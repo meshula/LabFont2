@@ -106,7 +106,7 @@ labfont_v2/
 [ ] 1. Initial Setup
     [X] Create directory structure
     [X] Setup CMake build system
-    [ ] Add external dependencies
+    [X] Add external dependencies
     [ ] Create initial CI pipeline
 
 [ ] 2. Core Implementation

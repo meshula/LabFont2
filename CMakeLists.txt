@@ -27,6 +27,7 @@ target_include_directories(labfont
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb
 )
 
 # Source files will be added here as they are created
