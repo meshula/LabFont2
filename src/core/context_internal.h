@@ -8,6 +8,7 @@
 #include "font_manager.h"
 #include "draw_state.h"
 #include "resource_manager.h"
+#include "memory.h"
 #include "error.h"
 
 namespace labfont {
@@ -34,6 +35,8 @@ public:
     Backend* GetBackend() { return m_backend.get(); }
     FontManager* GetFontManager() { return m_fontManager.get(); }
     DrawState* GetDrawState() { return m_drawState.get(); }
+    ResourceManagerImpl* GetResourceManager() { return m_resourceManager.get(); }
+    MemoryManager* GetMemoryManager() { return &MemoryManager::Instance(); }
     
     // Viewport
     void SetViewport(float x, float y, float width, float height);
@@ -47,10 +50,6 @@ private:
     std::unique_ptr<FontManager> m_fontManager;
     std::unique_ptr<DrawState> m_drawState;
     std::unique_ptr<ResourceManagerImpl> m_resourceManager;
-
-public:
-    // Make resource manager accessible to C interface implementations
-    ResourceManagerImpl* GetResourceManager() { return m_resourceManager.get(); }
     
     unsigned int m_width;
     unsigned int m_height;

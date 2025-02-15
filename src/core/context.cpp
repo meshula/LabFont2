@@ -257,4 +257,39 @@ lab_buffer lab_get_buffer(lab_context ctx, const char* name) {
     return nullptr;
 }
 
+// Memory Management C interface
+void* lab_allocate(size_t size, lab_memory_category category) {
+    auto& manager = labfont::MemoryManager::Instance();
+    return manager.Allocate(size, static_cast<labfont::MemoryCategory>(category));
+}
+
+void lab_free(void* ptr) {
+    auto& manager = labfont::MemoryManager::Instance();
+    manager.Free(ptr);
+}
+
+void lab_enable_leak_detection(lab_context ctx, bool enable) {
+    if (!ctx) return;
+    labfont::GetContextImpl(ctx)->GetMemoryManager()->EnableLeakDetection(enable);
+}
+
+void lab_get_memory_stats(lab_context ctx, lab_memory_stats* stats) {
+    if (!ctx || !stats) return;
+    
+    auto impl_stats = labfont::GetContextImpl(ctx)->GetMemoryManager()->GetStats();
+    stats->totalAllocated = impl_stats.totalAllocated;
+    stats->totalFreed = impl_stats.totalFreed;
+    stats->currentUsage = impl_stats.currentUsage;
+    stats->peakUsage = impl_stats.peakUsage;
+    
+    for (int i = 0; i < 5; ++i) {
+        stats->categoryUsage[i] = impl_stats.categoryUsage[static_cast<labfont::MemoryCategory>(i)];
+    }
+}
+
+void lab_reset_memory_stats(lab_context ctx) {
+    if (!ctx) return;
+    labfont::GetContextImpl(ctx)->GetMemoryManager()->ResetStats();
+}
+
 } // extern "C"

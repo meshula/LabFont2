@@ -4,12 +4,14 @@
 extern MunitSuite context_suite;
 extern MunitSuite resource_suite;
 extern MunitSuite error_suite;
+extern MunitSuite memory_suite;
 
 int main(int argc, char* argv[]) {
     MunitSuite suites[] = {
         context_suite,
         resource_suite,
         error_suite,
+        memory_suite,
         { NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE }
     };
 

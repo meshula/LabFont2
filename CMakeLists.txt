@@ -37,6 +37,7 @@ target_sources(labfont
         src/core/context.cpp
         src/core/resource_manager.cpp
         src/core/error.cpp
+        src/core/memory.cpp
         # src/core/font.cpp
         # src/core/atlas.cpp
         

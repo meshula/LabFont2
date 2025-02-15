@@ -19,6 +19,7 @@ target_sources(labfont_unit_tests
         unit/test_context.c
         unit/test_resources.c
         unit/test_error.c
+        unit/test_memory.c
         # unit/test_font.c
         # unit/test_drawing.c
 )

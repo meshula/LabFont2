@@ -90,6 +90,26 @@ typedef enum lab_text_style
     LAB_TEXT_STYLE_UNDERLINE = 1 << 2
 } lab_text_style;
 
+/* Memory categories */
+typedef enum lab_memory_category
+{
+    LAB_MEMORY_GENERAL,
+    LAB_MEMORY_GRAPHICS,
+    LAB_MEMORY_TEXT,
+    LAB_MEMORY_RESOURCES,
+    LAB_MEMORY_TEMPORARY
+} lab_memory_category;
+
+/* Memory statistics */
+typedef struct lab_memory_stats
+{
+    size_t totalAllocated;
+    size_t totalFreed;
+    size_t currentUsage;
+    size_t peakUsage;
+    size_t categoryUsage[5];  /* One for each lab_memory_category */
+} lab_memory_stats;
+
 #ifdef __cplusplus
 }
 #endif

@@ -137,7 +137,7 @@ labfont_v2/
     [X] Context management
     [X] Resource handling
     [X] Error handling system
-    [ ] Basic memory management
+    [X] Basic memory management
 
 [ ] 3. Backend Implementation
     [ ] Abstract backend interface

@@ -52,6 +52,13 @@ lab_color lab_color_rgb(float r, float g, float b);
 const char* lab_get_error_string(lab_error error);
 void lab_set_viewport(lab_context ctx, float x, float y, float width, float height);
 
+/* Memory Management */
+void* lab_allocate(size_t size, lab_memory_category category);
+void lab_free(void* ptr);
+void lab_enable_leak_detection(lab_context ctx, bool enable);
+void lab_get_memory_stats(lab_context ctx, lab_memory_stats* stats);
+void lab_reset_memory_stats(lab_context ctx);
+
 /* Resource Management */
 lab_result lab_create_texture(lab_context ctx, const char* name, const lab_texture_desc* desc, lab_texture* out_texture);
 void lab_destroy_texture(lab_context ctx, lab_texture texture);
