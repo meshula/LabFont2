@@ -103,11 +103,11 @@ labfont_v2/
 
 ## Project Plan
 
-[ ] 1. Initial Setup
+[X] 1. Initial Setup
     [X] Create directory structure
     [X] Setup CMake build system
     [X] Add external dependencies
-    [ ] Create initial CI pipeline
+    [X] Create initial CI pipeline
 
 [ ] 2. Core Implementation
     [ ] Context management
