@@ -8,6 +8,7 @@
 #include "font_manager.h"
 #include "draw_state.h"
 #include "resource_manager.h"
+#include "error.h"
 
 namespace labfont {
 

@@ -5,19 +5,23 @@
 namespace labfont {
 
 lab_result Context::Create(lab_backend_type type, const lab_context_desc* desc, Context** out_context) {
+    LAB_ERROR_GUARD();
+
     if (!desc || !out_context) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Invalid parameters passed to Context::Create"};
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid parameters passed to Context::Create");
+    }
+
+    if (desc->width == 0 || desc->height == 0) {
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid dimensions in context description");
     }
 
     std::unique_ptr<Context> context(new (std::nothrow) Context());
     if (!context) {
-        return {LAB_ERROR_OUT_OF_MEMORY, "Failed to allocate Context"};
+        LAB_RETURN_ERROR(LAB_ERROR_OUT_OF_MEMORY, "Failed to allocate Context");
     }
 
     lab_result result = context->Initialize(type, desc);
-    if (result.error != LAB_ERROR_NONE) {
-        return result;
-    }
+    LAB_RETURN_IF_ERROR(result);
 
     *out_context = context.release();
     return {LAB_ERROR_NONE, nullptr};

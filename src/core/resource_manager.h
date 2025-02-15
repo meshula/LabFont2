@@ -2,6 +2,7 @@
 #define LABFONT_RESOURCE_MANAGER_IMPL_H
 
 #include "resource.h"
+#include "error.h"
 #include <unordered_map>
 #include <mutex>
 

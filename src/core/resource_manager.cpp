@@ -22,14 +22,20 @@ lab_result ResourceManagerImpl::CreateTexture(
     const TextureParams& params,
     std::shared_ptr<TextureResource>& out_texture)
 {
+    LAB_ERROR_GUARD();
+
     if (name.empty()) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty"};
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty");
+    }
+
+    if (params.width == 0 || params.height == 0) {
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid texture dimensions");
     }
 
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if (ResourceExists(name)) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists"};
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists");
     }
 
     auto texture = std::make_shared<TextureResource>(
@@ -41,9 +47,7 @@ lab_result ResourceManagerImpl::CreateTexture(
 
     // TODO: Once backend interface is implemented, create the actual GPU resource
     // lab_result result = m_backend->CreateTexture(params, texture.get());
-    // if (result.error != LAB_ERROR_NONE) {
-    //     return result;
-    // }
+    // LAB_RETURN_IF_ERROR(result);
 
     m_resources[name] = texture;
     out_texture = texture;
@@ -55,14 +59,20 @@ lab_result ResourceManagerImpl::CreateBuffer(
     const BufferParams& params,
     std::shared_ptr<BufferResource>& out_buffer)
 {
+    LAB_ERROR_GUARD();
+
     if (name.empty()) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty"};
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty");
+    }
+
+    if (params.size == 0) {
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Buffer size cannot be zero");
     }
 
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if (ResourceExists(name)) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists"};
+        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists");
     }
 
     auto buffer = std::make_shared<BufferResource>(
@@ -73,9 +83,7 @@ lab_result ResourceManagerImpl::CreateBuffer(
 
     // TODO: Once backend interface is implemented, create the actual GPU resource
     // lab_result result = m_backend->CreateBuffer(params, buffer.get());
-    // if (result.error != LAB_ERROR_NONE) {
-    //     return result;
-    // }
+    // LAB_RETURN_IF_ERROR(result);
 
     m_resources[name] = buffer;
     out_buffer = buffer;
