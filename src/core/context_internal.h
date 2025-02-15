@@ -7,6 +7,7 @@
 #include "backend.h"
 #include "font_manager.h"
 #include "draw_state.h"
+#include "resource_manager.h"
 
 namespace labfont {
 
@@ -44,6 +45,11 @@ private:
     std::unique_ptr<Backend> m_backend;
     std::unique_ptr<FontManager> m_fontManager;
     std::unique_ptr<DrawState> m_drawState;
+    std::unique_ptr<ResourceManagerImpl> m_resourceManager;
+
+public:
+    // Make resource manager accessible to C interface implementations
+    ResourceManagerImpl* GetResourceManager() { return m_resourceManager.get(); }
     
     unsigned int m_width;
     unsigned int m_height;

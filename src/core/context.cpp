@@ -59,6 +59,12 @@ lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* de
     //     return {LAB_ERROR_OUT_OF_MEMORY, "Failed to create draw state"};
     // }
 
+    // Resource manager initialization
+    m_resourceManager = std::make_unique<ResourceManagerImpl>(m_backend.get());
+    if (!m_resourceManager) {
+        return {LAB_ERROR_OUT_OF_MEMORY, "Failed to create resource manager"};
+    }
+
     return {LAB_ERROR_NONE, nullptr};
 }
 
@@ -169,6 +175,82 @@ void lab_set_viewport(lab_context ctx, float x, float y, float width, float heig
     if (ctx) {
         labfont::GetContextImpl(ctx)->SetViewport(x, y, width, height);
     }
+}
+
+// Resource Management C interface
+lab_result lab_create_texture(lab_context ctx, const char* name, const lab_texture_desc* desc, lab_texture* out_texture) {
+    if (!ctx || !name || !desc || !out_texture) {
+        return {LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+
+    auto context = labfont::GetContextImpl(ctx);
+    labfont::TextureParams params = {
+        .width = desc->width,
+        .height = desc->height,
+        .format = desc->format,
+        .initial_data = desc->initial_data
+    };
+
+    std::shared_ptr<labfont::TextureResource> texture;
+    lab_result result = context->GetResourceManager()->CreateTexture(name, params, texture);
+    if (result.error == LAB_ERROR_NONE) {
+        *out_texture = reinterpret_cast<lab_texture>(texture.get());
+    }
+    return result;
+}
+
+void lab_destroy_texture(lab_context ctx, lab_texture texture) {
+    if (!ctx || !texture) return;
+    auto context = labfont::GetContextImpl(ctx);
+    auto resource = reinterpret_cast<labfont::TextureResource*>(texture);
+    context->GetResourceManager()->DestroyResource(resource->GetName());
+}
+
+lab_texture lab_get_texture(lab_context ctx, const char* name) {
+    if (!ctx || !name) return nullptr;
+    auto context = labfont::GetContextImpl(ctx);
+    auto resource = context->GetResourceManager()->GetResource(name);
+    if (resource && resource->GetType() == labfont::ResourceType::Texture) {
+        return reinterpret_cast<lab_texture>(resource.get());
+    }
+    return nullptr;
+}
+
+lab_result lab_create_buffer(lab_context ctx, const char* name, const lab_buffer_desc* desc, lab_buffer* out_buffer) {
+    if (!ctx || !name || !desc || !out_buffer) {
+        return {LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+
+    auto context = labfont::GetContextImpl(ctx);
+    labfont::BufferParams params = {
+        .size = desc->size,
+        .dynamic = desc->dynamic,
+        .initial_data = desc->initial_data
+    };
+
+    std::shared_ptr<labfont::BufferResource> buffer;
+    lab_result result = context->GetResourceManager()->CreateBuffer(name, params, buffer);
+    if (result.error == LAB_ERROR_NONE) {
+        *out_buffer = reinterpret_cast<lab_buffer>(buffer.get());
+    }
+    return result;
+}
+
+void lab_destroy_buffer(lab_context ctx, lab_buffer buffer) {
+    if (!ctx || !buffer) return;
+    auto context = labfont::GetContextImpl(ctx);
+    auto resource = reinterpret_cast<labfont::BufferResource*>(buffer);
+    context->GetResourceManager()->DestroyResource(resource->GetName());
+}
+
+lab_buffer lab_get_buffer(lab_context ctx, const char* name) {
+    if (!ctx || !name) return nullptr;
+    auto context = labfont::GetContextImpl(ctx);
+    auto resource = context->GetResourceManager()->GetResource(name);
+    if (resource && resource->GetType() == labfont::ResourceType::Buffer) {
+        return reinterpret_cast<lab_buffer>(resource.get());
+    }
+    return nullptr;
 }
 
 } // extern "C"

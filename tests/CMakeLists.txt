@@ -15,9 +15,17 @@ target_include_directories(munit PUBLIC ${munit_SOURCE_DIR})
 add_executable(labfont_unit_tests)
 target_sources(labfont_unit_tests
     PRIVATE
+        unit/test_main.c
         unit/test_context.c
+        unit/test_resources.c
         # unit/test_font.c
         # unit/test_drawing.c
+)
+
+# Make test suites visible to linker
+target_compile_definitions(labfont_unit_tests
+    PRIVATE
+        MUNIT_NO_MAIN
 )
 
 target_include_directories(labfont_unit_tests

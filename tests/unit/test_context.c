@@ -123,14 +123,10 @@ static MunitTest context_tests[] = {
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };
 
-static const MunitSuite context_suite = {
+const MunitSuite context_suite = {
     "/context",
     context_tests,
     NULL,
     1,
     MUNIT_SUITE_OPTION_NONE
 };
-
-int main(int argc, char* argv[]) {
-    return munit_suite_main(&context_suite, NULL, argc, argv);
-}

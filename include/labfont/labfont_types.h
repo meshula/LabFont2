@@ -1,6 +1,9 @@
 #ifndef LABFONT_TYPES_H
 #define LABFONT_TYPES_H
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,6 +49,22 @@ typedef struct lab_context_desc
 /* Opaque handle types */
 typedef struct lab_context_t* lab_context;
 typedef struct lab_font_t* lab_font;
+typedef struct lab_texture_t* lab_texture;
+typedef struct lab_buffer_t* lab_buffer;
+
+/* Resource descriptors */
+typedef struct lab_texture_desc {
+    unsigned int width;
+    unsigned int height;
+    unsigned int format;
+    const void* initial_data;
+} lab_texture_desc;
+
+typedef struct lab_buffer_desc {
+    size_t size;
+    bool dynamic;
+    const void* initial_data;
+} lab_buffer_desc;
 
 /* Result type for operations that can fail */
 typedef struct lab_result
