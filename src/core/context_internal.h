@@ -4,13 +4,11 @@
 #include <labfont/labfont.h>
 #include <memory>
 #include <vector>
+#include "backend.h"
+#include "font_manager.h"
+#include "draw_state.h"
 
 namespace labfont {
-
-// Forward declarations
-class Backend;
-class FontManager;
-class DrawState;
 
 class Context {
 public:

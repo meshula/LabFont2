@@ -28,7 +28,7 @@ We will initially run tests with munit. If we need to visual testing, we will di
 
 We think we will likely need fontstash, stb_truetype, and stb_image as external dependencies, any others we must pause and verify before use.
 
-At and point during development we will rewrite this plan as necessary to facilitate the work or clarify elements, again, the Inception section we will keep in the interest of history.
+At any point during development we will rewrite this plan as necessary to facilitate the work or clarify elements, again, the Inception section we will keep in the interest of history.
 
 ## Design Document
 
