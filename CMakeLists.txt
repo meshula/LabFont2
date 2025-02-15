@@ -59,7 +59,52 @@ target_sources(labfont
 )
 
 if(LABFONT_ENABLE_METAL)
-    # target_sources(labfont PRIVATE src/backends/metal/...)
+    # Add Metal backend sources
+    target_sources(labfont
+        PRIVATE
+            src/backends/metal/metal_backend.h
+            src/backends/metal/metal_backend.mm
+            src/backends/metal/metal_command_buffer.h
+            src/backends/metal/metal_command_buffer.mm
+            src/backends/metal/metal_types.h
+    )
+    
+    # Compile Metal shaders
+    add_custom_command(
+        OUTPUT
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders/compiled/primitives.metallib
+        COMMAND
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders/compile_shaders.sh
+        DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders/primitives.metal
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders/compile_shaders.sh
+        WORKING_DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders
+        COMMENT
+            "Compiling Metal shaders"
+        VERBATIM
+    )
+    
+    # Add shader compilation to build dependencies
+    add_custom_target(metal_shaders
+        DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/metal/shaders/compiled/primitives.metallib
+    )
+    add_dependencies(labfont metal_shaders)
+    
+    # Link Metal framework
+    target_link_libraries(labfont
+        PRIVATE
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework Foundation"
+    )
+    
+    # Enable Metal backend
+    target_compile_definitions(labfont
+        PRIVATE
+            LABFONT_METAL_ENABLED=1
+    )
 endif()
 
 if(LABFONT_ENABLE_WGPU)
