@@ -145,8 +145,9 @@ bool MetalDevice::LoadShaders() {
         return false;
     }
     
+    NSURL* libraryURL = [NSURL fileURLWithPath:libraryPath];
     NSError* error = nil;
-    m_shaderLibrary = [m_device newLibraryWithFile:libraryPath error:&error];
+    m_shaderLibrary = [m_device newLibraryWithURL:libraryURL error:&error];
     if (!m_shaderLibrary) {
         return false;
     }

@@ -14,6 +14,7 @@ MetalCommandBuffer::MetalCommandBuffer(MetalDevice* device)
     , m_currentBlendMode(BlendMode::None)
     , m_inRenderPass(false)
 {
+    CreateVertexBuffer();
 }
 
 MetalCommandBuffer::~MetalCommandBuffer() {
@@ -72,7 +73,7 @@ void MetalCommandBuffer::SetBlendMode(BlendMode mode) {
     m_currentBlendMode = mode;
     
     if (m_renderEncoder) {
-        MTLRenderPipelineState* pipeline = nullptr;
+        MetalRenderPipelineStateRef pipeline = nil;
         switch (mode) {
             case BlendMode::None:
                 pipeline = m_device->GetTrianglePipeline();
@@ -141,7 +142,12 @@ void MetalCommandBuffer::DrawTriangles(const Vertex* vertices, uint32_t vertexCo
         m_vertexData[i].color[3] = vertices[i].color[3];
     }
     
-    // Update vertex buffer
+    // Create or update vertex buffer
+    if (!m_vertexBuffer) {
+        if (!CreateVertexBuffer()) {
+            return;
+        }
+    }
     UpdateVertexBuffer(vertices, vertexCount);
     
     // Set vertex buffer and draw
@@ -212,7 +218,12 @@ void MetalCommandBuffer::DrawLines(const Vertex* vertices, uint32_t vertexCount,
         return;
     }
     
-    // Update vertex buffer
+    // Create or update vertex buffer
+    if (!m_vertexBuffer) {
+        if (!CreateVertexBuffer()) {
+            return;
+        }
+    }
     UpdateVertexBuffer(reinterpret_cast<const Vertex*>(m_vertexData.data()), m_vertexData.size());
     
     // Set line pipeline and draw

@@ -17,7 +17,8 @@ typedef enum lab_error
     LAB_ERROR_BACKEND_ERROR = -3,
     LAB_ERROR_FONT_LOAD_FAILED = -4,
     LAB_ERROR_NOT_INITIALIZED = -5,
-    LAB_ERROR_INVALID_STATE = -6
+    LAB_ERROR_INVALID_STATE = -6,
+    LAB_ERROR_INITIALIZATION_FAILED = -7
 } lab_error;
 
 /* Backend types */
