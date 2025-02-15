@@ -31,6 +31,33 @@ We think we will likely need fontstash, stb_truetype, and stb_image as external 
 
 At any point during development we will rewrite this plan as necessary to facilitate the work or clarify elements, again, the Inception section we will keep in the interest of history.
 
+Backend Testing Strategy:
+We will implement headless testing for the backends, avoiding the need for windowed or interactive interfaces. This will allow for automated testing of all graphics functionality. Examples of tests include:
+
+1. Texture Operations
+   - Create textures of various formats (8-bit integer R/RGB/RGBA, f16, f32)
+   - Write test patterns (e.g., checkerboard) to textures
+   - Commit to GPU memory
+   - Read back and verify contents
+
+2. Drawing Operations
+   - Create textures as render targets
+   - Perform drawing operations (rectangles, lines, etc.)
+   - Read back results and verify against expected patterns
+   - Test different blend modes and states
+
+3. Render Target Management
+   - Create and switch between render targets
+   - Verify correct state handling
+   - Test multiple render target configurations
+
+4. Memory Management
+   - Verify proper allocation/deallocation of GPU resources
+   - Test resource lifetime management
+   - Monitor for memory leaks
+
+This testing strategy will ensure consistent behavior across all backends while maintaining automated verification.
+
 ## Design Document
 
 ### Core Architecture
@@ -141,10 +168,31 @@ labfont_v2/
 
 [ ] 3. Backend Implementation
     [ ] Abstract backend interface
+        - Texture management (create, update, read back)
+        - Render target handling
+        - Draw command interface
+        - State management (blend modes, etc.)
+        - Memory management interface
+    [ ] Backend Testing Infrastructure
+        - Test pattern generation
+        - Pixel buffer comparison utilities
+        - GPU resource verification
     [ ] Metal backend
+        - Core implementation
+        - Headless testing support
+        - Resource management
     [ ] WGPU backend
+        - Core implementation
+        - Headless testing support
+        - Resource management
     [ ] Vulkan backend
+        - Core implementation
+        - Headless testing support
+        - Resource management
     [ ] DX11 backend
+        - Core implementation
+        - Headless testing support
+        - Resource management
 
 [ ] 4. Text Rendering
     [ ] Font loading
@@ -179,13 +227,27 @@ labfont_v2/
 1. Unit Testing
    - Using munit framework
    - Test categories:
-     * Core functionality
-     * Resource management
-     * Text rendering
+     * Core functionality (context, resources, memory)
+     * Backend operations (textures, render targets)
+     * Text rendering and layout
      * Drawing operations
-     * Backend-specific features
+     * Error handling and recovery
 
-2. Visual Testing
+2. Backend Testing
+   - Headless testing framework
+   - Test categories:
+     * Texture formats and operations
+     * Draw command verification
+     * Render target management
+     * State and blend modes
+     * Resource lifetime and cleanup
+   - Verification methods:
+     * Pattern generation and validation
+     * Pixel buffer comparison
+     * Memory tracking
+     * Error injection and recovery
+
+3. Visual Testing
    - Automated image comparison
    - Test cases:
      * Basic shapes and primitives
