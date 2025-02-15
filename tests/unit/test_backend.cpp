@@ -130,8 +130,24 @@ static MunitResult test_draw_commands(const MunitParameter params[], void* data)
     auto backend = std::make_unique<CPUBackend>();
     backend->Initialize(800, 600);
     
+    // Create render target
+    RenderTargetDesc rtDesc = {
+        .width = 800,
+        .height = 600,
+        .format = TextureFormat::RGBA8_UNORM,
+        .hasDepth = false
+    };
+    
+    std::shared_ptr<RenderTarget> target;
+    lab_result result = backend->CreateRenderTarget(rtDesc, target);
+    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    
+    // Set render target
+    result = backend->SetRenderTarget(target.get());
+    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    
     // Begin frame
-    lab_result result = backend->BeginFrame();
+    result = backend->BeginFrame();
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     
     // Create some test vertices

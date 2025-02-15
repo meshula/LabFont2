@@ -55,6 +55,7 @@ target_sources(labfont
 target_sources(labfont
     PRIVATE
         src/backends/cpu/cpu_backend.h
+        src/backends/cpu/cpu_backend.cpp
 )
 
 if(LABFONT_ENABLE_METAL)

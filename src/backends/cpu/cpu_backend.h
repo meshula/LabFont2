@@ -32,6 +32,7 @@ public:
     bool SupportsReadback() const override { return m_readback; }
     
     // CPU-specific methods
+    std::vector<uint8_t>& GetData() { return m_data; }
     const std::vector<uint8_t>& GetData() const { return m_data; }
     void SetData(const void* data, size_t size) {
         if (size <= m_data.size()) {
@@ -114,7 +115,9 @@ private:
 // CPU-based backend implementation
 class CPUBackend : public Backend {
 public:
-    CPUBackend() = default;
+    CPUBackend() 
+        : m_currentBlendMode(BlendMode::None)
+    {}
     ~CPUBackend() override = default;
     
     lab_result Initialize(uint32_t width, uint32_t height) override {
@@ -169,11 +172,7 @@ public:
         return {LAB_ERROR_NONE, nullptr};
     }
     
-    lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override {
-        m_commands.insert(m_commands.end(), commands.begin(), commands.end());
-        // TODO: Implement actual command execution with software rasterization
-        return {LAB_ERROR_NONE, nullptr};
-    }
+    lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override;
     
     lab_result EndFrame() override {
         return {LAB_ERROR_NONE, nullptr};
@@ -246,6 +245,7 @@ private:
     std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
     std::vector<DrawCommand> m_commands;
     RenderTarget* m_currentRenderTarget = nullptr;
+    BlendMode m_currentBlendMode;
 };
 
 } // namespace labfont
