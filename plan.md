@@ -7,6 +7,29 @@ We are going to design an API that lets render styled text, as well as perform a
 Our library should have a C interface, although the implementation may use C++. This is to enable easy language bindings.
 We are going to want a Metal, WGPU, Vulkan, and DX11 backend, and the abstraction mustn't leak to the interface.
 
+For each task in our project plan:
+1. Implement the functionality
+2. Create comprehensive unit tests
+3. Build and run ALL tests to verify:
+   - New functionality works correctly
+   - No regression in existing functionality
+4. When all tests pass, mark the task as complete with [X]
+5. Commit both the implementation and test results
+6. Proceed to the next task
+
+When modifying files:
+1. Always verify file content integrity after modifications
+2. Ensure no accidental truncation or content loss occurred
+3. Review the complete file content in the tool result
+
+We will also checkpoint the plan in git whenever we modify it. We will preserve the Inception section as is so that we understand how this project came to be.
+
+We will initially run tests with munit. If we need to visual testing, we will discuss strategies later. Perhaps we can use an image understanding framework to check that a generated image contains, for example, a yellow circle on a black background, or text that reads "Hello world".
+
+We think we will likely need fontstash, stb_truetype, and stb_image as external dependencies, any others we must pause and verify before use.
+
+At and point during development we will rewrite this plan as necessary to facilitate the work or clarify elements, again, the Inception section we will keep in the interest of history.
+
 ## Design Document
 
 ### Core Architecture
