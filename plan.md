@@ -181,7 +181,7 @@ labfont_v2/
         - Software rasterization
         - Memory-based textures and render targets
         - Reference implementation for testing
-    [ ] Metal backend
+    [X] Metal backend
         - Core implementation
         - Headless testing support
         - Resource management
