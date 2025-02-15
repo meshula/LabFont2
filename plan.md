@@ -110,7 +110,7 @@ labfont_v2/
     [X] Create initial CI pipeline
 
 [ ] 2. Core Implementation
-    [ ] Context management
+    [X] Context management
     [ ] Resource handling
     [ ] Error handling system
     [ ] Basic memory management

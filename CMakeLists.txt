@@ -34,7 +34,7 @@ target_include_directories(labfont
 target_sources(labfont
     PRIVATE
         # Core files
-        # src/core/context.cpp
+        src/core/context.cpp
         # src/core/font.cpp
         # src/core/atlas.cpp
         

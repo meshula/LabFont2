@@ -11,10 +11,14 @@ FetchContent_MakeAvailable(munit)
 add_executable(labfont_unit_tests)
 target_sources(labfont_unit_tests
     PRIVATE
-        # Test files will be added here as they are created
-        # unit/test_context.c
+        unit/test_context.c
         # unit/test_font.c
         # unit/test_drawing.c
+)
+
+target_include_directories(labfont_unit_tests
+    PRIVATE
+        ${munit_SOURCE_DIR}
 )
 
 target_link_libraries(labfont_unit_tests
