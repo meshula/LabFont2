@@ -177,7 +177,7 @@ labfont_v2/
         - Test pattern generation
         - Pixel buffer comparison utilities
         - GPU resource verification
-    [ ] CPU backend
+    [X] CPU backend
         - Software rasterization
         - Memory-based textures and render targets
         - Reference implementation for testing
