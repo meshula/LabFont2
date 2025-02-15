@@ -13,9 +13,10 @@ For each task in our project plan:
 3. Build and run ALL tests to verify:
    - New functionality works correctly
    - No regression in existing functionality
-4. When all tests pass, mark the task as complete with [X]
-5. Commit both the implementation and test results
-6. Proceed to the next task
+4. When all tests pass:
+   - Mark the task as complete with [X] in plan.md
+   - Commit both the implementation and test results
+5. Proceed to the next task
 
 When modifying files:
 1. Always verify file content integrity after modifications
@@ -134,7 +135,7 @@ labfont_v2/
 
 [ ] 2. Core Implementation
     [X] Context management
-    [ ] Resource handling
+    [X] Resource handling
     [ ] Error handling system
     [ ] Basic memory management
 
