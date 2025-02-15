@@ -104,8 +104,8 @@ labfont_v2/
 ## Project Plan
 
 [ ] 1. Initial Setup
-    [ ] Create directory structure
-    [ ] Setup CMake build system
+    [X] Create directory structure
+    [X] Setup CMake build system
     [ ] Add external dependencies
     [ ] Create initial CI pipeline
 
