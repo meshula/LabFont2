@@ -19,6 +19,24 @@ option(LABFONT_ENABLE_WGPU "Enable WebGPU backend" OFF)
 option(LABFONT_ENABLE_VULKAN "Enable Vulkan backend" OFF)
 option(LABFONT_ENABLE_DX11 "Enable DirectX 11 backend" OFF)
 
+# WebGPU dependency
+if(LABFONT_ENABLE_WGPU)
+    include(FetchContent)
+    FetchContent_Declare(
+        webgpu
+        GIT_REPOSITORY https://github.com/webgpu-native/webgpu-headers.git
+        GIT_TAG main
+    )
+    FetchContent_MakeAvailable(webgpu)
+    
+    FetchContent_Declare(
+        wgpu
+        GIT_REPOSITORY https://github.com/gfx-rs/wgpu-native.git
+        GIT_TAG trunk
+    )
+    FetchContent_MakeAvailable(wgpu)
+endif()
+
 # Library target
 add_library(labfont)
 target_include_directories(labfont
@@ -108,7 +126,29 @@ if(LABFONT_ENABLE_METAL)
 endif()
 
 if(LABFONT_ENABLE_WGPU)
-    # target_sources(labfont PRIVATE src/backends/wgpu/...)
+    target_sources(labfont
+        PRIVATE
+            src/backends/wgpu/wgpu_types.h
+            src/backends/wgpu/wgpu_backend.h
+            src/backends/wgpu/wgpu_backend.cpp
+            src/backends/wgpu/wgpu_command_buffer.h
+            src/backends/wgpu/wgpu_command_buffer.cpp
+    )
+    
+    target_include_directories(labfont
+        PRIVATE
+            ${webgpu_SOURCE_DIR}/include
+    )
+    
+    target_link_libraries(labfont
+        PRIVATE
+            wgpu_native
+    )
+    
+    target_compile_definitions(labfont
+        PRIVATE
+            LABFONT_WGPU_ENABLED=1
+    )
 endif()
 
 if(LABFONT_ENABLE_VULKAN)
