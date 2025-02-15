@@ -15,13 +15,22 @@ target_include_directories(munit PUBLIC ${munit_SOURCE_DIR})
 add_executable(labfont_unit_tests)
 target_sources(labfont_unit_tests
     PRIVATE
-        unit/test_main.c
+        unit/test_main.cpp
         unit/test_context.c
         unit/test_resources.c
         unit/test_error.c
         unit/test_memory.c
+        unit/test_backend.cpp
         # unit/test_font.c
         # unit/test_drawing.c
+)
+
+# Set C++ standard for test files
+set_source_files_properties(
+    unit/test_main.cpp
+    unit/test_backend.cpp
+    PROPERTIES
+    COMPILE_FLAGS "-std=c++17"
 )
 
 # Make test suites visible to linker
@@ -33,6 +42,8 @@ target_compile_definitions(labfont_unit_tests
 target_include_directories(labfont_unit_tests
     PRIVATE
         ${munit_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}
 )
 
 target_link_libraries(labfont_unit_tests

@@ -51,6 +51,12 @@ target_sources(labfont
 )
 
 # Backend-specific source files
+# CPU backend is always enabled as it's used for testing
+target_sources(labfont
+    PRIVATE
+        src/backends/cpu/cpu_backend.h
+)
+
 if(LABFONT_ENABLE_METAL)
     # target_sources(labfont PRIVATE src/backends/metal/...)
 endif()
