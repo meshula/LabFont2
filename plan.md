@@ -1,5 +1,47 @@
 # LabFont v2
 
+## Collaborative Workflow
+This section describes how we work together and use this plan.md file:
+
+1. Plan.md serves multiple purposes:
+   - Project documentation and planning
+   - Task tracking and progress
+   - Methodology guide
+   - Crash recovery reference
+
+2. For each work session:
+   - Review the plan to understand current state
+   - Identify next task or continue interrupted task
+   - Follow test-driven development process
+   - Update plan with progress and learnings
+
+3. During development:
+   - Implement functionality in small, testable increments
+   - Create/update tests for new functionality
+   - Run ALL tests after each significant change
+   - Document test results and any issues found
+
+4. After implementing features:
+   - Run the complete test suite
+   - Verify both new and existing functionality
+   - Update plan.md with progress
+   - Commit changes with descriptive messages
+
+5. Crash Recovery Process:
+   - Read this section to understand workflow
+   - Review plan.md to identify current state
+   - Check recent changes in relevant files
+   - Run tests to verify system state
+   - Continue from last known good state
+
+6. Test Execution:
+   - Run tests frequently during development
+   - Use test output to verify progress
+   - Add print statements to tests for clarity
+   - Document test results in commits
+
+Remember: The plan is a living document that evolves with the project, but we preserve the Inception section for historical context.
+
 ## Inception
 We are going to write a new, modern version of LabFont, in the labfont_v2 directory. The existing API and source may be reviewed in the src directory, but we will not modify it. All work will be new, and in the labfont_v2 directory, including CMake scripts and so on. 
 We are going to take inspiration for required functionality from the resources in the ref directory, although we will not specifically use that technology.
@@ -185,10 +227,11 @@ labfont_v2/
         - Core implementation
         - Headless testing support
         - Resource management
-    [ ] WGPU backend
-        - Core implementation
-        - Headless testing support
+    [ ] WGPU backend (Browser-based)
+        - Core implementation targeting browser's WebGPU API
+        - Browser-based testing via Emscripten
         - Resource management
+        - WebAssembly build configuration
     [ ] Vulkan backend
         - Core implementation
         - Headless testing support
