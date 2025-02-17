@@ -28,7 +28,6 @@ public:
     
     // Metal-specific methods
     MetalTextureRef GetMTLTexture() const { return m_texture; }
-    MTLPixelFormat TextureFormatToMTLFormat(TextureFormat format);
     
 private:
     uint32_t m_width;

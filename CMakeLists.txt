@@ -60,7 +60,7 @@ target_include_directories(labfont
 set(CORE_SRC
     src/core/backend_types.h
     src/core/backend.h
-    src/core/content_internal.h
+    src/core/context_internal.h
     src/core/context.cpp
     src/core/draw_state.h
     src/core/error.cpp

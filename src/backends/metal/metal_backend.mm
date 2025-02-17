@@ -7,20 +7,22 @@
 namespace labfont {
 namespace metal {
 
-MTLPixelFormat MetalTexture::TextureFormatToMTLFormat(TextureFormat format) {
-    switch (format) {
-        case TextureFormat::R8_UNORM:    return MTLPixelFormatR8Unorm;
-        case TextureFormat::RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
-        case TextureFormat::R16F:        return MTLPixelFormatR16Float;
-        case TextureFormat::RGBA16F:     return MTLPixelFormatRGBA16Float;
-        case TextureFormat::R32F:        return MTLPixelFormatR32Float;
-        case TextureFormat::D24S8:       return MTLPixelFormatDepth24Unorm_Stencil8;
-        case TextureFormat::D32F:        return MTLPixelFormatDepth32Float;
-        default:
-            assert(false && "Unsupported texture format");
-            return MTLPixelFormatInvalid;
+namespace {
+    MTLPixelFormat TextureFormatToMTLFormat(TextureFormat format) {
+        switch (format) {
+            case TextureFormat::R8_UNORM:    return MTLPixelFormatR8Unorm;
+            case TextureFormat::RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
+            case TextureFormat::R16F:        return MTLPixelFormatR16Float;
+            case TextureFormat::RGBA16F:     return MTLPixelFormatRGBA16Float;
+            case TextureFormat::R32F:        return MTLPixelFormatR32Float;
+            case TextureFormat::D24S8:       return MTLPixelFormatDepth24Unorm_Stencil8;
+            case TextureFormat::D32F:        return MTLPixelFormatDepth32Float;
+            default:
+                std::cerr << "Unsupported texture format" << std::endl;
+                return MTLPixelFormatInvalid;
+        }
     }
-}
+} // anon
 
 MetalTexture::MetalTexture(MetalDevice* device, const TextureDesc& desc)
     : m_width(desc.width)
@@ -86,7 +88,7 @@ MetalRenderTarget::MetalRenderTarget(MetalDevice* device, const RenderTargetDesc
         TextureDesc depthDesc = {
             .width = desc.width,
             .height = desc.height,
-            .format = TextureFormat
+            .format = TextureFormat::D32F,
             .renderTarget = true,
             .readback = false,
             .data = nullptr
@@ -114,9 +116,6 @@ MetalRenderTarget::~MetalRenderTarget() {
         [m_renderPassDescriptor release];
     }
 }
-
-
-
 
 void TestMetalOffscreenRendering() {
     // 1. Create Metal device
@@ -179,11 +178,6 @@ void TestMetalOffscreenRendering() {
     [commandBuffer waitUntilCompleted];
 }
 
-
-
-
-
-
 MetalDevice::MetalDevice()
     : m_device(nil)
     , m_commandQueue(nil)
@@ -192,7 +186,7 @@ MetalDevice::MetalDevice()
     , m_linePipeline(nil)
     , m_depthState(nil)
 {
-    TestMetalOffscreenRendering();
+    //TestMetalOffscreenRendering();
 }
 
 MetalDevice::~MetalDevice() {

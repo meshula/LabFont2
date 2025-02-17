@@ -16,6 +16,28 @@ struct MetalVertex {
     float position[2];
     float texcoord[2];
     float color[4];
+
+    MetalVertex() = default;
+
+    MetalVertex(float px, float py, float u, float v, const float col[4]) {
+        position[0] = px;
+        position[1] = py;
+        texcoord[0] = u;
+        texcoord[1] = v;
+        std::memcpy(color, col, sizeof(float) * 4);
+    }
+    
+    // Conversion constructor from Vertex to MetalVertex
+    MetalVertex(const Vertex& v) {
+        position[0] = v.position[0];
+        position[1] = v.position[1];
+        texcoord[0] = v.texcoord[0];
+        texcoord[1] = v.texcoord[1];
+        color[0] = v.color[0];
+        color[1] = v.color[1];
+        color[2] = v.color[2];
+        color[3] = v.color[3];
+    }
 };
 
 // Command buffer for recording and submitting Metal commands
@@ -39,9 +61,13 @@ public:
     void DrawLines(const Vertex* vertices, uint32_t vertexCount, float lineWidth);
     
 private:
+    enum class DrawMode { Triangles, Lines };
     bool CreateVertexBuffer();
-    void UpdateVertexBuffer(const Vertex* vertices, uint32_t vertexCount);
-    
+    void UpdateVertexBuffer();
+    void Flush(DrawMode mode);
+
+    DrawMode m_currentDrawMode;
+
     MetalDevice* m_device;
     MetalCommandBufferRef m_commandBuffer;
     MetalRenderCommandEncoderRef m_renderEncoder;

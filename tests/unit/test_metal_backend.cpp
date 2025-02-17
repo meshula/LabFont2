@@ -79,7 +79,7 @@ static MunitResult test_metal_render_target(const MunitParameter params[], void*
     DrawCommand draw;
     draw.type = DrawCommandType::DrawTriangles;
     draw.triangles.vertices = vertices.data();
-    draw.triangles.vertexCount = vertices.size();
+    draw.triangles.vertexCount = (int) vertices.size();
     commands.push_back(draw);
     
     result = backend->SubmitCommands(commands);

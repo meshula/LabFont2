@@ -14,6 +14,7 @@ MetalCommandBuffer::MetalCommandBuffer(MetalDevice* device)
     , m_vertexBufferCapacity(0)
     , m_currentBlendMode(BlendMode::None)
     , m_inRenderPass(false)
+    , m_currentDrawMode(DrawMode::Triangles)
 {
     CreateVertexBuffer();
 }
@@ -204,121 +205,99 @@ void MetalCommandBuffer::Clear(const float color[4]) {
 }
 
 void MetalCommandBuffer::DrawTriangles(const Vertex* vertices, uint32_t vertexCount) {
-    if (!m_renderEncoder || vertexCount == 0) {
+    if (vertexCount == 0) {
         return;
     }
-    
-    // Convert vertices to Metal format
-    m_vertexData.resize(vertexCount);
-    for (uint32_t i = 0; i < vertexCount; ++i) {
-        m_vertexData[i].position[0] = vertices[i].position[0];
-        m_vertexData[i].position[1] = vertices[i].position[1];
-        m_vertexData[i].texcoord[0] = vertices[i].texcoord[0];
-        m_vertexData[i].texcoord[1] = vertices[i].texcoord[1];
-        m_vertexData[i].color[0] = vertices[i].color[0];
-        m_vertexData[i].color[1] = vertices[i].color[1];
-        m_vertexData[i].color[2] = vertices[i].color[2];
-        m_vertexData[i].color[3] = vertices[i].color[3];
+
+    if (m_currentDrawMode != DrawMode::Triangles) {
+        Flush(m_currentDrawMode);
+        m_currentDrawMode = DrawMode::Triangles;
     }
-    
-    // Create or update vertex buffer
-    if (!m_vertexBuffer) {
-        if (!CreateVertexBuffer()) {
-            return;
-        }
+
+    // ensure memcpy is safe
+    static_assert(sizeof(Vertex::position) == sizeof(MetalVertex::position), "Position size mismatch");
+    static_assert(sizeof(Vertex::texcoord) == sizeof(MetalVertex::texcoord), "Texcoord size mismatch");
+    static_assert(sizeof(Vertex::color) == sizeof(MetalVertex::color), "Color size mismatch");
+    static_assert(sizeof(Vertex) == sizeof(MetalVertex), "Vertex and MetalVertex sizes must match.");
+    static_assert(alignof(Vertex) == alignof(MetalVertex), "Vertex and MetalVertex alignment must match.");
+
+    size_t offset = m_vertexData.size();
+    if (offset + vertexCount > m_vertexData.capacity()) {
+        m_vertexData.reserve(std::max(offset * 2, m_vertexData.size() + vertexCount));
     }
-    UpdateVertexBuffer(vertices, vertexCount);
-    
-    // Set vertex buffer and draw
-    [m_renderEncoder setVertexBuffer:m_vertexBuffer offset:0 atIndex:0];
-    [m_renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-                      vertexStart:0
-                      vertexCount:vertexCount];
+    m_vertexData.resize(offset + vertexCount);
+    std::memcpy(m_vertexData.data() + offset, vertices, vertexCount * sizeof(Vertex));
 }
 
 void MetalCommandBuffer::DrawLines(const Vertex* vertices, uint32_t vertexCount, float lineWidth) {
-    if (!m_renderEncoder || vertexCount == 0) {
-        return;
+    if (vertexCount == 0) return;
+
+    if (m_currentDrawMode != DrawMode::Lines) {
+        Flush(m_currentDrawMode);
+        m_currentDrawMode = DrawMode::Lines;
     }
-    
-    // Convert lines to triangles
-    m_vertexData.clear();
-    m_vertexData.reserve(vertexCount * 2);
-    
-    for (uint32_t i = 0; i < vertexCount; i += 2) {
+
+    // Reserve space to avoid frequent reallocations
+    size_t additionalVertices = (vertexCount / 2) * 4; // 4 vertices per line segment
+    if (m_vertexData.capacity() < m_vertexData.size() + additionalVertices) {
+        m_vertexData.reserve(std::max(m_vertexData.size() * 2, m_vertexData.size() + additionalVertices));
+    }
+
+    for (uint32_t i = 0; i + 1 < vertexCount; i += 2) {
         const Vertex& v0 = vertices[i];
         const Vertex& v1 = vertices[i + 1];
-        
-        // Calculate line direction and normal
+
+        // Compute direction and normal
         float dx = v1.position[0] - v0.position[0];
         float dy = v1.position[1] - v0.position[1];
         float length = std::sqrt(dx * dx + dy * dy);
-        
-        if (length < 1e-6f) continue;
-        
+
+        if (length < 1e-6f) continue; // Skip degenerate lines
+
         float nx = -dy / length * (lineWidth * 0.5f);
         float ny = dx / length * (lineWidth * 0.5f);
-        
-        // Add vertices for line segment quad
-        MetalVertex mv;
-        
-        // Top left
-        mv.position[0] = v0.position[0] + nx;
-        mv.position[1] = v0.position[1] + ny;
-        mv.texcoord[0] = 0.0f;
-        mv.texcoord[1] = 0.0f;
-        std::memcpy(mv.color, v0.color, sizeof(float) * 4);
-        m_vertexData.push_back(mv);
-        
-        // Bottom left
-        mv.position[0] = v0.position[0] - nx;
-        mv.position[1] = v0.position[1] - ny;
-        mv.texcoord[0] = 0.0f;
-        mv.texcoord[1] = 1.0f;
-        m_vertexData.push_back(mv);
-        
-        // Top right
-        mv.position[0] = v1.position[0] + nx;
-        mv.position[1] = v1.position[1] + ny;
-        mv.texcoord[0] = 1.0f;
-        mv.texcoord[1] = 0.0f;
-        std::memcpy(mv.color, v1.color, sizeof(float) * 4);
-        m_vertexData.push_back(mv);
-        
-        // Bottom right
-        mv.position[0] = v1.position[0] - nx;
-        mv.position[1] = v1.position[1] - ny;
-        mv.texcoord[0] = 1.0f;
-        mv.texcoord[1] = 1.0f;
-        m_vertexData.push_back(mv);
+
+        // Append four vertices for the thickened line quad
+        m_vertexData.emplace_back(v0.position[0] + nx, v0.position[1] + ny, 0.0f, 0.0f, v0.color);
+        m_vertexData.emplace_back(v0.position[0] - nx, v0.position[1] - ny, 0.0f, 1.0f, v0.color);
+        m_vertexData.emplace_back(v1.position[0] + nx, v1.position[1] + ny, 1.0f, 0.0f, v1.color);
+        m_vertexData.emplace_back(v1.position[0] - nx, v1.position[1] - ny, 1.0f, 1.0f, v1.color);
     }
-    
-    if (m_vertexData.empty()) {
-        return;
+}
+
+
+void MetalCommandBuffer::Flush(DrawMode mode) {
+    if (m_vertexData.empty()) return;
+
+    if (m_vertexBufferCapacity < m_vertexData.size()) {
+        // Resize Metal buffer if necessary
+        m_vertexBufferCapacity = m_vertexData.size();
+        CreateVertexBuffer();
     }
-    
-    // Create or update vertex buffer
-    if (!m_vertexBuffer) {
-        if (!CreateVertexBuffer()) {
-            return;
-        }
-    }
-    UpdateVertexBuffer(reinterpret_cast<const Vertex*>(m_vertexData.data()), m_vertexData.size());
-    
+
+    UpdateVertexBuffer();
+
     // Set line pipeline and draw
-    [m_renderEncoder setRenderPipelineState:m_device->GetLinePipeline()];
+    if (mode == DrawMode::Triangles) {
+        [m_renderEncoder setRenderPipelineState:m_device->GetTrianglePipeline()];
+    } else if (mode == DrawMode::Lines) {
+        [m_renderEncoder setRenderPipelineState:m_device->GetLinePipeline()];
+    }
+
     [m_renderEncoder setVertexBuffer:m_vertexBuffer offset:0 atIndex:0];
     [m_renderEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
                       vertexStart:0
                       vertexCount:m_vertexData.size()];
-    
-    // Restore triangle pipeline
-    [m_renderEncoder setRenderPipelineState:m_device->GetTrianglePipeline()];
+
+    m_vertexData.clear();
 }
 
+
 bool MetalCommandBuffer::CreateVertexBuffer() {
-    const size_t initialSize = 1024 * sizeof(MetalVertex);
-    
+    const size_t initialCount = 1024;
+    const size_t initialSize = initialCount * sizeof(MetalVertex);
+    m_vertexData.reserve(initialCount);
+
     MTLResourceOptions options = MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined;
     m_vertexBuffer = [m_device->GetMTLDevice() newBufferWithLength:initialSize
                                                           options:options];
@@ -331,9 +310,9 @@ bool MetalCommandBuffer::CreateVertexBuffer() {
     return true;
 }
 
-void MetalCommandBuffer::UpdateVertexBuffer(const Vertex* vertices, uint32_t vertexCount) {
-    size_t requiredSize = vertexCount * sizeof(MetalVertex);
-    
+void MetalCommandBuffer::UpdateVertexBuffer() {
+    size_t requiredSize = m_vertexData.size() * sizeof(MetalVertex);
+
     // Create or resize vertex buffer if needed
     if (!m_vertexBuffer || requiredSize > m_vertexBufferCapacity) {
         if (m_vertexBuffer) {
