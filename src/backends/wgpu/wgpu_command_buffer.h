@@ -9,16 +9,7 @@ namespace labfont {
 namespace wgpu {
 
 class WGPUDevice;
-class WGPURenderTarget;
 
-// Vertex data for WebGPU pipeline
-struct WGPUVertex {
-    float position[2];
-    float texcoord[2];
-    float color[4];
-};
-
-// Command buffer for recording and submitting WebGPU commands
 class WGPUCommandBuffer {
 public:
     WGPUCommandBuffer(WGPUDevice* device);
@@ -50,23 +41,6 @@ private:
     std::vector<WGPUVertex> m_vertexData;
     BlendMode m_currentBlendMode;
     bool m_inRenderPass;
-    
-    // Pipeline states for different blend modes
-    WGPURenderPipelineRef m_trianglePipeline;
-    WGPURenderPipelineRef m_linePipeline;
-    WGPURenderPipelineRef m_alphaPipeline;
-    WGPURenderPipelineRef m_additivePipeline;
-    WGPURenderPipelineRef m_multiplyPipeline;
-    WGPURenderPipelineRef m_screenPipeline;
-    
-    // Bind group layout and bind group for uniforms
-    WGPUBindGroupLayoutRef m_bindGroupLayout;
-    WGPUBindGroupRef m_bindGroup;
-    
-    // Helper methods
-    WGPURenderPipelineRef GetPipelineForBlendMode(BlendMode mode);
-    bool CreatePipelines();
-    void DestroyPipelines();
 };
 
 } // namespace wgpu

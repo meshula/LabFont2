@@ -13,32 +13,13 @@ WGPUCommandBuffer::WGPUCommandBuffer(WGPUDevice* device)
     , m_vertexBufferCapacity(0)
     , m_currentBlendMode(BlendMode::None)
     , m_inRenderPass(false)
-    , m_trianglePipeline(nullptr)
-    , m_linePipeline(nullptr)
-    , m_alphaPipeline(nullptr)
-    , m_additivePipeline(nullptr)
-    , m_multiplyPipeline(nullptr)
-    , m_screenPipeline(nullptr)
-    , m_bindGroupLayout(nullptr)
-    , m_bindGroup(nullptr)
 {
     CreateVertexBuffer();
-    CreatePipelines();
 }
 
 WGPUCommandBuffer::~WGPUCommandBuffer() {
-    DestroyPipelines();
-    
     if (m_vertexBuffer) {
         wgpuBufferDestroy(m_vertexBuffer);
-    }
-    
-    if (m_bindGroup) {
-        wgpuBindGroupRelease(m_bindGroup);
-    }
-    
-    if (m_bindGroupLayout) {
-        wgpuBindGroupLayoutRelease(m_bindGroupLayout);
     }
 }
 
@@ -93,7 +74,18 @@ void WGPUCommandBuffer::SetBlendMode(BlendMode mode) {
     m_currentBlendMode = mode;
     
     if (m_renderPassEncoder) {
-        WGPURenderPipelineRef pipeline = GetPipelineForBlendMode(mode);
+        // Set pipeline based on blend mode
+        WGPURenderPipelineRef pipeline = nullptr;
+        switch (mode) {
+            case BlendMode::None:
+                pipeline = m_device->trianglePipeline;
+                break;
+            default:
+                // TODO: Handle other blend modes
+                pipeline = m_device->trianglePipeline;
+                break;
+        }
+        
         if (pipeline) {
             wgpuRenderPassEncoderSetPipeline(m_renderPassEncoder, pipeline);
         }
@@ -207,12 +199,12 @@ void WGPUCommandBuffer::DrawLines(const Vertex* vertices, uint32_t vertexCount, 
     UpdateVertexBuffer(reinterpret_cast<const Vertex*>(m_vertexData.data()), m_vertexData.size());
     
     // Set line pipeline and draw
-    wgpuRenderPassEncoderSetPipeline(m_renderPassEncoder, m_linePipeline);
+    wgpuRenderPassEncoderSetPipeline(m_renderPassEncoder, m_device->linePipeline);
     wgpuRenderPassEncoderSetVertexBuffer(m_renderPassEncoder, 0, m_vertexBuffer, 0, m_vertexData.size() * sizeof(WGPUVertex));
     wgpuRenderPassEncoderDraw(m_renderPassEncoder, m_vertexData.size(), 1, 0, 0);
     
     // Restore triangle pipeline
-    wgpuRenderPassEncoderSetPipeline(m_renderPassEncoder, m_trianglePipeline);
+    wgpuRenderPassEncoderSetPipeline(m_renderPassEncoder, m_device->trianglePipeline);
 }
 
 bool WGPUCommandBuffer::CreateVertexBuffer() {
@@ -253,141 +245,6 @@ void WGPUCommandBuffer::UpdateVertexBuffer(const Vertex* vertices, uint32_t vert
     
     // Update buffer data
     wgpuQueueWriteBuffer(m_device->GetQueue(), m_vertexBuffer, 0, m_vertexData.data(), requiredSize);
-}
-
-WGPURenderPipelineRef WGPUCommandBuffer::GetPipelineForBlendMode(BlendMode mode) {
-    switch (mode) {
-        case BlendMode::None:
-            return m_trianglePipeline;
-        case BlendMode::Alpha:
-            return m_alphaPipeline;
-        case BlendMode::Additive:
-            return m_additivePipeline;
-        case BlendMode::Multiply:
-            return m_multiplyPipeline;
-        case BlendMode::Screen:
-            return m_screenPipeline;
-        default:
-            return m_trianglePipeline;
-    }
-}
-
-bool WGPUCommandBuffer::CreatePipelines() {
-    // Create bind group layout
-    WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
-    m_bindGroupLayout = wgpuDeviceCreateBindGroupLayout(m_device->GetWGPUDevice(), &bindGroupLayoutDesc);
-    if (!m_bindGroupLayout) {
-        return false;
-    }
-    
-    // Create pipeline layout
-    WGPUPipelineLayoutDescriptor pipelineLayoutDesc = {};
-    pipelineLayoutDesc.bindGroupLayoutCount = 1;
-    pipelineLayoutDesc.bindGroupLayouts = &m_bindGroupLayout;
-    
-    WGPUPipelineLayoutRef pipelineLayout = wgpuDeviceCreatePipelineLayout(m_device->GetWGPUDevice(), &pipelineLayoutDesc);
-    if (!pipelineLayout) {
-        return false;
-    }
-    
-    // Create vertex state
-    WGPUVertexBufferLayout vertexBufferLayout = {};
-    vertexBufferLayout.arrayStride = sizeof(WGPUVertex);
-    vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
-    vertexBufferLayout.attributeCount = 3;
-    
-    WGPUVertexAttribute attributes[3] = {};
-    // Position
-    attributes[0].format = WGPUVertexFormat_Float32x2;
-    attributes[0].offset = offsetof(WGPUVertex, position);
-    attributes[0].shaderLocation = 0;
-    // Texcoord
-    attributes[1].format = WGPUVertexFormat_Float32x2;
-    attributes[1].offset = offsetof(WGPUVertex, texcoord);
-    attributes[1].shaderLocation = 1;
-    // Color
-    attributes[2].format = WGPUVertexFormat_Float32x4;
-    attributes[2].offset = offsetof(WGPUVertex, color);
-    attributes[2].shaderLocation = 2;
-    
-    vertexBufferLayout.attributes = attributes;
-    
-    WGPUVertexState vertexState = {};
-    vertexState.module = m_device->GetShaderModule();
-    vertexState.entryPoint = "vertex_main";
-    vertexState.bufferCount = 1;
-    vertexState.buffers = &vertexBufferLayout;
-    
-    // Create fragment state
-    WGPUFragmentState fragmentState = {};
-    fragmentState.module = m_device->GetShaderModule();
-    fragmentState.entryPoint = "fragment_main";
-    fragmentState.targetCount = 1;
-    
-    WGPUColorTargetState colorTarget = {};
-    colorTarget.format = WGPUTextureFormat_RGBA8Unorm;
-    colorTarget.writeMask = WGPUColorWriteMask_All;
-    
-    fragmentState.targets = &colorTarget;
-    
-    // Create pipeline descriptor
-    WGPURenderPipelineDescriptor pipelineDesc = {};
-    pipelineDesc.layout = pipelineLayout;
-    pipelineDesc.vertex = vertexState;
-    pipelineDesc.fragment = &fragmentState;
-    pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pipelineDesc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
-    pipelineDesc.primitive.frontFace = WGPUFrontFace_CCW;
-    pipelineDesc.primitive.cullMode = WGPUCullMode_None;
-    
-    // Create triangle pipeline
-    m_trianglePipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    if (!m_trianglePipeline) {
-        wgpuPipelineLayoutRelease(pipelineLayout);
-        return false;
-    }
-    
-    // Create line pipeline
-    fragmentState.entryPoint = "fragment_line";
-    pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleStrip;
-    
-    m_linePipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    if (!m_linePipeline) {
-        wgpuPipelineLayoutRelease(pipelineLayout);
-        return false;
-    }
-    
-    // Create blend mode pipelines
-    fragmentState.entryPoint = "fragment_main";
-    pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    
-    // Alpha blend
-    colorTarget.blend = &GetWGPUBlendState(BlendMode::Alpha);
-    m_alphaPipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    
-    // Additive blend
-    colorTarget.blend = &GetWGPUBlendState(BlendMode::Additive);
-    m_additivePipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    
-    // Multiply blend
-    colorTarget.blend = &GetWGPUBlendState(BlendMode::Multiply);
-    m_multiplyPipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    
-    // Screen blend
-    colorTarget.blend = &GetWGPUBlendState(BlendMode::Screen);
-    m_screenPipeline = wgpuDeviceCreateRenderPipeline(m_device->GetWGPUDevice(), &pipelineDesc);
-    
-    wgpuPipelineLayoutRelease(pipelineLayout);
-    return true;
-}
-
-void WGPUCommandBuffer::DestroyPipelines() {
-    if (m_screenPipeline) wgpuRenderPipelineRelease(m_screenPipeline);
-    if (m_multiplyPipeline) wgpuRenderPipelineRelease(m_multiplyPipeline);
-    if (m_additivePipeline) wgpuRenderPipelineRelease(m_additivePipeline);
-    if (m_alphaPipeline) wgpuRenderPipelineRelease(m_alphaPipeline);
-    if (m_linePipeline) wgpuRenderPipelineRelease(m_linePipeline);
-    if (m_trianglePipeline) wgpuRenderPipelineRelease(m_trianglePipeline);
 }
 
 } // namespace wgpu

@@ -2,8 +2,29 @@
 #define LABFONT_BACKEND_TYPES_H
 
 #include <cstdint>
+#include <labfont/labfont_types.h>
 
 namespace labfont {
+
+// Use the public error codes
+using lab_error = ::lab_error;
+
+// Result type that matches the public API
+struct lab_result {
+    lab_error error;
+    const char* message = nullptr;  // Default to nullptr for no message
+
+    // Conversion operator to public API result
+    operator ::lab_result() const {
+        return ::lab_result{error, message};
+    }
+
+    // Constructor from error code only
+    lab_result(lab_error e) : error(e) {}
+
+    // Constructor from error code and message
+    lab_result(lab_error e, const char* msg) : error(e), message(msg) {}
+};
 
 // Texture formats
 enum class TextureFormat {
@@ -15,7 +36,32 @@ enum class TextureFormat {
     RGBA16F,       // 16-bit float RGBA
     R32F,          // 32-bit float single channel
     RG32F,         // 32-bit float dual channel
-    RGBA32F        // 32-bit float RGBA
+    RGBA32F,       // 32-bit float RGBA
+    D24S8,         // 24-bit depth + 8-bit stencil
+    D32F           // 32-bit float depth
+};
+
+// Blend factors
+enum class BlendFactor {
+    Zero,
+    One,
+    SrcColor,
+    OneMinusSrcColor,
+    DstColor,
+    OneMinusDstColor,
+    SrcAlpha,
+    OneMinusSrcAlpha,
+    DstAlpha,
+    OneMinusDstAlpha
+};
+
+// Blend operations
+enum class BlendOp {
+    Add,
+    Subtract,
+    ReverseSubtract,
+    Min,
+    Max
 };
 
 // Blend modes

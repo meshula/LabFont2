@@ -1,6 +1,7 @@
 #import "metal_command_buffer.h"
 #import "metal_backend.h"
 #import <Metal/Metal.h>
+#include <iostream>
 
 namespace labfont {
 namespace metal {
@@ -26,6 +27,7 @@ MetalCommandBuffer::~MetalCommandBuffer() {
 bool MetalCommandBuffer::Begin() {
     m_commandBuffer = [m_device->GetCommandQueue() commandBuffer];
     if (!m_commandBuffer) {
+        std::cerr << "Error: Failed to create command buffer!\n";
         return false;
     }
     return true;
@@ -42,18 +44,95 @@ bool MetalCommandBuffer::End() {
     return true;
 }
 
+void ValidateRenderPassDescriptor(MTLRenderPassDescriptor *desc) {
+    if (!desc) {
+        std::cerr << "Error: Render pass descriptor is null.\n";
+        return;
+    }
+
+    bool hasValidAttachment = false;
+
+    const NSUInteger MTLMaxColorAttachments = 4; // only checking four
+    for (NSUInteger i = 0; i < MTLMaxColorAttachments; ++i) {
+        auto *colorAttachment = desc.colorAttachments[i];
+        if (colorAttachment && colorAttachment.texture) {
+            hasValidAttachment = true;
+            break;
+        }
+    }
+
+    if (!hasValidAttachment && !desc.depthAttachment.texture && !desc.stencilAttachment.texture) {
+        std::cerr << "Error: No valid color, depth, or stencil attachments.\n";
+    }
+
+    for (NSUInteger i = 0; i < MTLMaxColorAttachments; ++i) {
+        auto *colorAttachment = desc.colorAttachments[i];
+        if (colorAttachment && colorAttachment.texture) {
+            std::cout << "Color Attachment " << i << " has a valid texture.\n";
+        } else {
+            std::cerr << "Warning: Color Attachment " << i << " is missing a texture.\n";
+        }
+    }
+
+    if (desc.depthAttachment.texture) {
+        std::cout << "Depth attachment is set.\n";
+    } else {
+        std::cerr << "Warning: Depth attachment is missing.\n";
+    }
+
+    if (desc.stencilAttachment.texture) {
+        std::cout << "Stencil attachment is set.\n";
+    } else {
+        std::cerr << "Warning: Stencil attachment is missing.\n";
+    }
+}
+
+void ValidateCommandBuffer(id<MTLCommandBuffer> commandBuffer) {
+    if (!commandBuffer) {
+        std::cerr << "Error: Command buffer is null.\n";
+        return;
+    }
+
+    switch (commandBuffer.status) {
+        case MTLCommandBufferStatusNotEnqueued:
+            std::cerr << "Warning: Command buffer not enqueued.\n";
+            break;
+        case MTLCommandBufferStatusEnqueued:
+            std::cout << "Command buffer enqueued.\n";
+            break;
+        case MTLCommandBufferStatusCommitted:
+            std::cout << "Command buffer committed.\n";
+            break;
+        case MTLCommandBufferStatusScheduled:
+            std::cout << "Command buffer scheduled.\n";
+            break;
+        case MTLCommandBufferStatusCompleted:
+            std::cout << "Command buffer completed successfully.\n";
+            break;
+        case MTLCommandBufferStatusError:
+            std::cerr << "Error: Command buffer execution failed.\n";
+            if (commandBuffer.error) {
+                std::cerr << "Metal Error: " << commandBuffer.error.localizedDescription.UTF8String << "\n";
+            }
+            break;
+    }
+}
+
 bool MetalCommandBuffer::BeginRenderPass(MetalRenderTarget* target) {
     if (m_inRenderPass) {
         EndRenderPass();
     }
     
     MTLRenderPassDescriptor* renderPass = target->GetRenderPassDescriptor();
-    if (!renderPass) {
+    if (!renderPass || !m_commandBuffer) {
         return false;
     }
-    
+
+    ValidateRenderPassDescriptor(renderPass);
+    ValidateCommandBuffer(m_commandBuffer);
     m_renderEncoder = [m_commandBuffer renderCommandEncoderWithDescriptor:renderPass];
     if (!m_renderEncoder) {
+        std::cerr << "Error: Failed to create render command encoder!\n";
         return false;
     }
     

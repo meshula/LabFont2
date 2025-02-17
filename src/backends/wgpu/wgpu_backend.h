@@ -12,6 +12,25 @@ namespace wgpu {
 // Forward declarations
 class WGPUCommandBuffer;
 
+// WebGPU device wrapper
+class WGPUDevice {
+public:
+    WGPUDevice() = default;
+    ~WGPUDevice();
+    
+    WGPUDeviceRef GetWGPUDevice() const { return device; }
+    WGPUQueueRef GetQueue() const { return queue; }
+    WGPUShaderModuleRef GetShaderModule() const { return shaderModule; }
+    
+    // Device state
+    WGPUDeviceRef device = nullptr;
+    WGPUQueueRef queue = nullptr;
+    WGPUShaderModuleRef shaderModule = nullptr;
+    WGPURenderPipelineRef trianglePipeline = nullptr;
+    WGPURenderPipelineRef linePipeline = nullptr;
+    WGPUBindGroupLayoutRef bindGroupLayout = nullptr;
+};
+
 // WebGPU-based texture implementation
 class WGPUTexture : public Texture {
 public:
@@ -64,36 +83,6 @@ private:
     std::shared_ptr<WGPUTexture> m_depthTexture;
     RenderPassDesc m_renderPassDesc;
     WGPUDevice* m_device;
-};
-
-// WebGPU device wrapper
-class WGPUDevice {
-public:
-    WGPUDevice();
-    ~WGPUDevice();
-    
-    bool Initialize();
-    
-    WGPUDeviceRef GetWGPUDevice() const { return m_device; }
-    WGPUQueueRef GetQueue() const { return m_queue; }
-    
-    // Pipeline state objects
-    WGPURenderPipelineRef GetTrianglePipeline() const { return m_trianglePipeline; }
-    WGPURenderPipelineRef GetLinePipeline() const { return m_linePipeline; }
-    
-    // Bind group layout
-    WGPUBindGroupLayoutRef GetBindGroupLayout() const { return m_bindGroupLayout; }
-    
-private:
-    bool CreatePipelineStates();
-    bool LoadShaders();
-    
-    WGPUDeviceRef m_device;
-    WGPUQueueRef m_queue;
-    WGUShaderModuleRef m_shaderModule;
-    WGPURenderPipelineRef m_trianglePipeline;
-    WGPURenderPipelineRef m_linePipeline;
-    WGPUBindGroupLayoutRef m_bindGroupLayout;
 };
 
 // WebGPU-based backend implementation

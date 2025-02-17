@@ -1,7 +1,7 @@
 #ifndef LABFONT_ERROR_H
 #define LABFONT_ERROR_H
 
-#include <labfont/labfont_types.h>
+#include "backend_types.h"
 #include <string>
 #include <memory>
 
@@ -26,7 +26,7 @@ public:
     }
 
     lab_result GetLastError() const {
-        return {m_lastError, m_lastMessage.empty() ? nullptr : m_lastMessage.c_str()};
+        return lab_result(m_lastError, m_lastMessage.empty() ? nullptr : m_lastMessage.c_str());
     }
 
 private:

@@ -1,287 +1,15 @@
 #include "wgpu_backend.h"
 #include "wgpu_command_buffer.h"
-#include <fstream>
-#include <sstream>
+#include <cstring>
 
 namespace labfont {
 namespace wgpu {
 
-WGPUTexture::WGPUTexture(WGPUDevice* device, const TextureDesc& desc)
-    : m_width(desc.width)
-    , m_height(desc.height)
-    , m_format(desc.format)
-    , m_renderTarget(desc.renderTarget)
-    , m_readback(desc.readback)
-    , m_texture(nullptr)
-    , m_textureView(nullptr)
-    , m_device(device)
-{
-    WGPUTextureDescriptor textureDesc = {};
-    textureDesc.size = {desc.width, desc.height, 1};
-    textureDesc.format = GetWGPUFormat(desc.format);
-    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
-    
-    if (desc.renderTarget) {
-        textureDesc.usage |= WGPUTextureUsage_RenderAttachment;
-    }
-    
-    m_texture = wgpuDeviceCreateTexture(device->GetWGPUDevice(), &textureDesc);
-    if (m_texture) {
-        WGPUTextureViewDescriptor viewDesc = {};
-        viewDesc.format = textureDesc.format;
-        viewDesc.dimension = WGPUTextureViewDimension_2D;
-        viewDesc.baseMipLevel = 0;
-        viewDesc.mipLevelCount = 1;
-        viewDesc.baseArrayLayer = 0;
-        viewDesc.arrayLayerCount = 1;
-        
-        m_textureView = wgpuTextureCreateView(m_texture, &viewDesc);
-        
-        if (desc.data) {
-            WGPUImageCopyTexture destination = {};
-            destination.texture = m_texture;
-            
-            WGPUTextureDataLayout dataLayout = {};
-            dataLayout.offset = 0;
-            dataLayout.bytesPerRow = desc.width * 4;
-            dataLayout.rowsPerImage = desc.height;
-            
-            WGPUExtent3D size = {desc.width, desc.height, 1};
-            
-            wgpuQueueWriteTexture(device->GetQueue(), &destination, desc.data, desc.width * desc.height * 4, &dataLayout, &size);
-        }
-    }
-}
-
-WGPUTexture::~WGPUTexture() {
-    if (m_textureView) {
-        wgpuTextureViewRelease(m_textureView);
-    }
-    if (m_texture) {
-        wgpuTextureRelease(m_texture);
-    }
-}
-
-WGPURenderTarget::WGPURenderTarget(WGPUDevice* device, const RenderTargetDesc& desc)
-    : m_width(desc.width)
-    , m_height(desc.height)
-    , m_format(desc.format)
-    , m_hasDepth(desc.hasDepth)
-    , m_device(device)
-{
-    // Create color texture
-    TextureDesc colorDesc = {
-        .width = desc.width,
-        .height = desc.height,
-        .format = desc.format,
-        .renderTarget = true,
-        .readback = true,
-        .data = nullptr
-    };
-    m_colorTexture = std::make_shared<WGPUTexture>(device, colorDesc);
-    
-    // Create depth texture if needed
-    if (desc.hasDepth) {
-        TextureDesc depthDesc = {
-            .width = desc.width,
-            .height = desc.height,
-            .format = TextureFormat::R32F,
-            .renderTarget = true,
-            .readback = false,
-            .data = nullptr
-        };
-        m_depthTexture = std::make_shared<WGPUTexture>(device, depthDesc);
-    }
-    
-    // Create render pass descriptor
-    m_renderPassDesc = {};
-    m_renderPassDesc.colorAttachment = m_colorTexture->GetWGPUTextureView();
-    m_renderPassDesc.depthStencilAttachment = m_hasDepth ? m_depthTexture->GetWGPUTextureView() : nullptr;
-    m_renderPassDesc.clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
-    m_renderPassDesc.clearDepth = 1.0f;
-    m_renderPassDesc.clearStencil = 0;
-}
-
-WGPURenderTarget::~WGPURenderTarget() = default;
-
-WGPUDevice::WGPUDevice()
-    : m_device(nullptr)
-    , m_queue(nullptr)
-    , m_shaderModule(nullptr)
-    , m_trianglePipeline(nullptr)
-    , m_linePipeline(nullptr)
-    , m_bindGroupLayout(nullptr)
-{
-}
-
-WGPUDevice::~WGPUDevice() {
-    if (m_bindGroupLayout) wgpuBindGroupLayoutRelease(m_bindGroupLayout);
-    if (m_linePipeline) wgpuRenderPipelineRelease(m_linePipeline);
-    if (m_trianglePipeline) wgpuRenderPipelineRelease(m_trianglePipeline);
-    if (m_shaderModule) wgpuShaderModuleRelease(m_shaderModule);
-    if (m_queue) wgpuQueueRelease(m_queue);
-    if (m_device) wgpuDeviceRelease(m_device);
-}
-
-bool WGPUDevice::Initialize() {
-    // Create adapter
-    WGPURequestAdapterOptions adapterOpts = {};
-    adapterOpts.powerPreference = WGPUPowerPreference_HighPerformance;
-    
-    WGPUAdapter adapter = nullptr;
-    wgpuInstanceRequestAdapter(nullptr, &adapterOpts,
-        [](WGPURequestAdapterStatus status, WGPUAdapter adapter, const char* message, void* userdata) {
-            if (status == WGPURequestAdapterStatus_Success) {
-                *static_cast<WGPUAdapter*>(userdata) = adapter;
-            }
-        }, &adapter);
-    
-    if (!adapter) {
-        return false;
-    }
-    
-    // Create device
-    WGPUDeviceDescriptor deviceDesc = {};
-    deviceDesc.requiredFeatures = nullptr;
-    deviceDesc.requiredLimits = nullptr;
-    deviceDesc.defaultQueue.nextInChain = nullptr;
-    
-    m_device = wgpuAdapterCreateDevice(adapter, &deviceDesc);
-    wgpuAdapterRelease(adapter);
-    
-    if (!m_device) {
-        return false;
-    }
-    
-    // Get queue
-    m_queue = wgpuDeviceGetQueue(m_device);
-    if (!m_queue) {
-        return false;
-    }
-    
-    // Load shaders
-    if (!LoadShaders()) {
-        return false;
-    }
-    
-    // Create pipeline states
-    if (!CreatePipelineStates()) {
-        return false;
-    }
-    
-    return true;
-}
-
-bool WGPUDevice::LoadShaders() {
-    // Read shader source
-    std::ifstream file("src/backends/wgpu/shaders/primitives.wgsl");
-    if (!file.is_open()) {
-        return false;
-    }
-    
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string source = buffer.str();
-    
-    // Create shader module
-    WGPUShaderModuleWGSLDescriptor wgslDesc = {};
-    wgslDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    wgslDesc.code = source.c_str();
-    
-    WGPUShaderModuleDescriptor moduleDesc = {};
-    moduleDesc.nextInChain = &wgslDesc.chain;
-    
-    m_shaderModule = wgpuDeviceCreateShaderModule(m_device, &moduleDesc);
-    return m_shaderModule != nullptr;
-}
-
-bool WGPUDevice::CreatePipelineStates() {
-    // Create bind group layout
-    WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc = {};
-    m_bindGroupLayout = wgpuDeviceCreateBindGroupLayout(m_device, &bindGroupLayoutDesc);
-    if (!m_bindGroupLayout) {
-        return false;
-    }
-    
-    // Create pipeline layout
-    WGPUPipelineLayoutDescriptor pipelineLayoutDesc = {};
-    pipelineLayoutDesc.bindGroupLayoutCount = 1;
-    pipelineLayoutDesc.bindGroupLayouts = &m_bindGroupLayout;
-    
-    WGPUPipelineLayout pipelineLayout = wgpuDeviceCreatePipelineLayout(m_device, &pipelineLayoutDesc);
-    if (!pipelineLayout) {
-        return false;
-    }
-    
-    // Create vertex state
-    WGPUVertexBufferLayout vertexBufferLayout = {};
-    vertexBufferLayout.arrayStride = sizeof(WGPUVertex);
-    vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
-    vertexBufferLayout.attributeCount = 3;
-    
-    WGPUVertexAttribute attributes[3] = {};
-    // Position
-    attributes[0].format = WGPUVertexFormat_Float32x2;
-    attributes[0].offset = offsetof(WGPUVertex, position);
-    attributes[0].shaderLocation = 0;
-    // Texcoord
-    attributes[1].format = WGPUVertexFormat_Float32x2;
-    attributes[1].offset = offsetof(WGPUVertex, texcoord);
-    attributes[1].shaderLocation = 1;
-    // Color
-    attributes[2].format = WGPUVertexFormat_Float32x4;
-    attributes[2].offset = offsetof(WGPUVertex, color);
-    attributes[2].shaderLocation = 2;
-    
-    vertexBufferLayout.attributes = attributes;
-    
-    WGPUVertexState vertexState = {};
-    vertexState.module = m_shaderModule;
-    vertexState.entryPoint = "vertex_main";
-    vertexState.bufferCount = 1;
-    vertexState.buffers = &vertexBufferLayout;
-    
-    // Create fragment state
-    WGPUFragmentState fragmentState = {};
-    fragmentState.module = m_shaderModule;
-    fragmentState.entryPoint = "fragment_main";
-    fragmentState.targetCount = 1;
-    
-    WGPUColorTargetState colorTarget = {};
-    colorTarget.format = WGPUTextureFormat_RGBA8Unorm;
-    colorTarget.writeMask = WGPUColorWriteMask_All;
-    
-    fragmentState.targets = &colorTarget;
-    
-    // Create pipeline descriptor
-    WGPURenderPipelineDescriptor pipelineDesc = {};
-    pipelineDesc.layout = pipelineLayout;
-    pipelineDesc.vertex = vertexState;
-    pipelineDesc.fragment = &fragmentState;
-    pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pipelineDesc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
-    pipelineDesc.primitive.frontFace = WGPUFrontFace_CCW;
-    pipelineDesc.primitive.cullMode = WGPUCullMode_None;
-    
-    // Create triangle pipeline
-    m_trianglePipeline = wgpuDeviceCreateRenderPipeline(m_device, &pipelineDesc);
-    if (!m_trianglePipeline) {
-        wgpuPipelineLayoutRelease(pipelineLayout);
-        return false;
-    }
-    
-    // Create line pipeline
-    fragmentState.entryPoint = "fragment_line";
-    pipelineDesc.primitive.topology = WGPUPrimitiveTopology_TriangleStrip;
-    
-    m_linePipeline = wgpuDeviceCreateRenderPipeline(m_device, &pipelineDesc);
-    
-    wgpuPipelineLayoutRelease(pipelineLayout);
-    return m_linePipeline != nullptr;
-}
-
 WGPUBackend::WGPUBackend()
-    : m_device(std::make_unique<WGPUDevice>())
+    : m_width(0)
+    , m_height(0)
+    , m_device(nullptr)
+    , m_currentRenderTarget(nullptr)
     , m_currentBlendMode(BlendMode::None)
 {
 }
@@ -292,9 +20,74 @@ lab_result WGPUBackend::Initialize(uint32_t width, uint32_t height) {
     m_width = width;
     m_height = height;
     
-    if (!m_device->Initialize()) {
-        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to initialize WebGPU device"};
+#ifdef __EMSCRIPTEN__
+    // Get device from browser's WebGPU context
+    m_device = std::make_unique<WGPUDevice>();
+    m_device->device = GetWebDevice();
+    if (!m_device->device) {
+        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to get WebGPU device from browser"};
     }
+    
+    // Get queue
+    m_device->queue = wgpuDeviceGetQueue(m_device->device);
+    if (!m_device->queue) {
+        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to get WebGPU queue"};
+    }
+    
+    // Create shader module from WGSL
+    WGPUShaderModuleWGSLDescriptor wgslDesc = {};
+    wgslDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+    wgslDesc.code = R"(
+        // Vertex shader input
+        struct VertexInput {
+            @location(0) position: vec2<f32>,
+            @location(1) texcoord: vec2<f32>,
+            @location(2) color: vec4<f32>,
+        };
+
+        // Vertex shader output / Fragment shader input
+        struct VertexOutput {
+            @builtin(position) position: vec4<f32>,
+            @location(0) texcoord: vec2<f32>,
+            @location(1) color: vec4<f32>,
+        };
+
+        // Vertex shader
+        @vertex
+        fn vertex_main(input: VertexInput) -> VertexOutput {
+            var output: VertexOutput;
+            output.position = vec4<f32>(input.position, 0.0, 1.0);
+            output.texcoord = input.texcoord;
+            output.color = input.color;
+            return output;
+        }
+
+        // Fragment shader for triangles
+        @fragment
+        fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
+            return input.color;
+        }
+
+        // Fragment shader for lines with anti-aliasing
+        @fragment
+        fn fragment_line(input: VertexOutput) -> @location(0) vec4<f32> {
+            let dist = abs(input.texcoord.y - 0.5) * 2.0;
+            let alpha = 1.0 - smoothstep(0.8, 1.0, dist);
+            return vec4<f32>(input.color.rgb, input.color.a * alpha);
+        }
+    )";
+    
+    WGPUShaderModuleDescriptor moduleDesc = {};
+    moduleDesc.nextInChain = &wgslDesc.chain;
+    
+    m_device->shaderModule = wgpuDeviceCreateShaderModule(m_device->device, &moduleDesc);
+    if (!m_device->shaderModule) {
+        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create shader module"};
+    }
+#else
+    // Native initialization code would go here
+    return {LAB_ERROR_NOT_IMPLEMENTED, "Native WebGPU backend not implemented"};
+#endif
     
     return {LAB_ERROR_NONE, nullptr};
 }

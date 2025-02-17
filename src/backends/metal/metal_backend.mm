@@ -2,9 +2,25 @@
 #import "metal_command_buffer.h"
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
+#include <iostream>
 
 namespace labfont {
 namespace metal {
+
+MTLPixelFormat MetalTexture::TextureFormatToMTLFormat(TextureFormat format) {
+    switch (format) {
+        case TextureFormat::R8_UNORM:    return MTLPixelFormatR8Unorm;
+        case TextureFormat::RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
+        case TextureFormat::R16F:        return MTLPixelFormatR16Float;
+        case TextureFormat::RGBA16F:     return MTLPixelFormatRGBA16Float;
+        case TextureFormat::R32F:        return MTLPixelFormatR32Float;
+        case TextureFormat::D24S8:       return MTLPixelFormatDepth24Unorm_Stencil8;
+        case TextureFormat::D32F:        return MTLPixelFormatDepth32Float;
+        default:
+            assert(false && "Unsupported texture format");
+            return MTLPixelFormatInvalid;
+    }
+}
 
 MetalTexture::MetalTexture(MetalDevice* device, const TextureDesc& desc)
     : m_width(desc.width)
@@ -16,15 +32,19 @@ MetalTexture::MetalTexture(MetalDevice* device, const TextureDesc& desc)
     , m_device(device)
 {
     MTLTextureDescriptor* textureDesc = [[MTLTextureDescriptor alloc] init];
+    textureDesc.textureType = MTLTextureType2D;
     textureDesc.width = desc.width;
     textureDesc.height = desc.height;
-    textureDesc.pixelFormat = MTLPixelFormatRGBA8Unorm; // TODO: Map format
-    textureDesc.usage = MTLTextureUsageShaderRead;
-    
+    textureDesc.pixelFormat = TextureFormatToMTLFormat(m_format);
+
     if (desc.renderTarget) {
-        textureDesc.usage |= MTLTextureUsageRenderTarget;
+        textureDesc.usage |= MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+        textureDesc.storageMode = MTLStorageModePrivate;  // GPU-only memory
     }
-    
+    else {
+        textureDesc.usage = MTLTextureUsageShaderRead;
+    }
+
     m_texture = [device->GetMTLDevice() newTextureWithDescriptor:textureDesc];
     [textureDesc release];
     
@@ -66,7 +86,7 @@ MetalRenderTarget::MetalRenderTarget(MetalDevice* device, const RenderTargetDesc
         TextureDesc depthDesc = {
             .width = desc.width,
             .height = desc.height,
-            .format = TextureFormat::R32F,
+            .format = TextureFormat
             .renderTarget = true,
             .readback = false,
             .data = nullptr
@@ -79,7 +99,8 @@ MetalRenderTarget::MetalRenderTarget(MetalDevice* device, const RenderTargetDesc
     m_renderPassDescriptor.colorAttachments[0].texture = m_colorTexture->GetMTLTexture();
     m_renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
     m_renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-    
+    m_renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0); // Black
+
     if (m_hasDepth) {
         m_renderPassDescriptor.depthAttachment.texture = m_depthTexture->GetMTLTexture();
         m_renderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
@@ -94,6 +115,75 @@ MetalRenderTarget::~MetalRenderTarget() {
     }
 }
 
+
+
+
+void TestMetalOffscreenRendering() {
+    // 1. Create Metal device
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    if (!device) {
+        std::cerr << "Error: No Metal device found!\n";
+        return;
+    }
+
+    // 2. Create command queue
+    id<MTLCommandQueue> commandQueue = [device newCommandQueue];
+    if (!commandQueue) {
+        std::cerr << "Error: Failed to create command queue!\n";
+        return;
+    }
+
+    // 3. Create command buffer
+    id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+    if (!commandBuffer) {
+        std::cerr << "Error: Failed to create command buffer!\n";
+        return;
+    }
+
+    // 4. Create an offscreen texture (color attachment)
+    MTLTextureDescriptor* colorDesc = [[MTLTextureDescriptor alloc] init];
+    colorDesc.textureType = MTLTextureType2D;
+    colorDesc.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    colorDesc.width = 512;
+    colorDesc.height = 512;
+    colorDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+    colorDesc.storageMode = MTLStorageModePrivate;  // GPU-only memory
+
+    id<MTLTexture> colorTexture = [device newTextureWithDescriptor:colorDesc];
+    if (!colorTexture) {
+        std::cerr << "Error: Failed to create offscreen color texture!\n";
+        return;
+    }
+
+    // 5. Create render pass descriptor
+    MTLRenderPassDescriptor* renderPassDesc = [[MTLRenderPassDescriptor alloc] init];
+    renderPassDesc.colorAttachments[0].texture = colorTexture;
+    renderPassDesc.colorAttachments[0].loadAction = MTLLoadActionClear;
+    renderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+    renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0); // Black
+
+    // 6. Create render command encoder
+    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
+    if (!renderEncoder) {
+        std::cerr << "Error: Failed to create render command encoder!\n";
+        return;
+    }
+
+    std::cout << "✅ Success: Render encoder created without crashing!\n";
+
+    // 7. Finish encoding
+    [renderEncoder endEncoding];
+
+    // 8. Commit and wait
+    [commandBuffer commit];
+    [commandBuffer waitUntilCompleted];
+}
+
+
+
+
+
+
 MetalDevice::MetalDevice()
     : m_device(nil)
     , m_commandQueue(nil)
@@ -102,6 +192,7 @@ MetalDevice::MetalDevice()
     , m_linePipeline(nil)
     , m_depthState(nil)
 {
+    TestMetalOffscreenRendering();
 }
 
 MetalDevice::~MetalDevice() {
@@ -117,12 +208,14 @@ bool MetalDevice::Initialize() {
     // Create Metal device
     m_device = MTLCreateSystemDefaultDevice();
     if (!m_device) {
+        std::cerr << "Error: No Metal device found!\n";
         return false;
     }
     
     // Create command queue
     m_commandQueue = [m_device newCommandQueue];
     if (!m_commandQueue) {
+        std::cerr << "Error: Failed to create command queue!\n";
         return false;
     }
     
@@ -142,7 +235,14 @@ bool MetalDevice::Initialize() {
 bool MetalDevice::LoadShaders() {
     NSString* libraryPath = [[NSBundle mainBundle] pathForResource:@"primitives" ofType:@"metallib"];
     if (!libraryPath) {
-        return false;
+        // if the library path is not found, check if the library exists in the
+        // same directory as the executable.
+        NSString* executablePath = [[NSBundle mainBundle] executablePath];
+        NSString* executableDir = [executablePath stringByDeletingLastPathComponent];
+        libraryPath = [executableDir stringByAppendingPathComponent:@"primitives.metallib"];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:libraryPath]) {
+            return false;
+        }
     }
     
     NSURL* libraryURL = [NSURL fileURLWithPath:libraryPath];

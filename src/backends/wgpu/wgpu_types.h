@@ -1,7 +1,12 @@
 #ifndef LABFONT_WGPU_TYPES_H
 #define LABFONT_WGPU_TYPES_H
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5_webgpu.h>
+#else
 #include <webgpu/webgpu.h>
+#endif
 
 namespace labfont {
 namespace wgpu {
@@ -29,6 +34,13 @@ using WGPUSamplerRef = WGPUSampler;
 using WGPUCommandEncoderRef = WGPUCommandEncoder;
 using WGPURenderPassEncoderRef = WGPURenderPassEncoder;
 using WGPUCommandBufferRef = WGPUCommandBuffer;
+
+// Vertex structure
+struct WGPUVertex {
+    float position[2];
+    float texcoord[2];
+    float color[4];
+};
 
 // Descriptor types
 struct TextureDesc {
@@ -135,6 +147,13 @@ inline WGPUBlendState GetWGPUBlendState(BlendMode mode) {
     
     return state;
 }
+
+#ifdef __EMSCRIPTEN__
+// WebGPU device initialization for web
+inline WGPUDeviceRef GetWebDevice() {
+    return emscripten_webgpu_get_device();
+}
+#endif
 
 } // namespace wgpu
 } // namespace labfont
