@@ -39,23 +39,62 @@
     <h1>LabFont WebGPU Tests</h1>
     <div id="status" class="running">Initializing WebGPU...</div>
     <div id="results"></div>
-    <script src="test_runner.js"></script>
+    <script src="./test_runner.js"></script>
     <script>
+        // Initialize WebGPU before loading the Emscripten runtime
+        async function initWebGPU() {
+            const status = document.getElementById('status');
+            try {
+                if (!navigator.gpu) {
+                    throw new Error('WebGPU is not supported in this browser');
+                }
+                
+                status.textContent = 'Initializing WebGPU...';
+                
+                const adapter = await navigator.gpu.requestAdapter();
+                if (!adapter) {
+                    throw new Error('Failed to get WebGPU adapter');
+                }
+                console.log('Got WebGPU adapter:', adapter);
+                
+                const device = await adapter.requestDevice();
+                if (!device) {
+                    throw new Error('Failed to get WebGPU device');
+                }
+                console.log('Got WebGPU device:', device);
+                
+                // Store the device globally
+                window.gpuDevice = device;
+                
+                return true;
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                status.className = 'error';
+                throw error;
+            }
+        }
+        
         // This will be replaced by the emscripten generated code
-        var Module = {
+        Module = {
+            preRun: [
+                async function() {
+                    while (!window.gpuDevice) {
+                        console.log("Waiting for WebGPU device...");
+                        await new Promise(resolve => setTimeout(resolve, 50)); // Wait until initialized
+                    }
+                    Module.gpuDevice = window.gpuDevice;
+                    console.log("WebGPU device assigned to Module.gpuDevice");
+                }
+            ],
             onRuntimeInitialized: async function() {
                 const status = document.getElementById('status');
                 try {
-                    if (!navigator.gpu) {
-                        throw new Error('WebGPU is not supported in this browser');
-                    }
-                    
                     status.textContent = 'Running tests...';
                     status.className = 'running';
-                    
+
                     // Run the tests
                     const result = await runTests();
-                    
+
                     // Update status
                     if (result.success) {
                         status.textContent = 'All tests passed!';
@@ -64,17 +103,34 @@
                         status.textContent = 'Some tests failed';
                         status.className = 'error';
                     }
-                    
+
                     // Display results
                     displayResults(result.details);
-                    
+
                 } catch (error) {
                     status.textContent = 'Error: ' + error.message;
                     status.className = 'error';
                 }
             }
         };
+
+        
     </script>
-    {{{ SCRIPT }}} <!-- Emscripten will replace this -->
+    <script>
+        // Initialize WebGPU first, then load Emscripten
+        (async function() {
+            try {
+                await initWebGPU();
+                // Now that WebGPU is initialized, load the Emscripten script
+                var script = document.createElement('script');
+                script.src = './tests/labfont_tests.js';
+                document.body.appendChild(script);
+            } catch (error) {
+                console.error('Failed to initialize WebGPU:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').className = 'error';
+            }
+        })();
+    </script>
 </body>
 </html>

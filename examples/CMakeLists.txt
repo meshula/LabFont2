@@ -11,15 +11,23 @@
 #         labfont
 # )
 
-# add_executable(basic_drawing)
-# target_sources(basic_drawing
-#     PRIVATE
-#         basic/drawing.c
-# )
-# target_link_libraries(basic_drawing
-#     PRIVATE
-#         labfont
-# )
+add_executable(basic_drawing "basic/drawing_main.cpp")
+target_link_libraries(basic_drawing
+    PRIVATE
+        labfont
+)
+
+# set C++20 on basic_drawing
+set_target_properties(basic_drawing PROPERTIES CXX_STANDARD 20)
+
+if(EMSCRIPTEN)
+  set_target_properties(basic_drawing PROPERTIES SUFFIX ".html")
+  target_link_options(basic_drawing PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
+else()
+#  set(DAWN_FETCH_DEPENDENCIES ON)
+#  add_subdirectory("dawn" EXCLUDE_FROM_ALL)
+#  target_link_libraries(app PRIVATE dawn::webgpu_dawn glfw webgpu_glfw)
+endif()
 
 # Advanced examples
 # add_executable(advanced_text_styling)

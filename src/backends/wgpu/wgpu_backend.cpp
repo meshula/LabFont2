@@ -1,6 +1,7 @@
 #include "wgpu_backend.h"
 #include "wgpu_command_buffer.h"
 #include <cstring>
+#include <emscripten.h>
 
 namespace labfont {
 namespace wgpu {
@@ -20,13 +21,32 @@ lab_result WGPUBackend::Initialize(uint32_t width, uint32_t height) {
     m_width = width;
     m_height = height;
     
-#ifdef __EMSCRIPTEN__
-    // Get device from browser's WebGPU context
+    // Get the WebGPU device that was initialized by JavaScript
+    bool hasDevice = EM_ASM_INT({
+        if (!Module.gpuDevice) {
+            console.error("WebGPU device not initialized. Make sure to initialize WebGPU in JavaScript first.");
+            return 0;
+        }
+        return 1;
+    });
+    
+    if (!hasDevice) {
+        return {LAB_ERROR_INITIALIZATION_FAILED, "WebGPU device not initialized"};
+    }
+    
     m_device = std::make_unique<WGPUDevice>();
-    m_device->device = GetWebDevice();
+    m_device->device = emscripten_webgpu_get_device();
     if (!m_device->device) {
+        EM_ASM({
+            console.error("Failed to get WebGPU device from Emscripten");
+            console.log("Module.gpuDevice:", Module.gpuDevice);
+        });
         return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to get WebGPU device from browser"};
     }
+    
+    EM_ASM({
+        console.log("Successfully got WebGPU device from Emscripten");
+    });
     
     // Get queue
     m_device->queue = wgpuDeviceGetQueue(m_device->device);
@@ -84,10 +104,6 @@ lab_result WGPUBackend::Initialize(uint32_t width, uint32_t height) {
     if (!m_device->shaderModule) {
         return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create shader module"};
     }
-#else
-    // Native initialization code would go here
-    return {LAB_ERROR_NOT_IMPLEMENTED, "Native WebGPU backend not implemented"};
-#endif
     
     return {LAB_ERROR_NONE, nullptr};
 }
@@ -98,7 +114,7 @@ lab_result WGPUBackend::Resize(uint32_t width, uint32_t height) {
     return {LAB_ERROR_NONE, nullptr};
 }
 
-lab_result WGPUBackend::CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) {
+lab_result WGPUBackend::CreateTexture(const labfont::TextureDesc& desc, std::shared_ptr<Texture>& out_texture) {
     auto texture = std::make_shared<WGPUTexture>(m_device.get(), desc);
     if (!texture->GetWGPUTexture()) {
         return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create WebGPU texture"};
@@ -157,7 +173,7 @@ lab_result WGPUBackend::ReadbackTexture(Texture* texture, void* data, size_t siz
     wgpuCommandEncoderCopyTextureToBuffer(encoder, &source, &destination, &copySize);
     
     WGPUCommandBufferDescriptor cmdBufferDesc = {};
-    WGPUCommandBuffer cmdBuffer = wgpuCommandEncoderFinish(encoder, &cmdBufferDesc);
+    WGPUCommandBufferRef cmdBuffer = wgpuCommandEncoderFinish(encoder, &cmdBufferDesc);
     wgpuQueueSubmit(m_device->GetQueue(), 1, &cmdBuffer);
     
     // Map buffer and copy data
@@ -168,7 +184,7 @@ lab_result WGPUBackend::ReadbackTexture(Texture* texture, void* data, size_t siz
     
     bool mapped = false;
     while (!mapped) {
-        wgpuDeviceTick(m_device->GetWGPUDevice());
+        emscripten_sleep(1);
     }
     
     void* mappedData = wgpuBufferGetMappedRange(stagingBuffer, 0, size);
@@ -176,20 +192,19 @@ lab_result WGPUBackend::ReadbackTexture(Texture* texture, void* data, size_t siz
     
     wgpuBufferUnmap(stagingBuffer);
     wgpuBufferRelease(stagingBuffer);
-    wgpuCommandBufferRelease(cmdBuffer);
     wgpuCommandEncoderRelease(encoder);
     
     return {LAB_ERROR_NONE, nullptr};
 }
 
-lab_result WGPUBackend::CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) {
-    auto target = std::make_shared<WGPURenderTarget>(m_device.get(), desc);
-    if (!target->GetColorTexture()) {
+lab_result WGPUBackend::CreateRenderTarget(const labfont::RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) {
+    auto wgpuTarget = std::make_shared<WGPURenderTarget>(m_device.get(), desc);
+    if (!wgpuTarget->GetColorTexture()) {
         return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create WebGPU render target"};
     }
     
-    out_target = target;
-    m_renderTargets.push_back(target);
+    out_target = std::static_pointer_cast<RenderTarget>(wgpuTarget);
+    m_renderTargets.push_back(out_target);
     return {LAB_ERROR_NONE, nullptr};
 }
 

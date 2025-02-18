@@ -36,9 +36,8 @@ bool WGPUCommandBuffer::End() {
     
     if (m_commandEncoder) {
         WGPUCommandBufferDescriptor cmdBufferDesc = {};
-        WGPUCommandBuffer cmdBuffer = wgpuCommandEncoderFinish(m_commandEncoder, &cmdBufferDesc);
-        wgpuQueueSubmit(m_device->GetQueue(), 1, &cmdBuffer);
-        wgpuCommandBufferRelease(cmdBuffer);
+    WGPUCommandBufferRef cmdBuffer = wgpuCommandEncoderFinish(m_commandEncoder, &cmdBufferDesc);
+    wgpuQueueSubmit(m_device->GetQueue(), 1, &cmdBuffer);
         wgpuCommandEncoderRelease(m_commandEncoder);
         m_commandEncoder = nullptr;
     }
@@ -52,7 +51,8 @@ bool WGPUCommandBuffer::BeginRenderPass(WGPURenderTarget* target) {
     }
     
     const auto& renderPassDesc = target->GetRenderPassDesc();
-    m_renderPassEncoder = wgpuCommandEncoderBeginRenderPass(m_commandEncoder, &renderPassDesc);
+    auto wgpuDesc = GetWGPURenderPassDescriptor(renderPassDesc);
+    m_renderPassEncoder = wgpuCommandEncoderBeginRenderPass(m_commandEncoder, &wgpuDesc);
     if (!m_renderPassEncoder) {
         return false;
     }

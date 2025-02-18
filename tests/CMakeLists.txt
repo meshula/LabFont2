@@ -39,6 +39,21 @@ if(LABFONT_ENABLE_WGPU)
         unit/test_wgpu_backend.cpp
     )
     target_compile_definitions(labfont_tests PRIVATE LABFONT_WGPU_ENABLED=1)
+    
+    # Add Emscripten WebGPU include paths for tests
+    if(EMSCRIPTEN)
+        target_include_directories(labfont_tests
+            PRIVATE
+                ${EMSCRIPTEN_INCLUDE_DIR}
+                ${EMSCRIPTEN_INCLUDE_DIR}/webgpu
+                ${EMSCRIPTEN_INCLUDE_DIR}/emscripten
+        )
+        target_compile_definitions(labfont_tests
+            PRIVATE
+                __EMSCRIPTEN__
+                WEBGPU_CPP_IMPLEMENTATION
+        )
+    endif()
 endif()
 
 if(LABFONT_ENABLE_DX11)
@@ -90,6 +105,21 @@ set_target_properties(labfont_tests PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
+
+# Copy web test files when building with Emscripten
+if(EMSCRIPTEN)
+    add_custom_command(TARGET labfont_tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html
+            ${CMAKE_CURRENT_BINARY_DIR}/labfont_wasm_tests.html
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/web/test_runner.js
+            ${CMAKE_CURRENT_BINARY_DIR}/tests/test_runner.js
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            ${CMAKE_CURRENT_BINARY_DIR}/tests
+        COMMENT "Copying web test files"
+    )
+endif()
 
 # Add test
 add_test(NAME labfont_tests COMMAND labfont_tests)

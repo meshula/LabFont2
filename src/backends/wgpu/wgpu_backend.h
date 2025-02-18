@@ -34,7 +34,7 @@ public:
 // WebGPU-based texture implementation
 class WGPUTexture : public Texture {
 public:
-    WGPUTexture(WGPUDevice* device, const TextureDesc& desc);
+    WGPUTexture(WGPUDevice* device, const labfont::TextureDesc& desc);
     ~WGPUTexture() override;
     
     uint32_t GetWidth() const override { return m_width; }
@@ -59,9 +59,9 @@ private:
 };
 
 // WebGPU-based render target implementation
-class WGPURenderTarget : public RenderTarget {
+class WGPURenderTarget final : public RenderTarget {
 public:
-    WGPURenderTarget(WGPUDevice* device, const RenderTargetDesc& desc);
+    WGPURenderTarget(WGPUDevice* device, const labfont::RenderTargetDesc& desc);
     ~WGPURenderTarget() override;
     
     uint32_t GetWidth() const override { return m_width; }
@@ -72,7 +72,7 @@ public:
     Texture* GetDepthTexture() override { return m_depthTexture.get(); }
     
     // WebGPU-specific methods
-    const RenderPassDesc& GetRenderPassDesc() const { return m_renderPassDesc; }
+    const wgpu::RenderPassDesc& GetRenderPassDesc() const { return m_renderPassDesc; }
     
 private:
     uint32_t m_width;
@@ -81,7 +81,7 @@ private:
     bool m_hasDepth;
     std::shared_ptr<WGPUTexture> m_colorTexture;
     std::shared_ptr<WGPUTexture> m_depthTexture;
-    RenderPassDesc m_renderPassDesc;
+    wgpu::RenderPassDesc m_renderPassDesc;
     WGPUDevice* m_device;
 };
 
@@ -123,7 +123,7 @@ private:
     std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
     RenderTarget* m_currentRenderTarget = nullptr;
     BlendMode m_currentBlendMode = BlendMode::None;
-    std::unique_ptr<WGPUCommandBuffer> m_currentCommandBuffer;
+    std::unique_ptr<labfont::wgpu::WGPUCommandBuffer> m_currentCommandBuffer;
 };
 
 } // namespace wgpu

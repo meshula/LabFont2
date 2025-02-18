@@ -37,17 +37,45 @@ if(LABFONT_ENABLE_VULKAN AND NOT EMSCRIPTEN)
     endif()
 endif()
 
+# Library target
+add_library(labfont)
+
 # WebAssembly/Emscripten configuration
 if(EMSCRIPTEN)
     if(LABFONT_ENABLE_WGPU)
         # Enable WebGPU in Emscripten
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sUSE_WEBGPU=1")
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
+        
+        # Add Emscripten WebGPU include paths
+        set(EMSCRIPTEN_INCLUDE_DIR "${EMSCRIPTEN_ROOT}/cache/sysroot/include")
+        target_include_directories(labfont
+            PRIVATE
+                ${EMSCRIPTEN_INCLUDE_DIR}
+                ${EMSCRIPTEN_INCLUDE_DIR}/webgpu
+                ${EMSCRIPTEN_INCLUDE_DIR}/emscripten
+        )
+
+        # Set Emscripten compile flags
+        set(EMSCRIPTEN_FLAGS "-s USE_WEBGPU=1 -s WASM=1 -s ASSERTIONS=1")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EMSCRIPTEN_FLAGS}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EMSCRIPTEN_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EMSCRIPTEN_FLAGS}")
+
+        # Set WebGPU compile definitions
+        target_compile_definitions(labfont
+            PRIVATE
+                __EMSCRIPTEN__
+                WEBGPU_CPP_IMPLEMENTATION
+        )
+        
+        # Set WebGPU compile definitions
+        target_compile_definitions(labfont
+            PRIVATE
+                __EMSCRIPTEN__
+        )
     endif()
 endif()
-
-# Library target
-add_library(labfont)
 target_include_directories(labfont
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -97,6 +125,9 @@ if (LABFONT_ENABLE_WGPU)
         src/backends/wgpu/wgpu_backend.cpp
         src/backends/wgpu/wgpu_command_buffer.h
         src/backends/wgpu/wgpu_command_buffer.cpp
+        src/backends/wgpu/wgpu_texture.cpp
+        src/backends/wgpu/wgpu_device.cpp
+        src/backends/wgpu/wgpu_render_target.cpp
     )
     
     target_compile_definitions(labfont

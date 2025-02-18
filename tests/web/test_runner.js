@@ -1,19 +1,58 @@
 // Test runner for WebAssembly/WebGPU tests
+
+// Initialize WebGPU before running tests
+async function initializeWebGPU() {
+    if (!navigator.gpu) {
+        console.error("WebGPU is not supported in this browser.");
+        throw new Error("WebGPU is not supported.");
+    }
+
+    try {
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (!adapter) {
+            throw new Error("Failed to get GPU adapter.");
+        }
+
+        const device = await adapter.requestDevice();
+        if (!device) {
+            throw new Error("Failed to get GPU device.");
+        }
+
+        console.log("WebGPU initialized successfully");
+
+        // Store the device in the Module object so it's available for WebAssembly code
+        Module.gpuDevice = device;
+    } catch (error) {
+        console.error("Error initializing WebGPU:", error);
+        throw error;
+    }
+}
+
+
+// Test runner for WebAssembly/WebGPU tests
 async function runTests() {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
+            // Ensure WebGPU is initialized
+            if (!Module.gpuDevice) {
+                console.error("WebGPU device not initialized");
+                throw new Error("WebGPU device not initialized");
+            }
+
             // Call the test runner function exported from C++
+            console.log("Running tests...");
             const result = Module.ccall('run_tests', 'number', [], []);
-            
+
             // Parse the test results
             const success = result === 0;
             const details = Module.getTestResults(); // This will be implemented in C++
-            
+
             resolve({
                 success,
                 details
             });
         } catch (error) {
+            console.error("Error running tests:", error);
             reject(error);
         }
     });
@@ -90,3 +129,16 @@ async function getWebGPUDevice(adapter) {
 // Export WebGPU utilities to be used by the C++ code
 Module.getWebGPUAdapter = getWebGPUAdapter;
 Module.getWebGPUDevice = getWebGPUDevice;
+
+
+// Entry point: Initialize WebGPU and then run tests
+(async function () {
+    try {
+        await initializeWebGPU();
+        const results = await runTests();
+        displayResults(results.details);
+    } catch (error) {
+        console.error("Test execution failed:", error);
+    }
+})();
+

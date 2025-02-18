@@ -5,13 +5,12 @@
 
 using namespace labfont;
 using namespace labfont::wgpu;
-using namespace labfont::test;
 
 static MunitResult test_wgpu_initialization(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<WGPUBackend>();
     
     // Initialize backend
-    lab_result result = backend->Initialize(800, 600);
+    labfont::lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     
     // Verify supported features
@@ -37,7 +36,7 @@ static MunitResult test_wgpu_texture_operations(const MunitParameter params[], v
     };
     
     std::shared_ptr<Texture> texture;
-    lab_result result = backend->CreateTexture(desc, texture);
+    labfont::lab_result result = backend->CreateTexture(desc, texture);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     munit_assert_not_null(texture.get());
     
@@ -87,7 +86,7 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     };
     
     std::shared_ptr<RenderTarget> target;
-    lab_result result = backend->CreateRenderTarget(desc, target);
+    labfont::lab_result result = backend->CreateRenderTarget(desc, target);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     munit_assert_not_null(target.get());
     
@@ -163,7 +162,7 @@ static MunitResult test_wgpu_blend_modes(const MunitParameter params[], void* da
     };
     
     std::shared_ptr<RenderTarget> target;
-    lab_result result = backend->CreateRenderTarget(desc, target);
+    labfont::lab_result result = backend->CreateRenderTarget(desc, target);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     
     backend->SetRenderTarget(target.get());
@@ -274,7 +273,7 @@ static MunitTest wgpu_backend_tests[] = {
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };
 
-extern "C" MunitSuite wgpu_backend_suite = {
+extern "C" MunitSuite wgpu_suite = {
     (char*)"/wgpu_backend",
     wgpu_backend_tests,
     NULL,

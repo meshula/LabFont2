@@ -1,9 +1,10 @@
 #ifndef LABFONT_WGPU_COMMAND_BUFFER_H
 #define LABFONT_WGPU_COMMAND_BUFFER_H
 
-#include "wgpu_types.h"
 #include "core/backend_types.h"
+#include "wgpu_types.h"
 #include <vector>
+#include <emscripten.h>
 
 namespace labfont {
 namespace wgpu {
@@ -34,9 +35,9 @@ private:
     void UpdateVertexBuffer(const Vertex* vertices, uint32_t vertexCount);
     
     WGPUDevice* m_device;
-    WGPUCommandEncoderRef m_commandEncoder;
-    WGPURenderPassEncoderRef m_renderPassEncoder;
-    WGPUBufferRef m_vertexBuffer;
+    WGPUCommandEncoder m_commandEncoder;
+    WGPURenderPassEncoder m_renderPassEncoder;
+    WGPUBuffer m_vertexBuffer;
     size_t m_vertexBufferCapacity;
     std::vector<WGPUVertex> m_vertexData;
     BlendMode m_currentBlendMode;

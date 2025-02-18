@@ -1,16 +1,30 @@
 #!/bin/bash
 set -e
 
-# Check if emscripten is installed
+# Store original directory
+ORIGINAL_DIR="$(pwd)"
+
+# Ensure EMSDK is installed
+if [ ! -d "$HOME/emsdk" ]; then
+    echo "Emscripten SDK not found. Installing..."
+    git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+    cd "$HOME/emsdk"
+    ./emsdk install latest
+    ./emsdk activate latest
+    cd "$ORIGINAL_DIR"
+fi
+
+# Set up Emscripten environment dynamically
+eval $(~/emsdk/emsdk construct_env)
+
+# Verify `emcc` is available
 if ! command -v emcc &> /dev/null; then
-    echo "Emscripten not found. Please install it first:"
-    echo "git clone https://github.com/emscripten-core/emsdk.git"
-    echo "cd emsdk"
-    echo "./emsdk install latest"
-    echo "./emsdk activate latest"
-    echo "source ./emsdk_env.sh"
+    echo "Error: Emscripten is not properly set up."
     exit 1
 fi
+
+# Return to original directory in case we switched
+cd "$ORIGINAL_DIR"
 
 # Create build directory
 BUILD_DIR="build_wasm"
@@ -18,12 +32,10 @@ mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
 # Configure with CMake
-emcmake cmake .. \
-    -DLABFONT_ENABLE_WGPU=ON \
-    -DCMAKE_BUILD_TYPE=Debug
+emcmake cmake .. -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug
 
 # Build
-emmake make
+emmake make -j$(nproc)  # Use all available cores
 
 # Create a simple Python HTTP server script
 cat > serve.py << 'EOF'
@@ -47,6 +59,6 @@ EOF
 
 # Start the server
 echo "Starting local server..."
-echo "Please open Chrome and navigate to http://localhost:8000/tests/labfont_wasm_tests.html"
+echo "Please open Chrome and navigate to http://localhost:8000/labfont_wasm_tests.html"
 echo "Press Ctrl+C to stop the server"
 python3 serve.py
