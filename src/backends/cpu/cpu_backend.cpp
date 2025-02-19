@@ -18,12 +18,12 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
     // Get render target dimensions and buffer
     uint32_t width = colorTexture->GetWidth();
     uint32_t height = colorTexture->GetHeight();
-    auto colorBuffer = colorTexture->GetData();
+    uint8_t* colorBuffer = colorTexture->GetData();
     
     // Process each command
     for (const auto& cmd : commands) {
         switch (cmd.type) {
-            case DrawCommandType::Clear: {
+            case LAB_DRAW_COMMAND_CLEAR: {
                 // Convert float color to uint8_t
                 uint8_t clearColor[4];
                 for (int i = 0; i < 4; ++i) {
@@ -37,11 +37,11 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 break;
             }
             
-            case DrawCommandType::DrawTriangles: {
+            case LAB_DRAW_COMMAND_TRIANGLES: {
                 const auto& params = cmd.triangles;
                 for (uint32_t i = 0; i < params.vertexCount; i += 3) {
                     cpu::DrawTriangle(
-                        colorBuffer.data(),
+                        colorBuffer,
                         nullptr, // TODO: Depth buffer
                         width,
                         height,
@@ -52,11 +52,11 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 break;
             }
             
-            case DrawCommandType::DrawLines: {
+            case LAB_DRAW_COMMAND_LINES: {
                 const auto& params = cmd.lines;
                 for (uint32_t i = 0; i < params.vertexCount; i += 2) {
                     cpu::DrawLine(
-                        colorBuffer.data(),
+                        colorBuffer,
                         width,
                         height,
                         &params.vertices[i],
@@ -66,26 +66,11 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 }
                 break;
             }
-            
-            case DrawCommandType::SetBlendMode: {
-                m_currentBlendMode = cmd.blend.mode;
-                break;
-            }
-            
-            case DrawCommandType::SetScissor: {
-                // TODO: Implement scissor test
-                break;
-            }
-            
-            case DrawCommandType::SetViewport: {
-                // TODO: Implement viewport transform
-                break;
-            }
         }
     }
     
     // Update the texture with the modified buffer
-    colorTexture->SetData(colorBuffer.data(), colorBuffer.size());
+    colorTexture->SetData(colorBuffer, width * height * 4);
 
     // Store commands for testing/debugging
     m_commands.insert(m_commands.end(), commands.begin(), commands.end());

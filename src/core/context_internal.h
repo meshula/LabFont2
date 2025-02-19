@@ -41,8 +41,8 @@ public:
     // Viewport
     void SetViewport(float x, float y, float width, float height);
     
-private:
-    Context() = default;  // Private constructor, use Create() instead
+protected:
+    Context() = default;  // Protected constructor, use Create() instead
     
     lab_result Initialize(lab_backend_type type, const lab_context_desc* desc);
     

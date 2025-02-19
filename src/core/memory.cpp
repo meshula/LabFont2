@@ -1,20 +1,46 @@
 #include "memory.h"
+#include "error_macros.h"
 #include <cstdlib>
-#include <iostream>
 
 namespace labfont {
 
-MemoryManager& MemoryManager::Instance() {
-    static MemoryManager instance;
-    return instance;
+// Conversion functions
+inline MemoryCategory ToInternalCategory(lab_memory_category category) {
+    switch (category) {
+        case LAB_MEMORY_GENERAL: return MemoryCategory::General;
+        case LAB_MEMORY_GRAPHICS: return MemoryCategory::Graphics;
+        case LAB_MEMORY_TEXT: return MemoryCategory::Text;
+        case LAB_MEMORY_RESOURCES: return MemoryCategory::Resources;
+        case LAB_MEMORY_TEMPORARY: return MemoryCategory::Temporary;
+        default: return MemoryCategory::General;
+    }
+}
+
+inline lab_memory_stats ToPublicStats(const MemoryStats& stats) {
+    lab_memory_stats result = {
+        .totalAllocated = stats.totalAllocated,
+        .totalFreed = stats.totalFreed,
+        .currentUsage = stats.currentUsage,
+        .peakUsage = stats.peakUsage,
+        .categoryUsage = {0}
+    };
+    
+    // Convert category usage
+    result.categoryUsage[LAB_MEMORY_GENERAL] = stats.categoryUsage.at(MemoryCategory::General);
+    result.categoryUsage[LAB_MEMORY_GRAPHICS] = stats.categoryUsage.at(MemoryCategory::Graphics);
+    result.categoryUsage[LAB_MEMORY_TEXT] = stats.categoryUsage.at(MemoryCategory::Text);
+    result.categoryUsage[LAB_MEMORY_RESOURCES] = stats.categoryUsage.at(MemoryCategory::Resources);
+    result.categoryUsage[LAB_MEMORY_TEMPORARY] = stats.categoryUsage.at(MemoryCategory::Temporary);
+    
+    return result;
 }
 
 MemoryManager::MemoryManager() {
-    // Initialize category usage counters
-    for (int i = 0; i < static_cast<int>(MemoryCategory::Temporary) + 1; ++i) {
-        auto category = static_cast<MemoryCategory>(i);
-        m_categoryUsage[category] = 0;
-    }
+    m_categoryUsage[MemoryCategory::General] = 0;
+    m_categoryUsage[MemoryCategory::Graphics] = 0;
+    m_categoryUsage[MemoryCategory::Text] = 0;
+    m_categoryUsage[MemoryCategory::Resources] = 0;
+    m_categoryUsage[MemoryCategory::Temporary] = 0;
 }
 
 MemoryManager::~MemoryManager() {
@@ -23,114 +49,92 @@ MemoryManager::~MemoryManager() {
     }
 }
 
+MemoryManager& MemoryManager::Instance() {
+    static MemoryManager instance;
+    return instance;
+}
+
 void* MemoryManager::Allocate(size_t size, MemoryCategory category) {
     void* ptr = std::malloc(size);
     if (!ptr) {
-        ErrorContext::Instance().SetError(LAB_ERROR_OUT_OF_MEMORY, "Failed to allocate memory");
         return nullptr;
     }
-
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        
-        m_totalAllocated += size;
-        m_currentUsage += size;
-        m_categoryUsage[category] += size;
-        
-        if (m_currentUsage > m_peakUsage) {
-            m_peakUsage = m_currentUsage;
-        }
-
-        m_allocations[ptr] = {
-            size,
-            category,
-            __FILE__,
-            __LINE__
-        };
+    
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_totalAllocated += size;
+    m_currentUsage += size;
+    m_categoryUsage[category] += size;
+    
+    if (m_currentUsage > m_peakUsage) {
+        m_peakUsage = m_currentUsage;
     }
-
+    
+    m_allocations[ptr] = {size, category, nullptr, 0};
     return ptr;
 }
 
 void MemoryManager::Free(void* ptr) {
     if (!ptr) return;
-
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        
-        auto it = m_allocations.find(ptr);
-        if (it != m_allocations.end()) {
-            const auto& info = it->second;
-            m_totalFreed += info.size;
-            m_currentUsage -= info.size;
-            m_categoryUsage[info.category] -= info.size;
-            m_allocations.erase(it);
-        }
+    
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = m_allocations.find(ptr);
+    if (it != m_allocations.end()) {
+        const auto& info = it->second;
+        m_totalFreed += info.size;
+        m_currentUsage -= info.size;
+        m_categoryUsage[info.category] -= info.size;
+        m_allocations.erase(it);
     }
-
+    
     std::free(ptr);
 }
 
 MemoryStats MemoryManager::GetStats() const {
     std::lock_guard<std::mutex> lock(m_mutex);
-    
-    MemoryStats stats;
-    stats.totalAllocated = m_totalAllocated;
-    stats.totalFreed = m_totalFreed;
-    stats.currentUsage = m_currentUsage;
-    stats.peakUsage = m_peakUsage;
-    
-    for (const auto& [category, usage] : m_categoryUsage) {
-        stats.categoryUsage[category] = usage;
-    }
-    
-    return stats;
+    return MemoryStats{
+        .totalAllocated = m_totalAllocated,
+        .totalFreed = m_totalFreed,
+        .currentUsage = m_currentUsage,
+        .peakUsage = m_peakUsage,
+        .categoryUsage = m_categoryUsage
+    };
 }
 
 void MemoryManager::ResetStats() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    
     m_totalAllocated = 0;
     m_totalFreed = 0;
     m_currentUsage = 0;
     m_peakUsage = 0;
-    
     for (auto& [category, usage] : m_categoryUsage) {
         usage = 0;
     }
-    
-    m_allocations.clear();
 }
 
 void MemoryManager::EnableLeakDetection(bool enable) {
-    std::lock_guard<std::mutex> lock(m_mutex);
     m_leakDetectionEnabled = enable;
 }
 
 void MemoryManager::DumpLeaks() const {
     std::lock_guard<std::mutex> lock(m_mutex);
-    
-    if (m_allocations.empty()) {
-        std::cout << "No memory leaks detected.\n";
-        return;
-    }
-
-    std::cout << "Memory leaks detected:\n";
-    for (const auto& [ptr, info] : m_allocations) {
-        std::cout << "Leak at " << ptr << ":\n"
-                  << "  Size: " << info.size << " bytes\n"
-                  << "  Category: " << static_cast<int>(info.category) << "\n"
-                  << "  Location: " << info.file << ":" << info.line << "\n";
-    }
-}
-
-// Global allocation helpers
-void* lab_allocate(size_t size, MemoryCategory category) {
-    return MemoryManager::Instance().Allocate(size, category);
-}
-
-void lab_free(void* ptr) {
-    MemoryManager::Instance().Free(ptr);
+    // TODO: Implement leak reporting
 }
 
 } // namespace labfont
+
+// C API implementations
+extern "C" {
+
+void* lab_alloc(size_t size, lab_memory_category category) {
+    return labfont::MemoryManager::Instance().Allocate(size, labfont::ToInternalCategory(category));
+}
+
+void lab_free(void* ptr) {
+    labfont::MemoryManager::Instance().Free(ptr);
+}
+
+lab_memory_stats lab_get_memory_stats(void) {
+    return labfont::ToPublicStats(labfont::MemoryManager::Instance().GetStats());
+}
+
+} // extern "C"

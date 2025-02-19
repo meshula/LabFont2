@@ -1,10 +1,10 @@
 #include "wgpu_backend.h"
-#include "wgpu_types.h"
+#include "wgpu_device.h"
+#include <cstring>
 
 namespace labfont {
-namespace wgpu {
 
-WGPUTexture::WGPUTexture(WGPUDevice* device, const TextureDesc& desc)
+WebGPUTexture::WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc)
     : m_width(desc.width)
     , m_height(desc.height)
     , m_format(desc.format)
@@ -12,21 +12,10 @@ WGPUTexture::WGPUTexture(WGPUDevice* device, const TextureDesc& desc)
     , m_readback(desc.readback)
     , m_texture(nullptr)
     , m_textureView(nullptr)
-    , m_device(device)
 {
-    WGPUTextureDescriptor textureDesc = {};
-    textureDesc.size = {desc.width, desc.height, 1};
-    textureDesc.format = GetWGPUFormat(desc.format);
-    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+    WGPUTextureDescriptor textureDesc = GetWGPUTextureDescriptor(desc);
+    m_texture = wgpuDeviceCreateTexture(device->GetDevice(), &textureDesc);
     
-    if (desc.renderTarget) {
-        textureDesc.usage |= WGPUTextureUsage_RenderAttachment;
-    }
-    if (desc.readback) {
-        textureDesc.usage |= WGPUTextureUsage_CopySrc;
-    }
-    
-    m_texture = wgpuDeviceCreateTexture(device->GetWGPUDevice(), &textureDesc);
     if (m_texture) {
         WGPUTextureViewDescriptor viewDesc = {};
         viewDesc.format = textureDesc.format;
@@ -35,20 +24,19 @@ WGPUTexture::WGPUTexture(WGPUDevice* device, const TextureDesc& desc)
         viewDesc.mipLevelCount = 1;
         viewDesc.baseArrayLayer = 0;
         viewDesc.arrayLayerCount = 1;
+        viewDesc.aspect = WGPUTextureAspect_All;
         
         m_textureView = wgpuTextureCreateView(m_texture, &viewDesc);
     }
 }
 
-WGPUTexture::~WGPUTexture() {
+WebGPUTexture::~WebGPUTexture() {
     if (m_textureView) {
         wgpuTextureViewRelease(m_textureView);
     }
     if (m_texture) {
-        wgpuTextureDestroy(m_texture);
         wgpuTextureRelease(m_texture);
     }
 }
 
-} // namespace wgpu
 } // namespace labfont

@@ -1,295 +1,176 @@
 #include "context_internal.h"
-#include <stdexcept>
-#include <cassert>
+#include "context_impl.h"
+#include "core/memory.h"
+#include "core/internal_types.h"
+#include <memory>
+#include <vector>
+
+#ifdef LABFONT_METAL_ENABLED
+#include "backends/metal/metal_backend.h"
+#endif
+
+#ifdef LABFONT_WGPU_ENABLED
+#include "backends/wgpu/wgpu_backend.h"
+#endif
+
+#ifdef LABFONT_VULKAN_ENABLED
+#include "backends/vulkan/vulkan_backend.h"
+#endif
+
+#ifdef LABFONT_DX11_ENABLED
+#include "backends/dx11/dx11_backend.h"
+#endif
 
 namespace labfont {
 
+Context::~Context() = default;
+
 lab_result Context::Create(lab_backend_type type, const lab_context_desc* desc, Context** out_context) {
-    LAB_ERROR_GUARD();
-
-    if (!desc || !out_context) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid parameters passed to Context::Create");
+    auto context = std::make_unique<ContextImpl>();
+    auto result = context->Initialize(type, desc);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
     }
-
-    if (desc->width == 0 || desc->height == 0) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid dimensions in context description");
-    }
-
-    std::unique_ptr<Context> context(new (std::nothrow) Context());
-    if (!context) {
-        LAB_RETURN_ERROR(LAB_ERROR_OUT_OF_MEMORY, "Failed to allocate Context");
-    }
-
-    lab_result result = context->Initialize(type, desc);
-    LAB_RETURN_IF_ERROR(result);
-
+    
     *out_context = context.release();
-    return {LAB_ERROR_NONE, nullptr};
-}
-
-Context::~Context() {
-    // Ensure we're not in the middle of a frame
-    if (m_inTextMode) {
-        EndText();
-    }
-    if (m_inDrawMode) {
-        EndDraw();
-    }
-
-    // Members will be automatically cleaned up by unique_ptr
+    return lab_result(LAB_ERROR_NONE);
 }
 
 lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* desc) {
-    m_width = desc->width;
-    m_height = desc->height;
+    m_backend = CreateBackend(type);
+    if (!m_backend) {
+        return lab_result(LAB_ERROR_INVALID_PARAMETER, "Unsupported backend type");
+    }
+    
+    // Initialize backend
+    auto result = m_backend->Initialize(desc ? desc->width : 0, desc ? desc->height : 0);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
+    }
+    
+    // Initialize managers
+    m_fontManager = std::make_unique<FontManager>();
+    m_drawState = std::make_unique<DrawState>();
+    m_resourceManager = std::make_unique<ResourceManagerImpl>(m_backend.get());
+    
+    m_width = desc ? desc->width : 0;
+    m_height = desc ? desc->height : 0;
     m_inTextMode = false;
     m_inDrawMode = false;
-
-    // Backend initialization will be implemented later
-    // m_backend = CreateBackend(type);
-    // if (!m_backend) {
-    //     return {LAB_ERROR_BACKEND_ERROR, "Failed to create backend"};
-    // }
-
-    // Font manager initialization will be implemented later
-    // m_fontManager = std::make_unique<FontManager>();
-    // if (!m_fontManager) {
-    //     return {LAB_ERROR_OUT_OF_MEMORY, "Failed to create font manager"};
-    // }
-
-    // Draw state initialization will be implemented later
-    // m_drawState = std::make_unique<DrawState>();
-    // if (!m_drawState) {
-    //     return {LAB_ERROR_OUT_OF_MEMORY, "Failed to create draw state"};
-    // }
-
-    // Resource manager initialization
-    m_resourceManager = std::make_unique<ResourceManagerImpl>(m_backend.get());
-    if (!m_resourceManager) {
-        return {LAB_ERROR_OUT_OF_MEMORY, "Failed to create resource manager"};
-    }
-
-    return {LAB_ERROR_NONE, nullptr};
-}
-
-lab_result Context::Resize(unsigned int width, unsigned int height) {
-    if (width == 0 || height == 0) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Invalid dimensions"};
-    }
-
-    // Backend resize will be implemented later
-    // if (!m_backend->Resize(width, height)) {
-    //     return {LAB_ERROR_BACKEND_ERROR, "Backend resize failed"};
-    // }
-
-    m_width = width;
-    m_height = height;
-    return {LAB_ERROR_NONE, nullptr};
+    
+    return lab_result(LAB_ERROR_NONE);
 }
 
 void Context::BeginFrame() {
-    assert(!m_inTextMode && !m_inDrawMode && "BeginFrame called while in text or draw mode");
-    // m_backend->BeginFrame();
+    m_backend->BeginFrame();
 }
 
 void Context::EndFrame() {
-    assert(!m_inTextMode && !m_inDrawMode && "EndFrame called while in text or draw mode");
-    // m_backend->EndFrame();
-}
-
-void Context::Clear(lab_color color) {
-    assert(!m_inTextMode && !m_inDrawMode && "Clear called while in text or draw mode");
-    // m_backend->Clear(color);
-}
-
-void Context::BeginText() {
-    assert(!m_inTextMode && !m_inDrawMode && "BeginText called while already in text or draw mode");
-    m_inTextMode = true;
-}
-
-void Context::EndText() {
-    assert(m_inTextMode && "EndText called without matching BeginText");
-    m_inTextMode = false;
-}
-
-void Context::BeginDraw() {
-    assert(!m_inTextMode && !m_inDrawMode && "BeginDraw called while already in text or draw mode");
-    m_inDrawMode = true;
-}
-
-void Context::EndDraw() {
-    assert(m_inDrawMode && "EndDraw called without matching BeginDraw");
-    m_inDrawMode = false;
-}
-
-void Context::SetViewport(float x, float y, float width, float height) {
-    // m_backend->SetViewport(x, y, width, height);
+    m_backend->EndFrame();
 }
 
 } // namespace labfont
 
-// C interface implementations
 extern "C" {
 
-lab_result lab_create_context(lab_backend_type type, const lab_context_desc* desc, lab_context* out_context) {
-    if (!out_context) {
-        return {LAB_ERROR_INVALID_PARAMETER, "out_context is null"};
+lab_operation_result lab_create_context(const lab_backend_desc* desc, lab_context* out_context) {
+    if (!desc || !out_context) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
     }
-
+    
+    // Convert backend_desc to context_desc
+    lab_context_desc context_desc = {
+        .width = desc->width,
+        .height = desc->height,
+        .native_window = desc->native_window,
+        .max_vertices = 1024,  // Default value
+        .atlas_width = 1024,   // Default value
+        .atlas_height = 1024   // Default value
+    };
+    
     labfont::Context* context = nullptr;
-    lab_result result = labfont::Context::Create(type, desc, &context);
-    if (result.error == LAB_ERROR_NONE) {
-        *out_context = labfont::GetContextHandle(context);
+    auto result = labfont::Context::Create(desc->type, &context_desc, &context);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
     }
-    return result;
+    
+    *out_context = labfont::GetContextHandle(context);
+    return lab_operation_result{LAB_ERROR_NONE, nullptr};
 }
 
 void lab_destroy_context(lab_context ctx) {
-    if (ctx) {
-        delete labfont::GetContextImpl(ctx);
-    }
+    delete labfont::GetContextImpl(ctx);
 }
 
-lab_result lab_resize_context(lab_context ctx, unsigned int width, unsigned int height) {
+lab_operation_result lab_begin_frame(lab_context ctx) {
     if (!ctx) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Context is null"};
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
     }
-    return labfont::GetContextImpl(ctx)->Resize(width, height);
-}
-
-void lab_begin_frame(lab_context ctx) {
-    if (ctx) {
-        labfont::GetContextImpl(ctx)->BeginFrame();
-    }
-}
-
-void lab_end_frame(lab_context ctx) {
-    if (ctx) {
-        labfont::GetContextImpl(ctx)->EndFrame();
-    }
-}
-
-void lab_clear(lab_context ctx, lab_color color) {
-    if (ctx) {
-        labfont::GetContextImpl(ctx)->Clear(color);
-    }
-}
-
-void lab_set_viewport(lab_context ctx, float x, float y, float width, float height) {
-    if (ctx) {
-        labfont::GetContextImpl(ctx)->SetViewport(x, y, width, height);
-    }
-}
-
-// Resource Management C interface
-lab_result lab_create_texture(lab_context ctx, const char* name, const lab_texture_desc* desc, lab_texture* out_texture) {
-    if (!ctx || !name || !desc || !out_texture) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
-    }
-
+    
     auto context = labfont::GetContextImpl(ctx);
-    labfont::TextureParams params = {
+    auto result = context->GetBackend()->BeginFrame();
+    return result;
+}
+
+lab_operation_result lab_end_frame(lab_context ctx) {
+    if (!ctx) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto result = context->GetBackend()->EndFrame();
+    return result;
+}
+
+lab_operation_result lab_submit_commands(lab_context ctx, const lab_draw_command* commands, uint32_t commandCount) {
+    if (!ctx || !commands || commandCount == 0) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    std::vector<labfont::DrawCommand> internalCommands(commands, commands + commandCount);
+    auto result = context->GetBackend()->SubmitCommands(internalCommands);
+    return result;
+}
+
+lab_operation_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target) {
+    if (!ctx || !desc || !out_target) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    labfont::RenderTargetDesc internal_desc = {
         .width = desc->width,
         .height = desc->height,
-        .format = desc->format,
-        .initial_data = desc->initial_data
+        .format = static_cast<labfont::TextureFormat>(desc->format),
+        .hasDepth = desc->hasDepth
     };
-
-    std::shared_ptr<labfont::TextureResource> texture;
-    lab_result result = context->GetResourceManager()->CreateTexture(name, params, texture);
+    
+    std::shared_ptr<labfont::RenderTarget> target;
+    auto result = context->GetBackend()->CreateRenderTarget(internal_desc, target);
     if (result.error == LAB_ERROR_NONE) {
-        *out_texture = reinterpret_cast<lab_texture>(texture.get());
+        *out_target = reinterpret_cast<lab_render_target>(target.get());
     }
     return result;
 }
 
-void lab_destroy_texture(lab_context ctx, lab_texture texture) {
-    if (!ctx || !texture) return;
+void lab_destroy_render_target(lab_context ctx, lab_render_target target) {
+    if (!ctx || !target) {
+        return;
+    }
+    
     auto context = labfont::GetContextImpl(ctx);
-    auto resource = reinterpret_cast<labfont::TextureResource*>(texture);
-    context->GetResourceManager()->DestroyResource(resource->GetName());
+    context->GetBackend()->DestroyRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
 }
 
-lab_texture lab_get_texture(lab_context ctx, const char* name) {
-    if (!ctx || !name) return nullptr;
+lab_operation_result lab_set_render_target(lab_context ctx, lab_render_target target) {
+    if (!ctx) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
+    }
+    
     auto context = labfont::GetContextImpl(ctx);
-    auto resource = context->GetResourceManager()->GetResource(name);
-    if (resource && resource->GetType() == labfont::ResourceType::Texture) {
-        return reinterpret_cast<lab_texture>(resource.get());
-    }
-    return nullptr;
-}
-
-lab_result lab_create_buffer(lab_context ctx, const char* name, const lab_buffer_desc* desc, lab_buffer* out_buffer) {
-    if (!ctx || !name || !desc || !out_buffer) {
-        return {LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
-    }
-
-    auto context = labfont::GetContextImpl(ctx);
-    labfont::BufferParams params = {
-        .size = desc->size,
-        .dynamic = desc->dynamic,
-        .initial_data = desc->initial_data
-    };
-
-    std::shared_ptr<labfont::BufferResource> buffer;
-    lab_result result = context->GetResourceManager()->CreateBuffer(name, params, buffer);
-    if (result.error == LAB_ERROR_NONE) {
-        *out_buffer = reinterpret_cast<lab_buffer>(buffer.get());
-    }
+    auto result = context->GetBackend()->SetRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
     return result;
-}
-
-void lab_destroy_buffer(lab_context ctx, lab_buffer buffer) {
-    if (!ctx || !buffer) return;
-    auto context = labfont::GetContextImpl(ctx);
-    auto resource = reinterpret_cast<labfont::BufferResource*>(buffer);
-    context->GetResourceManager()->DestroyResource(resource->GetName());
-}
-
-lab_buffer lab_get_buffer(lab_context ctx, const char* name) {
-    if (!ctx || !name) return nullptr;
-    auto context = labfont::GetContextImpl(ctx);
-    auto resource = context->GetResourceManager()->GetResource(name);
-    if (resource && resource->GetType() == labfont::ResourceType::Buffer) {
-        return reinterpret_cast<lab_buffer>(resource.get());
-    }
-    return nullptr;
-}
-
-// Memory Management C interface
-void* lab_allocate(size_t size, lab_memory_category category) {
-    auto& manager = labfont::MemoryManager::Instance();
-    return manager.Allocate(size, static_cast<labfont::MemoryCategory>(category));
-}
-
-void lab_free(void* ptr) {
-    auto& manager = labfont::MemoryManager::Instance();
-    manager.Free(ptr);
-}
-
-void lab_enable_leak_detection(lab_context ctx, bool enable) {
-    if (!ctx) return;
-    labfont::GetContextImpl(ctx)->GetMemoryManager()->EnableLeakDetection(enable);
-}
-
-void lab_get_memory_stats(lab_context ctx, lab_memory_stats* stats) {
-    if (!ctx || !stats) return;
-    
-    auto impl_stats = labfont::GetContextImpl(ctx)->GetMemoryManager()->GetStats();
-    stats->totalAllocated = impl_stats.totalAllocated;
-    stats->totalFreed = impl_stats.totalFreed;
-    stats->currentUsage = impl_stats.currentUsage;
-    stats->peakUsage = impl_stats.peakUsage;
-    
-    for (int i = 0; i < 5; ++i) {
-        stats->categoryUsage[i] = impl_stats.categoryUsage[static_cast<labfont::MemoryCategory>(i)];
-    }
-}
-
-void lab_reset_memory_stats(lab_context ctx) {
-    if (!ctx) return;
-    labfont::GetContextImpl(ctx)->GetMemoryManager()->ResetStats();
 }
 
 } // extern "C"

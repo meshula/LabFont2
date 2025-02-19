@@ -2,6 +2,7 @@
 #define LABFONT_BACKEND_H
 
 #include "backend_types.h"
+#include "internal_types.h"
 #include "error.h"
 #include <memory>
 #include <vector>

@@ -3,39 +3,66 @@
 
 #include "core/backend.h"
 #include "wgpu_types.h"
-#include <memory>
-#include <vector>
+#include <webgpu/webgpu_cpp.h>
 
 namespace labfont {
-namespace wgpu {
 
-// Forward declarations
-class WGPUCommandBuffer;
+class WebGPUDevice;
+class WebGPURenderTarget;
 
-// WebGPU device wrapper
-class WGPUDevice {
+class WGPUBackend : public Backend {
 public:
-    WGPUDevice() = default;
-    ~WGPUDevice();
+    WGPUBackend() : m_device(std::make_unique<WebGPUDevice>()) {}
+    ~WGPUBackend() override;
     
-    WGPUDeviceRef GetWGPUDevice() const { return device; }
-    WGPUQueueRef GetQueue() const { return queue; }
-    WGPUShaderModuleRef GetShaderModule() const { return shaderModule; }
+    lab_result Initialize(uint32_t width, uint32_t height) override;
+    lab_result Resize(uint32_t width, uint32_t height) override;
     
-    // Device state
-    WGPUDeviceRef device = nullptr;
-    WGPUQueueRef queue = nullptr;
-    WGPUShaderModuleRef shaderModule = nullptr;
-    WGPURenderPipelineRef trianglePipeline = nullptr;
-    WGPURenderPipelineRef linePipeline = nullptr;
-    WGPUBindGroupLayoutRef bindGroupLayout = nullptr;
+    // Texture management
+    lab_result CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) override;
+    lab_result UpdateTexture(Texture* texture, const void* data, size_t size) override;
+    lab_result ReadbackTexture(Texture* texture, void* data, size_t size) override;
+    
+    // Render target management
+    lab_result CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) override;
+    lab_result SetRenderTarget(RenderTarget* target) override;
+    
+    // Draw command submission
+    lab_result BeginFrame() override;
+    lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override;
+    lab_result EndFrame() override;
+    
+    // Resource cleanup
+    void DestroyTexture(Texture* texture) override;
+    void DestroyRenderTarget(RenderTarget* target) override;
+    
+    // Memory management
+    size_t GetTextureMemoryUsage() const override { return 0; }
+    size_t GetTotalMemoryUsage() const override { return 0; }
+    
+    // Backend capabilities
+    bool SupportsTextureFormat(TextureFormat format) const override;
+    bool SupportsBlendMode(BlendMode mode) const override;
+    uint32_t GetMaxTextureSize() const override { return 8192; }
+    
+    // WGPU-specific getters
+    WebGPUDevice* GetDevice() { return m_device.get(); }
+    
+private:
+    std::unique_ptr<WebGPUDevice> m_device;
+    WGPUShaderModule m_shaderModule = nullptr;
+    WGPURenderPipeline m_trianglePipeline = nullptr;
+    WGPURenderPipeline m_linePipeline = nullptr;
+    WGPUBindGroupLayout m_bindGroupLayout = nullptr;
+    
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
 };
 
-// WebGPU-based texture implementation
-class WGPUTexture : public Texture {
+class WebGPUTexture : public Texture {
 public:
-    WGPUTexture(WGPUDevice* device, const labfont::TextureDesc& desc);
-    ~WGPUTexture() override;
+    WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc);
+    ~WebGPUTexture() override;
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
@@ -43,9 +70,9 @@ public:
     bool IsRenderTarget() const override { return m_renderTarget; }
     bool SupportsReadback() const override { return m_readback; }
     
-    // WebGPU-specific methods
-    WGPUTextureRef GetWGPUTexture() const { return m_texture; }
-    WGPUTextureViewRef GetWGPUTextureView() const { return m_textureView; }
+    // WGPU-specific getters
+    WGPUTexture GetWGPUTexture() const { return m_texture; }
+    WGPUTextureView GetWGPUTextureView() const { return m_textureView; }
     
 private:
     uint32_t m_width;
@@ -53,80 +80,38 @@ private:
     TextureFormat m_format;
     bool m_renderTarget;
     bool m_readback;
-    WGPUTextureRef m_texture;
-    WGPUTextureViewRef m_textureView;
-    WGPUDevice* m_device;
+    
+    WGPUTexture m_texture;
+    WGPUTextureView m_textureView;
 };
 
-// WebGPU-based render target implementation
-class WGPURenderTarget final : public RenderTarget {
+class WebGPURenderTarget : public RenderTarget {
 public:
-    WGPURenderTarget(WGPUDevice* device, const labfont::RenderTargetDesc& desc);
-    ~WGPURenderTarget() override;
+    WebGPURenderTarget(const WebGPUDevice* device, const RenderTargetDesc& desc);
+    ~WebGPURenderTarget() override;
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
     TextureFormat GetFormat() const override { return m_format; }
     bool HasDepth() const override { return m_hasDepth; }
+    
     Texture* GetColorTexture() override { return m_colorTexture.get(); }
     Texture* GetDepthTexture() override { return m_depthTexture.get(); }
     
-    // WebGPU-specific methods
-    const wgpu::RenderPassDesc& GetRenderPassDesc() const { return m_renderPassDesc; }
+    // WGPU-specific getters
+    const WGPURenderPassDescriptor* GetRenderPassDesc() const { return m_renderPassDesc; }
     
 private:
     uint32_t m_width;
     uint32_t m_height;
     TextureFormat m_format;
     bool m_hasDepth;
-    std::shared_ptr<WGPUTexture> m_colorTexture;
-    std::shared_ptr<WGPUTexture> m_depthTexture;
-    wgpu::RenderPassDesc m_renderPassDesc;
-    WGPUDevice* m_device;
+    
+    std::shared_ptr<WebGPUTexture> m_colorTexture;
+    std::shared_ptr<WebGPUTexture> m_depthTexture;
+    WGPURenderPassDescriptor* m_renderPassDesc;
 };
 
-// WebGPU-based backend implementation
-class WGPUBackend : public Backend {
-public:
-    WGPUBackend();
-    ~WGPUBackend() override;
-    
-    lab_result Initialize(uint32_t width, uint32_t height) override;
-    lab_result Resize(uint32_t width, uint32_t height) override;
-    
-    lab_result CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) override;
-    lab_result UpdateTexture(Texture* texture, const void* data, size_t size) override;
-    lab_result ReadbackTexture(Texture* texture, void* data, size_t size) override;
-    
-    lab_result CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) override;
-    lab_result SetRenderTarget(RenderTarget* target) override;
-    
-    lab_result BeginFrame() override;
-    lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override;
-    lab_result EndFrame() override;
-    
-    void DestroyTexture(Texture* texture) override;
-    void DestroyRenderTarget(RenderTarget* target) override;
-    
-    size_t GetTextureMemoryUsage() const override;
-    size_t GetTotalMemoryUsage() const override;
-    
-    bool SupportsTextureFormat(TextureFormat format) const override;
-    bool SupportsBlendMode(BlendMode mode) const override;
-    uint32_t GetMaxTextureSize() const override;
-    
-private:
-    uint32_t m_width = 0;
-    uint32_t m_height = 0;
-    std::unique_ptr<WGPUDevice> m_device;
-    std::vector<std::shared_ptr<Texture>> m_textures;
-    std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
-    RenderTarget* m_currentRenderTarget = nullptr;
-    BlendMode m_currentBlendMode = BlendMode::None;
-    std::unique_ptr<labfont::wgpu::WGPUCommandBuffer> m_currentCommandBuffer;
-};
-
-} // namespace wgpu
 } // namespace labfont
 
 #endif // LABFONT_WGPU_BACKEND_H

@@ -2,6 +2,7 @@
 #define LABFONT_TYPES_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -25,6 +26,20 @@ typedef enum lab_error
     LAB_ERROR_DEVICE_LOST = -11
 } lab_error;
 
+/* Texture formats */
+typedef enum lab_texture_format {
+    LAB_FORMAT_UNKNOWN,
+    LAB_FORMAT_R8_UNORM,
+    LAB_FORMAT_RG8_UNORM,
+    LAB_FORMAT_RGBA8_UNORM,
+    LAB_FORMAT_R16F,
+    LAB_FORMAT_RG16F,
+    LAB_FORMAT_RGBA16F,
+    LAB_FORMAT_R32F,
+    LAB_FORMAT_RG32F,
+    LAB_FORMAT_RGBA32F
+} lab_texture_format;
+
 /* Backend types */
 typedef enum lab_backend_type
 {
@@ -40,6 +55,14 @@ typedef struct lab_color
     float r, g, b, a;
 } lab_color;
 
+/* Backend description */
+typedef struct lab_backend_desc {
+    lab_backend_type type;     /* Backend type (Metal, WebGPU, etc.) */
+    unsigned int width;        /* Initial viewport width */
+    unsigned int height;       /* Initial viewport height */
+    void* native_window;      /* Native window handle (platform-specific) */
+} lab_backend_desc;
+
 /* Context description */
 typedef struct lab_context_desc
 {
@@ -51,17 +74,59 @@ typedef struct lab_context_desc
     unsigned int atlas_height;  /* Height of the font atlas texture */
 } lab_context_desc;
 
+/* Vertex type with position, texture coordinates, and color */
+typedef struct lab_vertex_2TC {
+    float position[2];  /* x, y */
+    float texcoord[2];  /* u, v */
+    float color[4];     /* r, g, b, a */
+} lab_vertex_2TC;
+
+/* Draw command types */
+typedef enum lab_draw_command_type {
+    LAB_DRAW_COMMAND_CLEAR,
+    LAB_DRAW_COMMAND_TRIANGLES,
+    LAB_DRAW_COMMAND_LINES
+} lab_draw_command_type;
+
+/* Draw command data */
+typedef struct lab_draw_command {
+    lab_draw_command_type type;
+    union {
+        struct {
+            float color[4];
+        } clear;
+        struct {
+            const lab_vertex_2TC* vertices;
+            uint32_t vertexCount;
+        } triangles;
+        struct {
+            const lab_vertex_2TC* vertices;
+            uint32_t vertexCount;
+            float lineWidth;
+        } lines;
+    };
+} lab_draw_command;
+
+/* Render target description */
+typedef struct lab_render_target_desc {
+    uint32_t width;
+    uint32_t height;
+    lab_texture_format format;
+    bool hasDepth;
+} lab_render_target_desc;
+
 /* Opaque handle types */
 typedef struct lab_context_t* lab_context;
 typedef struct lab_font_t* lab_font;
 typedef struct lab_texture_t* lab_texture;
 typedef struct lab_buffer_t* lab_buffer;
+typedef struct lab_render_target_t* lab_render_target;
 
 /* Resource descriptors */
 typedef struct lab_texture_desc {
     unsigned int width;
     unsigned int height;
-    unsigned int format;
+    lab_texture_format format;
     const void* initial_data;
 } lab_texture_desc;
 
@@ -72,11 +137,10 @@ typedef struct lab_buffer_desc {
 } lab_buffer_desc;
 
 /* Result type for operations that can fail */
-typedef struct lab_result
-{
+typedef struct lab_operation_result {
     lab_error error;
     const char* message;  /* Optional error message, NULL if no error */
-} lab_result;
+} lab_operation_result;
 
 /* Text alignment */
 typedef enum lab_text_align

@@ -106,17 +106,30 @@ set_target_properties(labfont_tests PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
-# Copy web test files when building with Emscripten
+# WebGPU browser tests when building with Emscripten
 if(EMSCRIPTEN)
-    add_custom_command(TARGET labfont_tests POST_BUILD
+    add_executable(labfont_wgpu_tests "web/test_wgpu_main.cpp")
+    target_link_libraries(labfont_wgpu_tests
+        PRIVATE
+            labfont
+            munit
+    )
+    
+    # Set C++20 standard for WebGPU support
+    set_target_properties(labfont_wgpu_tests PROPERTIES CXX_STANDARD 20)
+    
+    # Configure Emscripten build
+    set_target_properties(labfont_wgpu_tests PROPERTIES SUFFIX ".html")
+    target_link_options(labfont_wgpu_tests PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
+    
+    # Copy HTML template and ensure test_runner.js is in the right place
+    add_custom_command(TARGET labfont_wgpu_tests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html
-            ${CMAKE_CURRENT_BINARY_DIR}/labfont_wasm_tests.html
+            ${CMAKE_CURRENT_SOURCE_DIR}/web/test.html
+            $<TARGET_FILE_DIR:labfont_wgpu_tests>/labfont_wgpu_tests.html
         COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_CURRENT_SOURCE_DIR}/web/test_runner.js
-            ${CMAKE_CURRENT_BINARY_DIR}/tests/test_runner.js
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-            ${CMAKE_CURRENT_BINARY_DIR}/tests
+            $<TARGET_FILE_DIR:labfont_wgpu_tests>/test_runner.js
         COMMENT "Copying web test files"
     )
 endif()

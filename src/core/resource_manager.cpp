@@ -1,5 +1,6 @@
 #include "resource_manager.h"
 #include "backend.h"
+#include "error_macros.h"
 #include <cassert>
 
 namespace labfont {

@@ -1,111 +1,72 @@
-#ifndef LABFONT_TEST_PATTERNS_H
-#define LABFONT_TEST_PATTERNS_H
+#ifndef TEST_PATTERNS_H
+#define TEST_PATTERNS_H
 
-#include <vector>
-#include <cstdint>
-#include <cstring>
-#include <cmath>
+#include "labfont/labfont_types.h"
+#include "labfont/labfont.h"
 
-namespace labfont {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-class PatternGenerator {
-public:
-    template<typename T>
-    static std::vector<T> GenerateCheckerboard(
-        uint32_t width,
-        uint32_t height,
-        uint32_t tileSize,
-        const T* color1,
-        const T* color2,
-        uint32_t channels
-    ) {
-        std::vector<T> pattern(width * height * channels);
-        
-        for (uint32_t y = 0; y < height; y++) {
-            for (uint32_t x = 0; x < width; x++) {
-                bool isColor1 = ((x / tileSize) + (y / tileSize)) % 2 == 0;
-                const T* color = isColor1 ? color1 : color2;
-                
-                uint32_t pixelIndex = (y * width + x) * channels;
-                std::memcpy(&pattern[pixelIndex], color, channels * sizeof(T));
-            }
-        }
-        
-        return pattern;
+// Draw a simple red triangle to test basic rendering
+inline lab_operation_result test_draw_triangle(lab_context ctx) {
+    // Create a render target
+    lab_render_target target = nullptr;
+    lab_render_target_desc target_desc = {
+        .width = 512,
+        .height = 512,
+        .format = LAB_FORMAT_RGBA8_UNORM,
+        .hasDepth = false
+    };
+    
+    lab_operation_result result = lab_create_render_target(ctx, &target_desc, &target);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
     }
     
-    template<typename T>
-    static std::vector<T> GenerateGradient(
-        uint32_t width,
-        uint32_t height,
-        const T* startColor,
-        const T* endColor,
-        uint32_t channels
-    ) {
-        std::vector<T> pattern(width * height * channels);
-        
-        for (uint32_t y = 0; y < height; y++) {
-            for (uint32_t x = 0; x < width; x++) {
-                float t = static_cast<float>(x) / (width - 1);
-                
-                uint32_t pixelIndex = (y * width + x) * channels;
-                for (uint32_t c = 0; c < channels; c++) {
-                    pattern[pixelIndex + c] = static_cast<T>(
-                        startColor[c] * (1.0f - t) + endColor[c] * t
-                    );
-                }
-            }
-        }
-        
-        return pattern;
-    }
-};
-
-class PixelComparator {
-public:
-    template<typename T>
-    static bool CompareBuffers(
-        const T* buffer1,
-        const T* buffer2,
-        uint32_t pixelCount,
-        uint32_t channels,
-        T tolerance
-    ) {
-        for (uint32_t i = 0; i < pixelCount * channels; i++) {
-            T diff = std::abs(buffer1[i] - buffer2[i]);
-            if (diff > tolerance) {
-                return false;
-            }
-        }
-        return true;
+    // Begin frame
+    result = lab_begin_frame(ctx);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
     }
     
-    template<typename T>
-    static float CalculatePSNR(
-        const T* buffer1,
-        const T* buffer2,
-        uint32_t pixelCount,
-        uint32_t channels,
-        T maxValue
-    ) {
-        double mse = 0.0;
-        uint32_t totalSamples = pixelCount * channels;
-        
-        for (uint32_t i = 0; i < totalSamples; i++) {
-            double diff = buffer1[i] - buffer2[i];
-            mse += diff * diff;
-        }
-        
-        mse /= totalSamples;
-        if (mse == 0.0) {
-            return INFINITY;
-        }
-        
-        double maxValueSquared = static_cast<double>(maxValue) * maxValue;
-        return 10.0 * log10(maxValueSquared / mse);
+    // Set render target
+    result = lab_set_render_target(ctx, target);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
     }
-};
+    
+    // Draw commands
+    lab_vertex_2TC vertices[3] = {
+        {{0.0f, 0.5f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // Top
+        {{-0.5f, -0.5f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}}, // Bottom left
+        {{0.5f, -0.5f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}}   // Bottom right
+    };
+    
+    lab_draw_command cmd = {
+        .type = LAB_DRAW_COMMAND_TRIANGLES,
+        .triangles = {
+            .vertices = vertices,
+            .vertexCount = 3
+        }
+    };
+    
+    result = lab_submit_commands(ctx, &cmd, 1);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
+    }
+    
+    // End frame
+    result = lab_end_frame(ctx);
+    if (result.error != LAB_ERROR_NONE) {
+        return result;
+    }
+    
+    return (lab_operation_result){LAB_ERROR_NONE, nullptr};
+}
 
-} // namespace labfont
+#ifdef __cplusplus
+}
+#endif
 
-#endif // LABFONT_TEST_PATTERNS_H
+#endif // TEST_PATTERNS_H
