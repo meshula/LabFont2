@@ -14,8 +14,15 @@ import platform
 import subprocess
 import shutil
 from pathlib import Path
-import tkinter as tk
-from tkinter import filedialog, messagebox
+
+# Try to import tkinter, but don't fail if it's not available
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox
+    HAS_TKINTER = True
+except ImportError:
+    HAS_TKINTER = False
+    print("Note: tkinter is not available. GUI dialogs will be replaced with command-line prompts.")
 
 def is_command_available(command):
     """Check if a command is available on the system."""
@@ -367,18 +374,31 @@ def main():
         print("Vulkan SDK not found automatically.")
         
         # Ask user if they want to specify the path
-        root = tk.Tk()
-        root.withdraw()  # Hide the main window
-        
-        if messagebox.askyesno("Vulkan SDK", "Vulkan SDK not found. Would you like to specify its location?"):
-            vulkan_dir = filedialog.askdirectory(title="Select Vulkan SDK Directory")
-            if vulkan_dir and os.path.isdir(vulkan_dir):
-                vulkan_sdk_path = vulkan_dir
-                print(f"Using user-specified Vulkan SDK at: {vulkan_sdk_path}")
+        if HAS_TKINTER:
+            root = tk.Tk()
+            root.withdraw()  # Hide the main window
+            
+            if messagebox.askyesno("Vulkan SDK", "Vulkan SDK not found. Would you like to specify its location?"):
+                vulkan_dir = filedialog.askdirectory(title="Select Vulkan SDK Directory")
+                if vulkan_dir and os.path.isdir(vulkan_dir):
+                    vulkan_sdk_path = vulkan_dir
+                    print(f"Using user-specified Vulkan SDK at: {vulkan_sdk_path}")
+                else:
+                    print("No valid Vulkan SDK directory selected.")
             else:
-                print("No valid Vulkan SDK directory selected.")
+                print("Skipping Vulkan SDK configuration.")
         else:
-            print("Skipping Vulkan SDK configuration.")
+            # Command-line fallback
+            response = input("Vulkan SDK not found. Would you like to specify its location? (y/n): ")
+            if response.lower() in ['y', 'yes']:
+                vulkan_dir = input("Enter the path to the Vulkan SDK directory: ")
+                if vulkan_dir and os.path.isdir(vulkan_dir):
+                    vulkan_sdk_path = vulkan_dir
+                    print(f"Using user-specified Vulkan SDK at: {vulkan_sdk_path}")
+                else:
+                    print("No valid Vulkan SDK directory provided.")
+            else:
+                print("Skipping Vulkan SDK configuration.")
     
     # Check for Emscripten
     print("\nChecking for Emscripten...")
