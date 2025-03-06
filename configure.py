@@ -187,6 +187,27 @@ def create_build_scripts(vulkan_sdk_path, emscripten_path, has_glfw):
     if platform.system() != 'Windows':
         os.chmod(f'build_core{script_ext}', 0o755)
     
+    # Create examples build script if GLFW was found
+    if has_glfw:
+        with open(f'build_examples{script_ext}', 'w') as f:
+            if platform.system() == 'Windows':
+                f.write('@echo off\n')
+                f.write('mkdir build_examples 2>nul\n')
+                f.write('cd build_examples\n')
+                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF\n')
+                f.write('cmake --build .\n')
+                f.write('cd ..\n')
+            else:
+                f.write('#!/bin/bash\n')
+                f.write('mkdir -p build_examples && cd build_examples\n')
+                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF\n')
+                f.write('make\n')
+                f.write('cd ..\n')
+        
+        # Make the script executable on Unix-like systems
+        if platform.system() != 'Windows':
+            os.chmod(f'build_examples{script_ext}', 0o755)
+    
     # Create Vulkan build script if SDK was found
     if vulkan_sdk_path:
         with open(f'build_vk{script_ext}', 'w') as f:

@@ -12,6 +12,8 @@ build_vk.bat
 build_mtl.sh
 build_wasm.sh
 build_wasm.bat
+build_examples.sh
+build_examples.bat
 
 # IDE files
 .vscode/

@@ -191,3 +191,57 @@ The configure.py script has generated build scripts for the detected dependencie
 - `build_vk.sh`: Builds with the Vulkan backend
 - `build_mtl.sh`: Builds with the Metal backend
 - `build_wasm.sh`: Builds with WebAssembly and WebGPU
+
+
+## Build Dependencies Notes
+
+The following dependencies are required to build different components of LabFont2:
+
+- **Vulkan SDK**: Found at `/Users/nick/VulkanSDK/1.4.304.1/macOS`
+- **Emscripten**: Found in PATH
+- **GLFW**: Found
+
+## Building
+
+The configure.py script has generated build scripts for the detected dependencies:
+
+- `build_core.sh`: Builds the core library without any backends
+- `build_vk.sh`: Builds with the Vulkan backend
+- `build_mtl.sh`: Builds with the Metal backend
+- `build_wasm.sh`: Builds with WebAssembly and WebGPU
+
+
+## Build Dependencies Notes
+
+The following dependencies are required to build different components of LabFont2:
+
+- **Vulkan SDK**: Found at `/Users/nick/VulkanSDK/1.4.304.1/macOS`
+- **Emscripten**: Found in PATH
+- **GLFW**: Found
+
+## Building
+
+The configure.py script has generated build scripts for the detected dependencies:
+
+- `build_core.sh`: Builds the core library without any backends
+- `build_vk.sh`: Builds with the Vulkan backend
+- `build_mtl.sh`: Builds with the Metal backend
+- `build_wasm.sh`: Builds with WebAssembly and WebGPU
+
+
+## Build Dependencies Notes
+
+The following dependencies are required to build different components of LabFont2:
+
+- **Vulkan SDK**: Found at `/Users/nick/VulkanSDK/1.4.304.1/macOS`
+- **Emscripten**: Found in PATH
+- **GLFW**: Found
+
+## Building
+
+The configure.py script has generated build scripts for the detected dependencies:
+
+- `build_core.sh`: Builds the core library without any backends
+- `build_vk.sh`: Builds with the Vulkan backend
+- `build_mtl.sh`: Builds with the Metal backend
+- `build_wasm.sh`: Builds with WebAssembly and WebGPU

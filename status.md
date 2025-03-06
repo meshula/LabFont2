@@ -13,7 +13,7 @@ This report documents the current status of LabFont2 after cloning the repositor
 | Vulkan Backend | ✅ Success | The Vulkan backend builds successfully, but the tests fail to compile. |
 | WebGPU Backend | ❌ Failure | Build fails due to incomplete type 'labfont::WebGPUDevice' and missing implementation. |
 | WebAssembly | ✅ Success | The build_wasm.sh script now provides clear installation instructions for Emscripten, and the build process starts but fails due to WebGPU backend issues. |
-| Examples | ⚠️ Skipped | Examples are skipped due to missing GLFW dependency. The build system detects the missing dependency and disables the examples rather than failing. |
+| Examples | ⚠️ Skipped/❌ Failure | Examples are skipped due to missing GLFW dependency. When GLFW is installed, they fail to build due to direct WebGPU dependency in drawing_main.cpp. |
 
 ## Test Status
 
@@ -33,7 +33,7 @@ LabFont2 appears to be in an early development stage with several incomplete or 
 
 4. **Tests**: The test code doesn't match the current API implementation, suggesting that either the tests or the API have been updated without keeping the other in sync.
 
-5. **Examples**: The examples require GLFW, which isn't included in the repository or listed as a dependency in the build instructions. When GLFW is not found, the examples are skipped rather than failing to build.
+5. **Examples**: The examples require GLFW, which isn't included in the repository or listed as a dependency in the build instructions. When GLFW is not found, the examples are skipped rather than failing to build. Additionally, the examples directly include WebGPU headers instead of using the LabFont abstraction, which contradicts the library's design goals.
 
 The project's README advertises features that don't appear to be fully implemented yet, such as text rendering with styling and layout. The code structure is in place, but many components seem to be incomplete or non-functional.
 
@@ -54,7 +54,15 @@ The project's README advertises features that don't appear to be fully implement
 
 #### Checklist
 
-nothing currently
+- [x] Verify core library builds successfully
+- [x] Verify Metal backend build fails with expected errors
+- [x] Verify Vulkan backend builds but tests fail to compile
+- [x] Verify WebGPU backend fails with incomplete type errors
+- [x] Verify examples are skipped due to missing GLFW dependency
+- [x] Verify examples fail to build with WebGPU dependency error after installing GLFW
+- [x] Verify unit tests fail to compile with API mismatches
+- [ ] Install GLFW to test examples (optional)
+- [ ] Install Vulkan SDK to test Vulkan backend (optional)
 
 
 ### For LabFont2 Authors
@@ -88,3 +96,9 @@ nothing currently
 - [ ] Fix WebGPU backend errors:
   - [ ] Incomplete type 'labfont::WebGPUDevice'
   - [ ] Missing implementation of WebGPU device and related components
+- [ ] Fix examples:
+  - [ ] Remove direct WebGPU dependency in drawing_main.cpp (should use LabFont abstraction instead)
+- [ ] Fix Vulkan backend test issues:
+  - [ ] Implement missing symbols like CreateBackend, lab_create_buffer, lab_create_texture
+- [ ] Add detailed API documentation
+- [ ] Include sample fonts in the repository
