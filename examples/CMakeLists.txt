@@ -11,10 +11,27 @@
 #         labfont
 # )
 
+# Find GLFW
+find_package(glfw3 QUIET)
+if(NOT glfw3_FOUND)
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(GLFW QUIET glfw3)
+  endif()
+endif()
+
+# Check if GLFW was found
+if(NOT glfw3_FOUND AND NOT GLFW_FOUND)
+  message(WARNING "GLFW not found. Examples requiring GLFW will be disabled.")
+  return()
+endif()
+
 add_executable(basic_drawing "basic/drawing_main.cpp")
 target_link_libraries(basic_drawing
     PRIVATE
         labfont
+        $<$<BOOL:${glfw3_FOUND}>:glfw>
+        $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
 )
 
 # set C++20 on basic_drawing
