@@ -37,13 +37,15 @@ target_link_libraries(basic_drawing
 # set C++20 on basic_drawing
 set_target_properties(basic_drawing PROPERTIES CXX_STANDARD 20)
 
+# Include directories for LabFont headers
+target_include_directories(basic_drawing
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+)
+
 if(EMSCRIPTEN)
   set_target_properties(basic_drawing PROPERTIES SUFFIX ".html")
-  target_link_options(basic_drawing PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3")
-else()
-#  set(DAWN_FETCH_DEPENDENCIES ON)
-#  add_subdirectory("dawn" EXCLUDE_FROM_ALL)
-#  target_link_libraries(app PRIVATE dawn::webgpu_dawn glfw webgpu_glfw)
+  target_link_options(basic_drawing PRIVATE "-sUSE_GLFW=3")
 endif()
 
 # Advanced examples

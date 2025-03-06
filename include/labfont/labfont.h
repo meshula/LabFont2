@@ -15,6 +15,7 @@ void lab_destroy_context(lab_context ctx);
 void* lab_alloc(size_t size, lab_memory_category category);
 void lab_free(void* ptr);
 lab_memory_stats lab_get_memory_stats(void);
+void lab_reset_memory_stats(void);
 
 /* Font management */
 lab_operation_result lab_load_font(lab_context ctx, const char* path, lab_font* out_font);

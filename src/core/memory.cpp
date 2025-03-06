@@ -137,4 +137,9 @@ lab_memory_stats lab_get_memory_stats(void) {
     return labfont::ToPublicStats(labfont::MemoryManager::Instance().GetStats());
 }
 
+// This function is not in the public API, but we need it for testing
+extern "C" void lab_reset_memory_stats(void) {
+    labfont::MemoryManager::Instance().ResetStats();
+}
+
 } // extern "C"

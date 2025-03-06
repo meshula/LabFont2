@@ -31,7 +31,7 @@ static MunitResult test_memory_tracking(const MunitParameter params[], void* dat
 
     // Create context
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_METAL,
+        .type = LAB_BACKEND_CPU,
         .width = desc.width,
         .height = desc.height,
         .native_window = desc.native_window
@@ -63,8 +63,8 @@ static MunitResult test_memory_tracking(const MunitParameter params[], void* dat
     stats = lab_get_memory_stats();
     munit_assert_size(stats.currentUsage, ==, initial_usage);
 
-    // Note: lab_reset_memory_stats doesn't exist in the current API
-    // We'll just get the stats again
+    // Reset memory stats
+    lab_reset_memory_stats();
     stats = lab_get_memory_stats();
     munit_assert_size(stats.totalAllocated, ==, 0);
     munit_assert_size(stats.totalFreed, ==, 0);
@@ -87,7 +87,7 @@ static MunitResult test_memory_categories(const MunitParameter params[], void* d
 
     // Create context
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_METAL,
+        .type = LAB_BACKEND_CPU,
         .width = desc.width,
         .height = desc.height,
         .native_window = desc.native_window
@@ -114,8 +114,8 @@ static MunitResult test_memory_categories(const MunitParameter params[], void* d
     lab_free(ptr2);
     lab_free(ptr3);
 
-    // Note: lab_reset_memory_stats doesn't exist in the current API
-    // We'll just get the stats again
+    // Reset memory stats
+    lab_reset_memory_stats();
     stats = lab_get_memory_stats();
     munit_assert_size(stats.categoryUsage[LAB_MEMORY_GENERAL], ==, 0);
     munit_assert_size(stats.categoryUsage[LAB_MEMORY_GRAPHICS], ==, 0);

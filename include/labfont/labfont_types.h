@@ -47,7 +47,8 @@ typedef enum lab_backend_type
     LAB_BACKEND_METAL,
     LAB_BACKEND_WGPU,
     LAB_BACKEND_VULKAN,
-    LAB_BACKEND_DX11
+    LAB_BACKEND_DX11,
+    LAB_BACKEND_CPU
 } lab_backend_type;
 
 /* Color type */

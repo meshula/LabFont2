@@ -21,6 +21,9 @@
 #include "backends/dx11/dx11_backend.h"
 #endif
 
+// Include CPU backend for tests
+#include "backends/cpu/cpu_backend.h"
+
 namespace labfont {
 
 Context::~Context() = default;
@@ -55,6 +58,9 @@ std::unique_ptr<Backend> Context::CreateBackend(lab_backend_type type) {
         case LAB_BACKEND_DX11:
             return std::make_unique<dx11::DX11Backend>();
 #endif
+        // Use CPU backend as a fallback for tests
+        case LAB_BACKEND_CPU:
+            return std::make_unique<CPUBackend>();
         default:
             return nullptr;
     }

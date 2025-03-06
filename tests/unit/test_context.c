@@ -14,7 +14,7 @@ static MunitResult test_context_creation(const MunitParameter params[], void* da
 
     // Test valid creation
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_METAL,
+        .type = LAB_BACKEND_CPU,
         .width = desc.width,
         .height = desc.height,
         .native_window = desc.native_window

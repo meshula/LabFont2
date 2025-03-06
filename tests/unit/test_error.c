@@ -30,7 +30,7 @@ static MunitResult test_error_propagation(const MunitParameter params[], void* d
     lab_context_desc desc = {0};  // Invalid desc (width and height are 0)
     
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_METAL,
+        .type = LAB_BACKEND_CPU,
         .width = desc.width,
         .height = desc.height,
         .native_window = desc.native_window
@@ -63,7 +63,7 @@ static MunitResult test_error_clearing(const MunitParameter params[], void* data
     
     // First operation should succeed
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_METAL,
+        .type = LAB_BACKEND_CPU,
         .width = desc.width,
         .height = desc.height,
         .native_window = desc.native_window

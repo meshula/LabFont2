@@ -1,174 +1,167 @@
-// this is a simple example of drawing a red triangle using WebGPU
-// original is at https://github.com/beaufortfrancois/webgpu-cross-platform-app
+// Simple example of drawing a red triangle using LabFont abstraction
+// Based on the original WebGPU example at https://github.com/beaufortfrancois/webgpu-cross-platform-app
 
 #include <GLFW/glfw3.h>
-#include <webgpu/webgpu_cpp.h>
+#include <labfont/labfont.h>
 #include <iostream>
-#if defined(__EMSCRIPTEN__)
-#include <emscripten/emscripten.h>
-#else
-#include <webgpu/webgpu_glfw.h>
-#endif
+#include <vector>
 
-wgpu::Instance instance;
-wgpu::Adapter adapter;
-wgpu::Device device;
-wgpu::RenderPipeline pipeline;
-
-wgpu::Surface surface;
-wgpu::TextureFormat format;
+// Window dimensions
 const uint32_t kWidth = 512;
 const uint32_t kHeight = 512;
 
-void ConfigureSurface() {
-  wgpu::SurfaceCapabilities capabilities;
-  surface.GetCapabilities(adapter, &capabilities);
-  format = capabilities.formats[0];
+// Global variables
+lab_context context = nullptr;
+GLFWwindow* window = nullptr;
 
-  wgpu::SurfaceConfiguration config{
-      .device = device,
-      .format = format,
-      .width = kWidth,
-      .height = kHeight};
-  surface.Configure(&config);
-}
-
-void GetAdapter(void (*callback)(wgpu::Adapter)) {
-  instance.RequestAdapter(
-      nullptr,
-      // TODO(https://bugs.chromium.org/p/dawn/issues/detail?id=1892): Use
-      // wgpu::RequestAdapterStatus and wgpu::Adapter.
-      [](WGPURequestAdapterStatus status, WGPUAdapter cAdapter,
-         const char* message, void* userdata) {
-        if (message) {
-          printf("RequestAdapter: %s\n", message);
-        }
-        if (status != WGPURequestAdapterStatus_Success) {
-          exit(0);
-        }
-        wgpu::Adapter adapter = wgpu::Adapter::Acquire(cAdapter);
-        reinterpret_cast<void (*)(wgpu::Adapter)>(userdata)(adapter);
-  }, reinterpret_cast<void*>(callback));
-}
-
-void GetDevice(void (*callback)(wgpu::Device)) {
-  adapter.RequestDevice(
-      nullptr,
-      // TODO(https://bugs.chromium.org/p/dawn/issues/detail?id=1892): Use
-      // wgpu::RequestDeviceStatus and wgpu::Device.
-      [](WGPURequestDeviceStatus status, WGPUDevice cDevice,
-          const char* message, void* userdata) {
-        if (message) {
-          printf("RequestDevice: %s\n", message);
-        }
-        wgpu::Device device = wgpu::Device::Acquire(cDevice);
-        device.SetUncapturedErrorCallback(
-            [](WGPUErrorType type, const char* message, void* userdata) {
-              std::cout << "Error: " << type << " - message: " << message;
-            },
-            nullptr);
-        reinterpret_cast<void (*)(wgpu::Device)>(userdata)(device);
-  }, reinterpret_cast<void*>(callback));
-}
-
-const char shaderCode[] = R"(
-    @vertex fn vertexMain(@builtin(vertex_index) i : u32) ->
-      @builtin(position) vec4f {
-        const pos = array(vec2f(0, 1), vec2f(-1, -1), vec2f(1, -1));
-        return vec4f(pos[i], 0, 1);
+// Initialize GLFW and create a window
+bool InitWindow() {
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
+        return false;
     }
-    @fragment fn fragmentMain() -> @location(0) vec4f {
-        return vec4f(1, 0, 0, 1);
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    window = glfwCreateWindow(kWidth, kHeight, "LabFont Triangle Example", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return false;
     }
-)";
 
-void CreateRenderPipeline() {
-  wgpu::ShaderModuleWGSLDescriptor wgslDesc{};
-  wgslDesc.code = shaderCode;
-
-  wgpu::ShaderModuleDescriptor shaderModuleDescriptor{
-      .nextInChain = &wgslDesc};
-  wgpu::ShaderModule shaderModule =
-      device.CreateShaderModule(&shaderModuleDescriptor);
-
-  wgpu::ColorTargetState colorTargetState{.format = format};
-
-  wgpu::FragmentState fragmentState{.module = shaderModule,
-                                    .targetCount = 1,
-                                    .targets = &colorTargetState};
-
-  wgpu::RenderPipelineDescriptor descriptor{
-      .vertex = {.module = shaderModule},
-      .fragment = &fragmentState};
-  pipeline = device.CreateRenderPipeline(&descriptor);
+    return true;
 }
 
+// Initialize LabFont context
+bool InitLabFont() {
+    // Create a backend descriptor
+    lab_backend_desc backend_desc = {
+        .type = LAB_BACKEND_CPU, // Use CPU backend for portability
+        .width = kWidth,
+        .height = kHeight,
+        .native_window = window
+    };
+
+    // Create the context
+    lab_operation_result result = lab_create_context(&backend_desc, &context);
+    if (result.error != LAB_ERROR_NONE) {
+        std::cerr << "Failed to create LabFont context: " << 
+            (result.message ? result.message : "Unknown error") << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+// Create a triangle using LabFont vertices
+std::vector<lab_vertex_2TC> CreateTriangleVertices() {
+    // Define a red triangle
+    std::vector<lab_vertex_2TC> vertices = {
+        // Top vertex (red)
+        {
+            .position = {0.0f, 0.5f},
+            .texcoord = {0.5f, 0.0f},
+            .color = {1.0f, 0.0f, 0.0f, 1.0f}
+        },
+        // Bottom left vertex (red)
+        {
+            .position = {-0.5f, -0.5f},
+            .texcoord = {0.0f, 1.0f},
+            .color = {1.0f, 0.0f, 0.0f, 1.0f}
+        },
+        // Bottom right vertex (red)
+        {
+            .position = {0.5f, -0.5f},
+            .texcoord = {1.0f, 1.0f},
+            .color = {1.0f, 0.0f, 0.0f, 1.0f}
+        }
+    };
+
+    return vertices;
+}
+
+// Render a frame
 void Render() {
-  wgpu::SurfaceTexture surfaceTexture;
-  surface.GetCurrentTexture(&surfaceTexture);
+    // Begin the frame
+    lab_operation_result result = lab_begin_frame(context);
+    if (result.error != LAB_ERROR_NONE) {
+        std::cerr << "Failed to begin frame: " << 
+            (result.message ? result.message : "Unknown error") << std::endl;
+        return;
+    }
 
-  wgpu::RenderPassColorAttachment attachment{
-      .view = surfaceTexture.texture.CreateView(),
-      .loadOp = wgpu::LoadOp::Clear,
-      .storeOp = wgpu::StoreOp::Store};
+    // Create clear command (black background)
+    lab_draw_command clear_cmd = {
+        .type = LAB_DRAW_COMMAND_CLEAR,
+        .clear = {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f}
+        }
+    };
 
-  wgpu::RenderPassDescriptor renderpass{.colorAttachmentCount = 1,
-                                        .colorAttachments = &attachment};
+    // Get triangle vertices
+    std::vector<lab_vertex_2TC> vertices = CreateTriangleVertices();
 
-  wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
-  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
-  pass.SetPipeline(pipeline);
-  pass.Draw(3);
-  pass.End();
-  wgpu::CommandBuffer commands = encoder.Finish();
-  device.GetQueue().Submit(1, &commands);
+    // Create triangle draw command
+    lab_draw_command triangle_cmd = {
+        .type = LAB_DRAW_COMMAND_TRIANGLES,
+        .triangles = {
+            .vertices = vertices.data(),
+            .vertexCount = static_cast<uint32_t>(vertices.size())
+        }
+    };
+
+    // Submit commands
+    lab_draw_command commands[] = {clear_cmd, triangle_cmd};
+    result = lab_submit_commands(context, commands, 2);
+    if (result.error != LAB_ERROR_NONE) {
+        std::cerr << "Failed to submit commands: " << 
+            (result.message ? result.message : "Unknown error") << std::endl;
+        return;
+    }
+
+    // End the frame
+    result = lab_end_frame(context);
+    if (result.error != LAB_ERROR_NONE) {
+        std::cerr << "Failed to end frame: " << 
+            (result.message ? result.message : "Unknown error") << std::endl;
+        return;
+    }
 }
 
-void InitGraphics() {
-  ConfigureSurface();
-  CreateRenderPipeline();
-}
+// Cleanup resources
+void Cleanup() {
+    if (context) {
+        lab_destroy_context(context);
+        context = nullptr;
+    }
 
-void Start() {
-  if (!glfwInit()) {
-    return;
-  }
+    if (window) {
+        glfwDestroyWindow(window);
+        window = nullptr;
+    }
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow* window =
-      glfwCreateWindow(kWidth, kHeight, "WebGPU window", nullptr, nullptr);
-
-#if defined(__EMSCRIPTEN__)
-  wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
-  canvasDesc.selector = "#canvas";
-
-  wgpu::SurfaceDescriptor surfaceDesc{.nextInChain = &canvasDesc};
-  surface = instance.CreateSurface(&surfaceDesc);
-#else
-  surface = wgpu::glfw::CreateSurfaceForWindow(instance, window);
-#endif
-
-  InitGraphics();
-
-#if defined(__EMSCRIPTEN__)
-  emscripten_set_main_loop(Render, 0, false);
-#else
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-    Render();
-    surface.Present();
-    instance.ProcessEvents();
-  }
-#endif
+    glfwTerminate();
 }
 
 int main() {
-  instance = wgpu::CreateInstance();
-  GetAdapter([](wgpu::Adapter a) {
-    adapter = a;
-    GetDevice([](wgpu::Device d) {
-      device = d;
-      Start();
-    });
-  });
+    // Initialize window
+    if (!InitWindow()) {
+        return 1;
+    }
+
+    // Initialize LabFont
+    if (!InitLabFont()) {
+        Cleanup();
+        return 1;
+    }
+
+    // Main loop
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        Render();
+    }
+
+    // Cleanup
+    Cleanup();
+    return 0;
 }

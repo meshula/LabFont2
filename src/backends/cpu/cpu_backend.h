@@ -103,6 +103,10 @@ public:
     ~CPUBackend() = default;
     
     lab_result Initialize(uint32_t width, uint32_t height) override {
+        // Validate parameters
+        if (width == 0 || height == 0) {
+            return lab_result(LAB_ERROR_INVALID_PARAMETER, "Width and height must be greater than 0");
+        }
         return lab_result(LAB_ERROR_NONE);
     }
     
