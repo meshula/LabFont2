@@ -1,8 +1,17 @@
 # Build directories
 build/
-build_wasm/
+build_*/
 out/
 cmake-build-*/
+
+# Generated build scripts
+build_core.sh
+build_core.bat
+build_vk.sh
+build_vk.bat
+build_mtl.sh
+build_wasm.sh
+build_wasm.bat
 
 # IDE files
 .vscode/
