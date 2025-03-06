@@ -2,8 +2,19 @@
 #define LABFONT_WGPU_BACKEND_H
 
 #include "core/backend.h"
-#include "wgpu_types.h"
-#include <webgpu/webgpu_cpp.h>
+
+// Forward declarations for WebGPU types to avoid include errors during development
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+  #include <webgpu/webgpu.h>
+#else
+  // Forward declarations for development without Emscripten
+  typedef struct WGPUShaderModuleImpl* WGPUShaderModule;
+  typedef struct WGPURenderPipelineImpl* WGPURenderPipeline;
+  typedef struct WGPUBindGroupLayoutImpl* WGPUBindGroupLayout;
+  typedef struct WGPUTextureImpl* WGPUTexture;
+  typedef struct WGPUTextureViewImpl* WGPUTextureView;
+  typedef struct WGPURenderPassDescriptorImpl* WGPURenderPassDescriptor;
+#endif
 
 namespace labfont {
 
@@ -59,20 +70,20 @@ private:
     uint32_t m_height = 0;
 };
 
+// Forward declarations of WebGPU-specific classes
+// These would be fully implemented in a real build with WebGPU headers
 class WebGPUTexture : public Texture {
 public:
-    WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc);
-    ~WebGPUTexture() override;
+    WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc) 
+        : m_width(desc.width), m_height(desc.height), m_format(desc.format),
+          m_renderTarget(false), m_readback(false), m_texture(nullptr), m_textureView(nullptr) {}
+    ~WebGPUTexture() override {}
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
     TextureFormat GetFormat() const override { return m_format; }
     bool IsRenderTarget() const override { return m_renderTarget; }
     bool SupportsReadback() const override { return m_readback; }
-    
-    // WGPU-specific getters
-    WGPUTexture GetWGPUTexture() const { return m_texture; }
-    WGPUTextureView GetWGPUTextureView() const { return m_textureView; }
     
 private:
     uint32_t m_width;
@@ -87,8 +98,10 @@ private:
 
 class WebGPURenderTarget : public RenderTarget {
 public:
-    WebGPURenderTarget(const WebGPUDevice* device, const RenderTargetDesc& desc);
-    ~WebGPURenderTarget() override;
+    WebGPURenderTarget(const WebGPUDevice* device, const RenderTargetDesc& desc)
+        : m_width(desc.width), m_height(desc.height), m_format(desc.format),
+          m_hasDepth(desc.hasDepth), m_renderPassDesc(nullptr) {}
+    ~WebGPURenderTarget() override {}
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
@@ -97,9 +110,6 @@ public:
     
     Texture* GetColorTexture() override { return m_colorTexture.get(); }
     Texture* GetDepthTexture() override { return m_depthTexture.get(); }
-    
-    // WGPU-specific getters
-    const WGPURenderPassDescriptor* GetRenderPassDesc() const { return m_renderPassDesc; }
     
 private:
     uint32_t m_width;

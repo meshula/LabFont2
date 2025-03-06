@@ -2,8 +2,14 @@
 #include "wgpu_device.h"
 #include <cstring>
 
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+  #include <emscripten/emscripten.h>
+#endif
+
 namespace labfont {
 
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+// Real implementation for Emscripten builds
 WebGPUTexture::WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc)
     : m_width(desc.width)
     , m_height(desc.height)
@@ -38,5 +44,6 @@ WebGPUTexture::~WebGPUTexture() {
         wgpuTextureRelease(m_texture);
     }
 }
+#endif
 
 } // namespace labfont

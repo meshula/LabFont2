@@ -1,19 +1,30 @@
 #ifndef LABFONT_WGPU_DEVICE_H
 #define LABFONT_WGPU_DEVICE_H
 
-#include <webgpu/webgpu_cpp.h>
+// Forward declarations for WebGPU types to avoid include errors during development
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+  #include <webgpu/webgpu.h>
+  #include <emscripten/emscripten.h>
+#else
+  // Forward declarations for development without Emscripten
+  typedef struct WGPUDeviceImpl* WGPUDevice;
+  typedef struct WGPUQueueImpl* WGPUQueue;
+  
+  // Dummy declaration of the Emscripten function
+  extern "C" {
+    WGPUDevice emscripten_webgpu_get_device();
+  }
+#endif
 
 namespace labfont {
 
-struct WGPUDeviceImpl;
-typedef WGPUDeviceImpl* WGPUDevice;
-
 class WebGPUDevice {
 public:
-    WGPUDevice() = default;
-    ~WGPUDevice() {
-        if (device) wgpuDeviceRelease(device);
-        if (queue) wgpuQueueRelease(queue);
+    WebGPUDevice() = default;
+    ~WebGPUDevice() {
+        // In a real implementation with WebGPU headers:
+        // if (device) wgpuDeviceRelease(device);
+        // if (queue) wgpuQueueRelease(queue);
     }
 
     WGPUDevice GetDevice() const { return device; }

@@ -45,7 +45,7 @@ std::unique_ptr<Backend> Context::CreateBackend(lab_backend_type type) {
 #endif
 #ifdef LABFONT_WGPU_ENABLED
         case LAB_BACKEND_WGPU:
-            return std::make_unique<wgpu::WGPUBackend>();
+            return std::make_unique<WGPUBackend>();
 #endif
 #ifdef LABFONT_VULKAN_ENABLED
         case LAB_BACKEND_VULKAN:

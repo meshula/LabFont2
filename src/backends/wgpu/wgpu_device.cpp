@@ -1,29 +1,21 @@
-#include "wgpu_backend.h"
+#include "wgpu_device.h"
 #include "wgpu_types.h"
 
-namespace labfont {
-namespace wgpu {
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+  #include <emscripten/emscripten.h>
+#endif
 
-WGPUDevice::~WGPUDevice() {
-    if (bindGroupLayout) {
-        wgpuBindGroupLayoutRelease(bindGroupLayout);
-    }
-    if (linePipeline) {
-        wgpuRenderPipelineRelease(linePipeline);
-    }
-    if (trianglePipeline) {
-        wgpuRenderPipelineRelease(trianglePipeline);
-    }
-    if (shaderModule) {
-        wgpuShaderModuleRelease(shaderModule);
+namespace labfont {
+
+WebGPUDevice::~WebGPUDevice() {
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+    if (device) {
+        wgpuDeviceRelease(device);
     }
     if (queue) {
         wgpuQueueRelease(queue);
     }
-    if (device) {
-        wgpuDeviceRelease(device);
-    }
+#endif
 }
 
-} // namespace wgpu
 } // namespace labfont
