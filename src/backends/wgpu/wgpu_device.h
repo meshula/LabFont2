@@ -5,6 +5,7 @@
 #if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
   #include <webgpu/webgpu.h>
   #include <emscripten/emscripten.h>
+  #include <emscripten/html5_webgpu.h>
 #else
   // Forward declarations for development without Emscripten
   typedef struct WGPUDeviceImpl* WGPUDevice;
@@ -21,11 +22,7 @@ namespace labfont {
 class WebGPUDevice {
 public:
     WebGPUDevice() = default;
-    ~WebGPUDevice() {
-        // In a real implementation with WebGPU headers:
-        // if (device) wgpuDeviceRelease(device);
-        // if (queue) wgpuQueueRelease(queue);
-    }
+    ~WebGPUDevice();
 
     WGPUDevice GetDevice() const { return device; }
     WGPUQueue GetQueue() const { return queue; }

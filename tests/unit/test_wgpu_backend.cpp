@@ -4,7 +4,6 @@
 #include "../utils/test_patterns.h"
 
 using namespace labfont;
-using namespace labfont::wgpu;
 
 static MunitResult test_wgpu_initialization(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<WGPUBackend>();

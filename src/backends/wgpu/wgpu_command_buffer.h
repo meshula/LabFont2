@@ -2,40 +2,42 @@
 #define LABFONT_WGPU_COMMAND_BUFFER_H
 
 #include "core/backend.h"
-#include "wgpu_types.h"
-#include "wgpu_vertex.h"
-#include <webgpu/webgpu_cpp.h>
-#include <vector>
+#include "core/vertex.h"
+#include "wgpu_device.h"
+#include "wgpu_render_target.h"
 
 namespace labfont {
 
-class WebGPUDevice;
-class WebGPURenderTarget;
-
-class WGPUCommandBuffer {
+// WebGPU-specific command buffer implementation
+class WebGPUCommandBuffer {
 public:
-    WGPUCommandBuffer(const WebGPUDevice* device);
-    ~WGPUCommandBuffer();
+    WebGPUCommandBuffer(const WebGPUDevice* device);
+    ~WebGPUCommandBuffer();
     
     bool Begin();
+    bool BeginRenderPass(WebGPURenderTarget* target);
+    bool EndRenderPass();
     bool End();
     
-    bool BeginRenderPass(WebGPURenderTarget* target);
-    void EndRenderPass();
-    
     void Clear(const float color[4]);
-    void DrawTriangles(const lab_vertex_2TC* vertices, uint32_t vertexCount);
-    void DrawLines(const lab_vertex_2TC* vertices, uint32_t vertexCount, float lineWidth);
+    void DrawTriangles(const Vertex* vertices, uint32_t vertexCount);
+    void DrawLines(const Vertex* vertices, uint32_t vertexCount, float lineWidth);
+    void SetBlendMode(BlendMode mode);
+    void SetScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     
 private:
-    void UpdateVertexBuffer(const lab_vertex_2TC* vertices, uint32_t vertexCount);
-    
     const WebGPUDevice* m_device;
-    WGPUCommandEncoder m_commandEncoder;
+    
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+    WGPUCommandEncoder m_encoder;
     WGPURenderPassEncoder m_renderPassEncoder;
-    WGPUBuffer m_vertexBuffer;
-    std::vector<WGPUVertex> m_vertexData;
-    size_t m_vertexBufferSize;
+#else
+    void* m_encoder = nullptr;
+    void* m_renderPassEncoder = nullptr;
+#endif
+    
+    bool m_inRenderPass = false;
 };
 
 } // namespace labfont

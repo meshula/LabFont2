@@ -1,14 +1,72 @@
-#include "wgpu_backend.h"
-#include "wgpu_device.h"
+#include "wgpu_texture.h"
 #include <cstring>
-
-#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
-  #include <emscripten/emscripten.h>
-#endif
 
 namespace labfont {
 
 #if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+// Helper function to convert TextureDesc to WGPUTextureDescriptor
+WGPUTextureDescriptor WebGPUTexture::GetWGPUTextureDescriptor(const TextureDesc& desc) {
+    WGPUTextureDescriptor textureDesc = {};
+    
+    // Set texture dimensions
+    textureDesc.size.width = desc.width;
+    textureDesc.size.height = desc.height;
+    textureDesc.size.depthOrArrayLayers = 1;
+    textureDesc.mipLevelCount = 1;
+    textureDesc.sampleCount = 1;
+    textureDesc.dimension = WGPUTextureDimension_2D;
+    
+    // Set format based on TextureFormat
+    switch (desc.format) {
+        case TextureFormat::R8_UNORM:
+            textureDesc.format = WGPUTextureFormat_R8Unorm;
+            break;
+        case TextureFormat::RG8_UNORM:
+            textureDesc.format = WGPUTextureFormat_RG8Unorm;
+            break;
+        case TextureFormat::RGBA8_UNORM:
+            textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+            break;
+        case TextureFormat::R16F:
+            textureDesc.format = WGPUTextureFormat_R16Float;
+            break;
+        case TextureFormat::RG16F:
+            textureDesc.format = WGPUTextureFormat_RG16Float;
+            break;
+        case TextureFormat::RGBA16F:
+            textureDesc.format = WGPUTextureFormat_RGBA16Float;
+            break;
+        case TextureFormat::R32F:
+            textureDesc.format = WGPUTextureFormat_R32Float;
+            break;
+        case TextureFormat::RG32F:
+            textureDesc.format = WGPUTextureFormat_RG32Float;
+            break;
+        case TextureFormat::RGBA32F:
+            textureDesc.format = WGPUTextureFormat_RGBA32Float;
+            break;
+        case TextureFormat::D32F:
+            textureDesc.format = WGPUTextureFormat_Depth32Float;
+            break;
+        default:
+            textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+            break;
+    }
+    
+    // Set usage flags
+    textureDesc.usage = WGPUTextureUsage_CopyDst | WGPUTextureUsage_TextureBinding;
+    
+    if (desc.renderTarget) {
+        textureDesc.usage |= WGPUTextureUsage_RenderAttachment;
+    }
+    
+    if (desc.readback) {
+        textureDesc.usage |= WGPUTextureUsage_CopySrc;
+    }
+    
+    return textureDesc;
+}
+
 // Real implementation for Emscripten builds
 WebGPUTexture::WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc)
     : m_width(desc.width)
@@ -43,6 +101,21 @@ WebGPUTexture::~WebGPUTexture() {
     if (m_texture) {
         wgpuTextureRelease(m_texture);
     }
+}
+#else
+// Stub implementation for non-Emscripten builds
+WebGPUTexture::WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc)
+    : m_width(desc.width)
+    , m_height(desc.height)
+    , m_format(desc.format)
+    , m_renderTarget(desc.renderTarget)
+    , m_readback(desc.readback)
+{
+    // No implementation for non-Emscripten builds
+}
+
+WebGPUTexture::~WebGPUTexture() {
+    // No implementation for non-Emscripten builds
 }
 #endif
 

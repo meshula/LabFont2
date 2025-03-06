@@ -2,24 +2,12 @@
 #define LABFONT_WGPU_BACKEND_H
 
 #include "core/backend.h"
-
-// Forward declarations for WebGPU types to avoid include errors during development
-#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
-  #include <webgpu/webgpu.h>
-#else
-  // Forward declarations for development without Emscripten
-  typedef struct WGPUShaderModuleImpl* WGPUShaderModule;
-  typedef struct WGPURenderPipelineImpl* WGPURenderPipeline;
-  typedef struct WGPUBindGroupLayoutImpl* WGPUBindGroupLayout;
-  typedef struct WGPUTextureImpl* WGPUTexture;
-  typedef struct WGPUTextureViewImpl* WGPUTextureView;
-  typedef struct WGPURenderPassDescriptorImpl* WGPURenderPassDescriptor;
-#endif
+#include "wgpu_device.h"
+#include "wgpu_texture.h"
+#include "wgpu_render_target.h"
+#include "wgpu_command_buffer.h"
 
 namespace labfont {
-
-class WebGPUDevice;
-class WebGPURenderTarget;
 
 class WGPUBackend : public Backend {
 public:
@@ -61,65 +49,26 @@ public:
     
 private:
     std::unique_ptr<WebGPUDevice> m_device;
+    
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
     WGPUShaderModule m_shaderModule = nullptr;
     WGPURenderPipeline m_trianglePipeline = nullptr;
     WGPURenderPipeline m_linePipeline = nullptr;
     WGPUBindGroupLayout m_bindGroupLayout = nullptr;
+#else
+    void* m_shaderModule = nullptr;
+    void* m_trianglePipeline = nullptr;
+    void* m_linePipeline = nullptr;
+    void* m_bindGroupLayout = nullptr;
+#endif
     
     uint32_t m_width = 0;
     uint32_t m_height = 0;
-};
-
-// Forward declarations of WebGPU-specific classes
-// These would be fully implemented in a real build with WebGPU headers
-class WebGPUTexture : public Texture {
-public:
-    WebGPUTexture(const WebGPUDevice* device, const TextureDesc& desc) 
-        : m_width(desc.width), m_height(desc.height), m_format(desc.format),
-          m_renderTarget(false), m_readback(false), m_texture(nullptr), m_textureView(nullptr) {}
-    ~WebGPUTexture() override {}
     
-    uint32_t GetWidth() const override { return m_width; }
-    uint32_t GetHeight() const override { return m_height; }
-    TextureFormat GetFormat() const override { return m_format; }
-    bool IsRenderTarget() const override { return m_renderTarget; }
-    bool SupportsReadback() const override { return m_readback; }
-    
-private:
-    uint32_t m_width;
-    uint32_t m_height;
-    TextureFormat m_format;
-    bool m_renderTarget;
-    bool m_readback;
-    
-    WGPUTexture m_texture;
-    WGPUTextureView m_textureView;
-};
-
-class WebGPURenderTarget : public RenderTarget {
-public:
-    WebGPURenderTarget(const WebGPUDevice* device, const RenderTargetDesc& desc)
-        : m_width(desc.width), m_height(desc.height), m_format(desc.format),
-          m_hasDepth(desc.hasDepth), m_renderPassDesc(nullptr) {}
-    ~WebGPURenderTarget() override {}
-    
-    uint32_t GetWidth() const override { return m_width; }
-    uint32_t GetHeight() const override { return m_height; }
-    TextureFormat GetFormat() const override { return m_format; }
-    bool HasDepth() const override { return m_hasDepth; }
-    
-    Texture* GetColorTexture() override { return m_colorTexture.get(); }
-    Texture* GetDepthTexture() override { return m_depthTexture.get(); }
-    
-private:
-    uint32_t m_width;
-    uint32_t m_height;
-    TextureFormat m_format;
-    bool m_hasDepth;
-    
-    std::shared_ptr<WebGPUTexture> m_colorTexture;
-    std::shared_ptr<WebGPUTexture> m_depthTexture;
-    WGPURenderPassDescriptor* m_renderPassDesc;
+    RenderTarget* m_currentRenderTarget = nullptr;
+    std::unique_ptr<WebGPUCommandBuffer> m_currentCommandBuffer;
+    std::vector<std::shared_ptr<Texture>> m_textures;
+    std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
 };
 
 } // namespace labfont
