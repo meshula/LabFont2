@@ -16,7 +16,8 @@ enum class TextureFormat {
     RGBA16F,
     R32F,
     RG32F,
-    RGBA32F
+    RGBA32F,
+    D32F     // 32-bit floating point depth format with no stencil
 };
 
 struct TextureDesc {

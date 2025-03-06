@@ -2,6 +2,7 @@
 #define LABFONT_VULKAN_TYPES_H
 
 #include "core/backend_types.h"
+#include "core/internal_types.h"
 #include <vulkan/vulkan.h>
 
 // Include portability subset extension

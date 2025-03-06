@@ -57,30 +57,32 @@ static MunitResult test_metal_render_target(const MunitParameter params[], void*
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     
     // Create test vertices for a triangle
-    std::vector<Vertex> vertices = {
+    lab_vertex_2TC vertices[3] = {
         {{-0.5f, -0.5f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
         {{ 0.5f, -0.5f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
         {{ 0.0f,  0.5f}, {0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
     };
     
-    // Submit draw commands
+    // Create C API draw commands
+    lab_draw_command clear_cmd = {
+        .type = LAB_DRAW_COMMAND_CLEAR,
+        .clear = {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f}
+        }
+    };
+    
+    lab_draw_command draw_cmd = {
+        .type = LAB_DRAW_COMMAND_TRIANGLES,
+        .triangles = {
+            .vertices = vertices,
+            .vertexCount = 3
+        }
+    };
+    
+    // Convert to C++ API draw commands
     std::vector<DrawCommand> commands;
-    
-    // Clear command
-    DrawCommand clear;
-    clear.type = DrawCommandType::Clear;
-    clear.clear.color[0] = 0.0f;
-    clear.clear.color[1] = 0.0f;
-    clear.clear.color[2] = 0.0f;
-    clear.clear.color[3] = 1.0f;
-    commands.push_back(clear);
-    
-    // Draw triangle
-    DrawCommand draw;
-    draw.type = DrawCommandType::DrawTriangles;
-    draw.triangles.vertices = vertices.data();
-    draw.triangles.vertexCount = (int) vertices.size();
-    commands.push_back(draw);
+    commands.push_back(DrawCommand(clear_cmd));
+    commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);

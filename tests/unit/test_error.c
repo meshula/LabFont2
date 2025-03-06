@@ -29,7 +29,13 @@ static MunitResult test_error_propagation(const MunitParameter params[], void* d
     lab_context ctx = NULL;
     lab_context_desc desc = {0};  // Invalid desc (width and height are 0)
     
-    lab_result result = lab_create_context(LAB_BACKEND_METAL, &desc, &ctx);
+    lab_backend_desc backend_desc = {
+        .type = LAB_BACKEND_METAL,
+        .width = desc.width,
+        .height = desc.height,
+        .native_window = desc.native_window
+    };
+    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
     munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
     munit_assert_not_null(result.message);
     
@@ -37,7 +43,7 @@ static MunitResult test_error_propagation(const MunitParameter params[], void* d
     lab_texture tex = NULL;
     lab_texture_desc tex_desc = {0};  // Invalid desc (width and height are 0)
     
-    result = lab_create_texture(ctx, "test", &tex_desc, &tex);
+    result = lab_create_texture(ctx, &tex_desc, &tex);
     munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
     munit_assert_not_null(result.message);
 
@@ -56,14 +62,20 @@ static MunitResult test_error_clearing(const MunitParameter params[], void* data
     };
     
     // First operation should succeed
-    lab_result result = lab_create_context(LAB_BACKEND_METAL, &desc, &ctx);
+    lab_backend_desc backend_desc = {
+        .type = LAB_BACKEND_METAL,
+        .width = desc.width,
+        .height = desc.height,
+        .native_window = desc.native_window
+    };
+    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     munit_assert_null(result.message);
     
     // Failed operation
     lab_texture tex = NULL;
     lab_texture_desc tex_desc = {0};  // Invalid desc
-    result = lab_create_texture(ctx, "test", &tex_desc, &tex);
+    result = lab_create_texture(ctx, &tex_desc, &tex);
     munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
     
     // Next valid operation should succeed with no error
@@ -72,7 +84,7 @@ static MunitResult test_error_clearing(const MunitParameter params[], void* data
         .height = 256,
         .format = 1
     };
-    result = lab_create_texture(ctx, "test2", &valid_desc, &tex);
+    result = lab_create_texture(ctx, &valid_desc, &tex);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     munit_assert_null(result.message);
     

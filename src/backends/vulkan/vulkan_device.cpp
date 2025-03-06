@@ -184,12 +184,8 @@ VkFormat VulkanDevice::GetVulkanFormat(TextureFormat format) const {
             return VK_FORMAT_R32G32_SFLOAT;
         case TextureFormat::RGBA32F:
             return VK_FORMAT_R32G32B32A32_SFLOAT;
-        case TextureFormat::D24S8:
-#ifdef __APPLE__
-            return VK_FORMAT_D32_SFLOAT_S8_UINT;
-#else
-            return VK_FORMAT_D24_UNORM_S8_UINT;
-#endif
+        case TextureFormat::D32F:
+            return VK_FORMAT_D32_SFLOAT;
         default:
             assert(false && "Unsupported texture format");
             return VK_FORMAT_UNDEFINED;
@@ -210,7 +206,7 @@ bool VulkanDevice::SupportsFormat(TextureFormat format) const {
     
     // For depth/stencil format, check depth/stencil attachment support
     bool supportsDepthStencil = true;
-    if (format == TextureFormat::D24S8) {
+    if (format == TextureFormat::D32F) {
         supportsDepthStencil = (props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
         return supportsDepthStencil;  // Don't check color support for depth formats
     }

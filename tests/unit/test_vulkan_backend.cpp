@@ -59,30 +59,32 @@ static MunitResult test_vulkan_render_target(const MunitParameter params[], void
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
     
     // Create test vertices for a triangle
-    std::vector<Vertex> vertices = {
+    lab_vertex_2TC vertices[3] = {
         {{-0.5f, -0.5f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
         {{ 0.5f, -0.5f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
         {{ 0.0f,  0.5f}, {0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}
     };
     
-    // Submit draw commands
+    // Create C API draw commands
+    lab_draw_command clear_cmd = {
+        .type = LAB_DRAW_COMMAND_CLEAR,
+        .clear = {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f}
+        }
+    };
+    
+    lab_draw_command draw_cmd = {
+        .type = LAB_DRAW_COMMAND_TRIANGLES,
+        .triangles = {
+            .vertices = vertices,
+            .vertexCount = 3
+        }
+    };
+    
+    // Convert to C++ API draw commands
     std::vector<DrawCommand> commands;
-    
-    // Clear command
-    DrawCommand clear;
-    clear.type = DrawCommandType::Clear;
-    clear.clear.color[0] = 0.0f;
-    clear.clear.color[1] = 0.0f;
-    clear.clear.color[2] = 0.0f;
-    clear.clear.color[3] = 1.0f;
-    commands.push_back(clear);
-    
-    // Draw triangle
-    DrawCommand draw;
-    draw.type = DrawCommandType::DrawTriangles;
-    draw.triangles.vertices = vertices.data();
-    draw.triangles.vertexCount = vertices.size();
-    commands.push_back(draw);
+    commands.push_back(DrawCommand(clear_cmd));
+    commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
     munit_assert_int(result.error, ==, LAB_ERROR_NONE);
@@ -118,10 +120,12 @@ static MunitResult test_vulkan_texture(const MunitParameter params[], void* data
     munit_assert_not_null(texture.get());
     
     // Generate test pattern
+    uint8_t color1[] = {255, 0, 0, 255};  // Red
+    uint8_t color2[] = {0, 255, 0, 255};  // Green
     std::vector<uint8_t> pattern = PatternGenerator::GenerateCheckerboard<uint8_t>(
         256, 256, 32,
-        new uint8_t[4]{255, 0, 0, 255},    // Red
-        new uint8_t[4]{0, 255, 0, 255},    // Green
+        color1,
+        color2,
         4  // RGBA
     );
     

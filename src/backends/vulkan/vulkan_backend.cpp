@@ -108,16 +108,16 @@ VulkanRenderTarget::VulkanRenderTarget(const labfont::RenderTargetDesc& desc, Vu
     colorDesc.readback = false;
     m_colorTexture = std::make_shared<VulkanTexture>(colorDesc, device);
 
-    // Create depth texture if needed
-    if (m_hasDepth) {
-        labfont::TextureDesc depthDesc = {};
-        depthDesc.width = m_width;
-        depthDesc.height = m_height;
-        depthDesc.format = TextureFormat::D24S8;
-        depthDesc.renderTarget = true;
-        depthDesc.readback = false;
-        m_depthTexture = std::make_shared<VulkanTexture>(depthDesc, device);
-    }
+        // Create depth texture if needed
+        if (m_hasDepth) {
+            labfont::TextureDesc depthDesc = {};
+            depthDesc.width = m_width;
+            depthDesc.height = m_height;
+            depthDesc.format = TextureFormat::D32F;
+            depthDesc.renderTarget = true;
+            depthDesc.readback = false;
+            m_depthTexture = std::make_shared<VulkanTexture>(depthDesc, device);
+        }
 
     // Create render pass
     std::vector<VkAttachmentDescription> attachments;
@@ -144,11 +144,11 @@ VulkanRenderTarget::VulkanRenderTarget(const labfont::RenderTargetDesc& desc, Vu
     // Depth attachment if needed
     if (m_hasDepth) {
         VkAttachmentDescription depthAttachment = {};
-        depthAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
+        depthAttachment.format = VK_FORMAT_D32_SFLOAT;
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

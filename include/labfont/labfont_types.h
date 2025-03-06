@@ -37,7 +37,8 @@ typedef enum lab_texture_format {
     LAB_FORMAT_RGBA16F,
     LAB_FORMAT_R32F,
     LAB_FORMAT_RG32F,
-    LAB_FORMAT_RGBA32F
+    LAB_FORMAT_RGBA32F,
+    LAB_FORMAT_D32F     /* 32-bit floating point depth format with no stencil */
 } lab_texture_format;
 
 /* Backend types */

@@ -209,9 +209,10 @@ def create_build_scripts(vulkan_sdk_path, emscripten_path, has_glfw):
         if platform.system() != 'Windows':
             os.chmod(f'build_vk{script_ext}', 0o755)
     
-    # Create WebAssembly build script if Emscripten was found
-    if emscripten_path:
-        with open(f'build_wasm{script_ext}', 'w') as f:
+    # Create WebAssembly build script
+    with open(f'build_wasm{script_ext}', 'w') as f:
+        if emscripten_path:
+            # If Emscripten was found, create a normal build script
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 if emscripten_path is not True:  # If we found a specific path
@@ -238,10 +239,38 @@ def create_build_scripts(vulkan_sdk_path, emscripten_path, has_glfw):
                 f.write('emmake make -j$(nproc 2>/dev/null || echo 4)  # Use 4 cores if nproc not available\n\n')
                 f.write('echo "Build complete. Run \'npx http-server build_wasm\' to start the server"\n')
                 f.write('echo "Then open http://localhost:8080/labfont_wgpu_tests.html in Chrome"\n')
+        else:
+            # If Emscripten was not found, create a script that informs the user
+            if platform.system() == 'Windows':
+                f.write('@echo off\n')
+                f.write('echo Emscripten SDK not found. WebAssembly builds require Emscripten.\n')
+                f.write('echo To install Emscripten, follow these steps:\n')
+                f.write('echo 1. Choose a location for Emscripten SDK (e.g., your home directory)\n')
+                f.write('echo 2. Open a terminal and navigate to that location\n')
+                f.write('echo 3. git clone https://github.com/emscripten-core/emsdk.git\n')
+                f.write('echo 4. cd emsdk\n')
+                f.write('echo 5. emsdk install latest\n')
+                f.write('echo 6. emsdk activate latest\n')
+                f.write('echo 7. Add the following to your shell profile (.bashrc, .zshrc, etc.):\n')
+                f.write('echo    source /path/to/emsdk/emsdk_env.sh\n')
+                f.write('echo 8. Run configure.py again after installation\n')
+            else:
+                f.write('#!/bin/bash\n')
+                f.write('echo "Emscripten SDK not found. WebAssembly builds require Emscripten."\n')
+                f.write('echo "To install Emscripten, follow these steps:"\n')
+                f.write('echo "1. Choose a location for Emscripten SDK (e.g., your home directory)"\n')
+                f.write('echo "2. Open a terminal and navigate to that location"\n')
+                f.write('echo "3. git clone https://github.com/emscripten-core/emsdk.git"\n')
+                f.write('echo "4. cd emsdk"\n')
+                f.write('echo "5. ./emsdk install latest"\n')
+                f.write('echo "6. ./emsdk activate latest"\n')
+                f.write('echo "7. Add the following to your shell profile (.bashrc, .zshrc, etc.):"\n')
+                f.write('echo "   source /path/to/emsdk/emsdk_env.sh"\n')
+                f.write('echo "8. Run configure.py again after installation"\n')
         
-        # Make the script executable on Unix-like systems
-        if platform.system() != 'Windows':
-            os.chmod(f'build_wasm{script_ext}', 0o755)
+    # Make the script executable on Unix-like systems
+    if platform.system() != 'Windows':
+        os.chmod(f'build_wasm{script_ext}', 0o755)
     
     # Create Metal build script if on macOS
     if platform.system() == 'Darwin':

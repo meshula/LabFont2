@@ -3,8 +3,54 @@
 
 #include "labfont/labfont_types.h"
 #include "labfont/labfont.h"
+#include <vector>
+#include <cmath>
+#include <cstring>
 
 #ifdef __cplusplus
+// C++ utility classes for test patterns
+namespace PatternGenerator {
+    template<typename T>
+    std::vector<T> GenerateCheckerboard(
+        uint32_t width, uint32_t height, 
+        uint32_t blockSize,
+        const T* color1, const T* color2, 
+        uint32_t channels
+    ) {
+        std::vector<T> data(width * height * channels);
+        
+        for (uint32_t y = 0; y < height; y++) {
+            for (uint32_t x = 0; x < width; x++) {
+                bool isColor1 = ((x / blockSize) + (y / blockSize)) % 2 == 0;
+                const T* color = isColor1 ? color1 : color2;
+                
+                for (uint32_t c = 0; c < channels; c++) {
+                    data[(y * width + x) * channels + c] = color[c];
+                }
+            }
+        }
+        
+        return data;
+    }
+}
+
+namespace PixelComparator {
+    template<typename T>
+    bool CompareBuffers(
+        const T* buffer1, const T* buffer2,
+        uint32_t pixelCount, uint32_t channels,
+        T tolerance
+    ) {
+        for (uint32_t i = 0; i < pixelCount * channels; i++) {
+            T diff = std::abs(buffer1[i] - buffer2[i]);
+            if (diff > tolerance) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
 extern "C" {
 #endif
 

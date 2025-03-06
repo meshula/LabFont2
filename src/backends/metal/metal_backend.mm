@@ -15,7 +15,6 @@ namespace {
             case TextureFormat::R16F:        return MTLPixelFormatR16Float;
             case TextureFormat::RGBA16F:     return MTLPixelFormatRGBA16Float;
             case TextureFormat::R32F:        return MTLPixelFormatR32Float;
-            case TextureFormat::D24S8:       return MTLPixelFormatDepth24Unorm_Stencil8;
             case TextureFormat::D32F:        return MTLPixelFormatDepth32Float;
             default:
                 std::cerr << "Unsupported texture format" << std::endl;

@@ -26,6 +26,8 @@ inline WGPUTextureFormat GetWGPUTextureFormat(TextureFormat format) {
             return WGPUTextureFormat_RG32Float;
         case TextureFormat::RGBA32F:
             return WGPUTextureFormat_RGBA32Float;
+        case TextureFormat::D32F:
+            return WGPUTextureFormat_Depth32Float;
         default:
             return WGPUTextureFormat_Undefined;
     }
