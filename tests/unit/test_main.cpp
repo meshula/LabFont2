@@ -2,12 +2,14 @@
 
 /* Forward declarations of test suites */
 extern "C" {
+    // CPU backend test suites
     extern MunitSuite context_suite;
     extern MunitSuite resource_suite;
     extern MunitSuite error_suite;
     extern MunitSuite memory_suite;
     extern MunitSuite backend_suite;
     
+    // Other backend test suites
     #ifdef LABFONT_VULKAN_ENABLED
     extern MunitSuite vulkan_suite;
     #endif

@@ -12,11 +12,11 @@ target_include_directories(munit PUBLIC
 # Unit tests executable
 add_executable(labfont_tests
     unit/test_main.cpp
-    unit/test_context.c
-    unit/test_resources.c
-    unit/test_error.c
-    unit/test_memory.c
-    unit/test_backend.cpp
+    unit/test_cpu_context.c
+    unit/test_cpu_resources.c
+    unit/test_cpu_error.c
+    unit/test_cpu_memory.c
+    unit/test_cpu_backend.cpp
 )
 
 # Add backend-specific tests based on enabled backends

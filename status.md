@@ -17,9 +17,20 @@ This report documents the current status of LabFont2 after cloning the repositor
 
 ## Test Status
 
+### Test Organization
+
+| Backend | Context | Resources | Error | Memory | Backend-specific |
+|---------|---------|-----------|-------|--------|-----------------|
+| CPU     | ✅ test_cpu_context.c | ✅ test_cpu_resources.c | ✅ test_cpu_error.c | ✅ test_cpu_memory.c | ✅ test_cpu_backend.cpp |
+| Metal   | - | - | - | - | ✅ test_metal_backend.cpp |
+| Vulkan  | - | - | - | - | ✅ test_vulkan_backend.cpp |
+| WebGPU  | - | - | - | - | ✅ test_wgpu_backend.cpp |
+
+### Test Status Summary
+
 | Test Suite | Status | Notes |
 |------------|--------|-------|
-| Unit Tests | ⚠️ Partial | Some core tests pass, but many tests fail with assertion errors. Vulkan tests fail with errors related to MoltenVK. |
+| Unit Tests | ⚠️ Partial | Tests now follow the naming convention `test_BACKEND_feature.c/cpp`. Some core tests pass, but many tests fail with assertion errors. Vulkan tests fail with errors related to MoltenVK. |
 
 ## Evaluation
 
@@ -68,18 +79,29 @@ The project's README advertises features that don't appear to be fully implement
 ### For LabFont2 Authors
 
 1. **Fix Backend Implementations**: Address the compilation errors in the WebGPU backend.
+   - The WebGPU backend fails with "allocation of incomplete type 'labfont::WebGPUDevice'" errors
+   - Implement the WebGPUDevice class that is currently only forward-declared
 
-2. **Update Tests**: Ensure tests are in sync with the current API implementation and fix failing tests.
+2. **Fix Backend Test Failures**: 
+   - Metal backend tests fail with assertion errors (LAB_ERROR_NONE vs -7)
+   - Vulkan backend tests fail with errors related to MoltenVK (duplicate class implementation)
+   - Resolve the conflict between multiple MoltenVK libraries on macOS
 
-3. **Clarify Dependencies**: Update the README with a complete list of dependencies, including GLFW for examples.
+3. **Standardize Test Organization**:
+   - Consider creating Metal, Vulkan, and WebGPU versions of the context, resources, error, and memory tests
+   - Follow the established naming convention `test_BACKEND_feature.c/cpp` for all tests
 
-4. **Provide Build Instructions for All Platforms**: The current build scripts are macOS-specific and some have hardcoded paths.
+4. **Clarify Dependencies**: Update the README with a complete list of dependencies, including GLFW for examples.
 
-5. **Implement Missing Features**: Several advertised features like text rendering with styling and layout appear to be incomplete.
+5. **Provide Build Instructions for All Platforms**: The current build scripts are macOS-specific and some have hardcoded paths.
 
-6. **Add Documentation**: Provide more detailed documentation on how to use the library and its various features.
+6. **Implement Missing Features**: Several advertised features like text rendering with styling and layout appear to be incomplete.
 
-7. **Include Sample Fonts**: Consider including sample fonts for testing and examples.
+7. **Add Documentation**: Provide more detailed documentation on how to use the library and its various features.
+
+8. **Include Sample Fonts**: Consider including sample fonts for testing and examples.
+
+9. **Improve Error Handling**: The current error codes (-7) are not descriptive enough. Consider adding more specific error codes and messages.
 
 #### Checklist (Prioritized by Dependencies)
 

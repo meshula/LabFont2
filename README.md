@@ -85,6 +85,21 @@ cd build
 ctest
 ```
 
+### Test Organization
+
+Unit tests follow the naming convention `test_BACKEND_feature.c/cpp`:
+
+- `test_cpu_context.c` - Tests for context creation and management using the CPU backend
+- `test_cpu_resources.c` - Tests for resource creation and management using the CPU backend
+- `test_cpu_error.c` - Tests for error handling using the CPU backend
+- `test_cpu_memory.c` - Tests for memory management using the CPU backend
+- `test_cpu_backend.cpp` - Tests for CPU backend-specific functionality
+- `test_metal_backend.cpp` - Tests for Metal backend-specific functionality
+- `test_vulkan_backend.cpp` - Tests for Vulkan backend-specific functionality
+- `test_wgpu_backend.cpp` - Tests for WebGPU backend-specific functionality
+
+This organization ensures clear separation between tests for different backends and makes it easier to understand which backend is being tested.
+
 ## License
 
 TBD
