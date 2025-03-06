@@ -76,39 +76,13 @@ The project's README advertises features that don't appear to be fully implement
 - [ ] Analyze WebGPU backend implementation requirements
 
 
-### For LabFont2 Authors
+### Author's Prioritized Checklist
 
-1. **Fix Backend Implementations**: Address the compilation errors in the WebGPU backend.
-   - The WebGPU backend fails with "allocation of incomplete type 'labfont::WebGPUDevice'" errors
-   - Implement the WebGPUDevice class that is currently only forward-declared
-
-2. **Fix Backend Test Failures**: 
-   - Metal backend tests fail with assertion errors (LAB_ERROR_NONE vs -7)
-   - Vulkan backend tests fail with errors related to MoltenVK (duplicate class implementation)
-   - Resolve the conflict between multiple MoltenVK libraries on macOS
-
-3. **Standardize Test Organization**:
-   - Consider creating Metal, Vulkan, and WebGPU versions of the context, resources, error, and memory tests
-   - Follow the established naming convention `test_BACKEND_feature.c/cpp` for all tests
-
-4. **Clarify Dependencies**: Update the README with a complete list of dependencies, including GLFW for examples.
-
-5. **Provide Build Instructions for All Platforms**: The current build scripts are macOS-specific and some have hardcoded paths.
-
-6. **Implement Missing Features**: Several advertised features like text rendering with styling and layout appear to be incomplete.
-
-7. **Add Documentation**: Provide more detailed documentation on how to use the library and its various features.
-
-8. **Include Sample Fonts**: Consider including sample fonts for testing and examples.
-
-9. **Improve Error Handling**: The current error codes (-7) are not descriptive enough. Consider adding more specific error codes and messages.
-
-#### Checklist (Prioritized by Dependencies)
-
-1. **Core API and Type Definitions**:
+1. **Core Functionality and Error Handling**:
    - [x] Define and implement missing core types (Vertex, DrawCommand, etc.)
    - [x] Ensure consistent enum definitions across the codebase
    - [x] Implement missing core functions (CreateBackend, lab_create_buffer, lab_create_texture)
+   - [x] Improve error handling with more descriptive error codes and messages (current -7 error code is not descriptive)
 
 2. **Backend Implementations**:
    - [x] Fix Metal backend errors
@@ -116,31 +90,44 @@ The project's README advertises features that don't appear to be fully implement
    - [ ] Fix WebGPU backend errors:
      - [x] Update build_wasm.sh to properly source the Emscripten environment
      - [x] Implement conditional compilation for WebGPU headers
+     - [ ] Implement the WebGPUDevice class that is currently only forward-declared
      - [ ] Fix namespace inconsistencies (wgpu::WGPUBackend vs labfont::WGPUBackend)
      - [ ] Resolve redefinition errors in wgpu_texture.cpp
      - [ ] Fix incomplete type errors and forward declarations
      - [ ] Complete the WebGPUDevice class implementation
      - [ ] Implement missing WebGPU backend functionality
 
-3. **Examples and Tests**:
+3. **Test Framework and Fixes**:
+   - [x] Standardize test naming convention to `test_BACKEND_feature.c/cpp`
+   - [ ] Fix backend test failures:
+     - [ ] Address assertion failures in Metal tests (LAB_ERROR_NONE vs -7)
+     - [ ] Fix MoltenVK conflicts in Vulkan tests (duplicate class implementation)
+     - [ ] Resolve conflicts between multiple MoltenVK libraries on macOS
+   - [ ] Expand test coverage:
+     - [ ] Create Metal, Vulkan, and WebGPU versions of context, resources, error, and memory tests
+     - [ ] Add more comprehensive tests for each backend
+
+4. **Examples and Documentation**:
    - [ ] Fix examples:
      - [ ] Refactor examples/basic/drawing_main.cpp to use the LabFont abstraction instead of direct WebGPU headers
      - [ ] Create simpler examples that demonstrate core functionality without requiring all backends
-   - [ ] Fix test failures:
-     - [ ] Address assertion failures in core tests (LAB_ERROR_NONE vs actual error codes)
-     - [ ] Fix the MoltenVK conflicts in Vulkan tests
-     - [ ] Add more comprehensive tests for each backend
-
-4. **Documentation and Resources**:
    - [ ] Add API documentation:
      - [ ] Document public interfaces
      - [ ] Create usage examples for common tasks
      - [ ] Document the architecture and design decisions
-   - [ ] Include sample fonts in the repository
+   - [ ] Include sample fonts for testing and examples
 
-5. **Build System**:
+5. **Build System and Dependencies**:
    - [x] Improve build scripts
+   - [ ] Clarify dependencies in README (including GLFW for examples)
    - [ ] Enhance build system:
+     - [ ] Provide build instructions for all platforms (current scripts are macOS-specific)
+     - [ ] Remove hardcoded paths from build scripts
      - [ ] Improve cross-platform support
      - [ ] Add better dependency management
-     - [ ] Create a more robust testing framework
+
+6. **Feature Implementation**:
+   - [ ] Implement missing advertised features:
+     - [ ] Text rendering with styling
+     - [ ] Text layout capabilities
+     - [ ] Additional drawing operations
