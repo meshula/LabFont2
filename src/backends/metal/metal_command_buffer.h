@@ -3,6 +3,8 @@
 
 #include "metal_types.h"
 #include "core/backend_types.h"
+#include "core/vertex.h"
+#include "core/internal_types.h"
 #include <vector>
 
 namespace labfont {

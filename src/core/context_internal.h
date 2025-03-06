@@ -44,6 +44,9 @@ public:
 protected:
     Context() = default;  // Protected constructor, use Create() instead
     
+    // Factory method to create the appropriate backend
+    std::unique_ptr<Backend> CreateBackend(lab_backend_type type);
+    
     lab_result Initialize(lab_backend_type type, const lab_context_desc* desc);
     
     std::unique_ptr<Backend> m_backend;

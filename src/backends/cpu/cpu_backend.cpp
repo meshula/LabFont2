@@ -23,7 +23,7 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
     // Process each command
     for (const auto& cmd : commands) {
         switch (cmd.type) {
-            case LAB_DRAW_COMMAND_CLEAR: {
+            case DrawCommandType::Clear: {
                 // Convert float color to uint8_t
                 uint8_t clearColor[4];
                 for (int i = 0; i < 4; ++i) {
@@ -37,7 +37,7 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 break;
             }
             
-            case LAB_DRAW_COMMAND_TRIANGLES: {
+            case DrawCommandType::DrawTriangles: {
                 const auto& params = cmd.triangles;
                 for (uint32_t i = 0; i < params.vertexCount; i += 3) {
                     cpu::DrawTriangle(
@@ -52,7 +52,7 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 break;
             }
             
-            case LAB_DRAW_COMMAND_LINES: {
+            case DrawCommandType::DrawLines: {
                 const auto& params = cmd.lines;
                 for (uint32_t i = 0; i < params.vertexCount; i += 2) {
                     cpu::DrawLine(

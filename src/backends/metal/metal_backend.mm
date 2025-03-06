@@ -430,13 +430,25 @@ lab_result MetalBackend::SubmitCommands(const std::vector<DrawCommand>& commands
             
             case DrawCommandType::DrawTriangles: {
                 const auto& params = cmd.triangles;
-                m_currentCommandBuffer->DrawTriangles(params.vertices, params.vertexCount);
+                // Convert lab_vertex_2TC to Vertex
+                std::vector<Vertex> vertices;
+                vertices.reserve(params.vertexCount);
+                for (uint32_t i = 0; i < params.vertexCount; ++i) {
+                    vertices.push_back(Vertex(params.vertices[i]));
+                }
+                m_currentCommandBuffer->DrawTriangles(vertices.data(), params.vertexCount);
                 break;
             }
             
             case DrawCommandType::DrawLines: {
                 const auto& params = cmd.lines;
-                m_currentCommandBuffer->DrawLines(params.vertices, params.vertexCount, params.lineWidth);
+                // Convert lab_vertex_2TC to Vertex
+                std::vector<Vertex> vertices;
+                vertices.reserve(params.vertexCount);
+                for (uint32_t i = 0; i < params.vertexCount; ++i) {
+                    vertices.push_back(Vertex(params.vertices[i]));
+                }
+                m_currentCommandBuffer->DrawLines(vertices.data(), params.vertexCount, params.lineWidth);
                 break;
             }
             

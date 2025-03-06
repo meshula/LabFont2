@@ -1,6 +1,7 @@
 #include "resource_manager.h"
 #include "backend.h"
 #include "error_macros.h"
+#include "context_internal.h"
 #include <cassert>
 
 namespace labfont {
@@ -122,3 +123,87 @@ void ResourceManagerImpl::RemoveResource(const std::string& name)
 }
 
 } // namespace labfont
+
+// C API implementations for resource management
+extern "C" {
+
+lab_operation_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture) {
+    if (!ctx || !desc || !out_texture) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    // Convert C API texture desc to internal format
+    labfont::TextureParams params;
+    params.width = desc->width;
+    params.height = desc->height;
+    params.format = static_cast<labfont::TextureFormat>(desc->format);
+    params.data = desc->initial_data;
+    
+    // Generate a unique name for the texture
+    std::string name = "texture_" + std::to_string(reinterpret_cast<uintptr_t>(desc));
+    
+    std::shared_ptr<labfont::TextureResource> texture;
+    auto result = resourceManager->CreateTexture(name, params, texture);
+    
+    if (result.error == LAB_ERROR_NONE) {
+        *out_texture = reinterpret_cast<lab_texture>(texture.get());
+    }
+    
+    return result;
+}
+
+void lab_destroy_texture(lab_context ctx, lab_texture texture) {
+    if (!ctx || !texture) {
+        return;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    auto textureResource = reinterpret_cast<labfont::TextureResource*>(texture);
+    resourceManager->DestroyResource(textureResource->GetName());
+}
+
+lab_operation_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* desc, lab_buffer* out_buffer) {
+    if (!ctx || !desc || !out_buffer) {
+        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    // Convert C API buffer desc to internal format
+    labfont::BufferParams params;
+    params.size = desc->size;
+    params.dynamic = desc->dynamic;
+    params.data = desc->initial_data;
+    
+    // Generate a unique name for the buffer
+    std::string name = "buffer_" + std::to_string(reinterpret_cast<uintptr_t>(desc));
+    
+    std::shared_ptr<labfont::BufferResource> buffer;
+    auto result = resourceManager->CreateBuffer(name, params, buffer);
+    
+    if (result.error == LAB_ERROR_NONE) {
+        *out_buffer = reinterpret_cast<lab_buffer>(buffer.get());
+    }
+    
+    return result;
+}
+
+void lab_destroy_buffer(lab_context ctx, lab_buffer buffer) {
+    if (!ctx || !buffer) {
+        return;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    auto bufferResource = reinterpret_cast<labfont::BufferResource*>(buffer);
+    resourceManager->DestroyResource(bufferResource->GetName());
+}
+
+} // extern "C"

@@ -36,6 +36,30 @@ lab_result Context::Create(lab_backend_type type, const lab_context_desc* desc, 
     return lab_result(LAB_ERROR_NONE);
 }
 
+// Factory function to create the appropriate backend based on the backend type
+std::unique_ptr<Backend> Context::CreateBackend(lab_backend_type type) {
+    switch (type) {
+#ifdef LABFONT_METAL_ENABLED
+        case LAB_BACKEND_METAL:
+            return std::make_unique<metal::MetalBackend>();
+#endif
+#ifdef LABFONT_WGPU_ENABLED
+        case LAB_BACKEND_WGPU:
+            return std::make_unique<wgpu::WGPUBackend>();
+#endif
+#ifdef LABFONT_VULKAN_ENABLED
+        case LAB_BACKEND_VULKAN:
+            return std::make_unique<vulkan::VulkanBackend>();
+#endif
+#ifdef LABFONT_DX11_ENABLED
+        case LAB_BACKEND_DX11:
+            return std::make_unique<dx11::DX11Backend>();
+#endif
+        default:
+            return nullptr;
+    }
+}
+
 lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* desc) {
     m_backend = CreateBackend(type);
     if (!m_backend) {

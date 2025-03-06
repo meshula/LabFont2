@@ -2,6 +2,7 @@
 #define LABFONT_RESOURCE_H
 
 #include "backend_types.h"
+#include "internal_types.h"
 #include <string>
 #include <memory>
 
@@ -41,7 +42,7 @@ private:
 // Texture resource
 class TextureResource : public Resource {
 public:
-    TextureResource(const std::string& name, unsigned int width, unsigned int height, unsigned int format)
+    TextureResource(const std::string& name, unsigned int width, unsigned int height, TextureFormat format)
         : Resource(ResourceType::Texture, name)
         , m_width(width)
         , m_height(height)
@@ -49,12 +50,12 @@ public:
     
     unsigned int GetWidth() const { return m_width; }
     unsigned int GetHeight() const { return m_height; }
-    unsigned int GetFormat() const { return m_format; }
+    TextureFormat GetFormat() const { return m_format; }
 
 private:
     unsigned int m_width;
     unsigned int m_height;
-    unsigned int m_format;
+    TextureFormat m_format;
 };
 
 // Buffer resource
@@ -77,14 +78,14 @@ private:
 struct TextureParams {
     unsigned int width;
     unsigned int height;
-    unsigned int format;
-    const void* initial_data;
+    TextureFormat format;  // Changed from unsigned int to TextureFormat
+    const void* data;      // Changed from initial_data to data to match usage
 };
 
 struct BufferParams {
     size_t size;
     bool dynamic;
-    const void* initial_data;
+    const void* data;      // Changed from initial_data to data to match usage
 };
 
 // Resource manager interface
