@@ -5,15 +5,8 @@ out/
 cmake-build-*/
 
 # Generated build scripts
-build_core.sh
-build_core.bat
-build_vk.sh
-build_vk.bat
-build_mtl.sh
-build_wasm.sh
-build_wasm.bat
-build_examples.sh
-build_examples.bat
+build*.sh
+build*.bat
 
 # IDE files
 .vscode/
@@ -44,3 +37,10 @@ compile_commands.json
 
 # Test output
 Testing/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
