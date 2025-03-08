@@ -11,12 +11,19 @@ The implementation is organized in a modular way, with separate classes for
 different aspects of the configuration process.
 """
 
+import argparse
 from config.configuration_manager import ConfigurationManager
 
 
 def main():
     """Main function to configure the build environment."""
-    config_manager = ConfigurationManager()
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Configure LabFont2 build environment")
+    parser.add_argument("--xcode", action="store_true", help="Use Xcode generator instead of make")
+    args = parser.parse_args()
+    
+    # Create configuration manager with parsed arguments
+    config_manager = ConfigurationManager(use_xcode=args.xcode)
     config_manager.configure()
 
 

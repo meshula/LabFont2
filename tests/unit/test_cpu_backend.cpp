@@ -19,7 +19,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
     auto backend = std::make_unique<CPUBackend>();
     
     // Initialize backend
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture
@@ -49,7 +49,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
 
 static MunitResult test_texture_update(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture
@@ -101,7 +101,7 @@ static MunitResult test_texture_update(const MunitParameter params[], void* data
 
 static MunitResult test_render_target(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target
@@ -140,7 +140,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
 
 static MunitResult test_draw_commands(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target

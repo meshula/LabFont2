@@ -32,6 +32,9 @@ bool InitWindow() {
     return true;
 }
 
+// Global render target
+lab_render_target render_target = nullptr;
+
 // Initialize LabFont context
 bool InitLabFont() {
     // Create a backend descriptor
@@ -46,6 +49,27 @@ bool InitLabFont() {
     lab_result result = lab_create_context(&backend_desc, &context);
     if (result != LAB_RESULT_OK) {
         std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result);
+        return false;
+    }
+
+    // Create a render target
+    lab_render_target_desc rt_desc = {
+        .width = kWidth,
+        .height = kHeight,
+        .format = LAB_FORMAT_RGBA8_UNORM,
+        .hasDepth = true
+    };
+    
+    result = lab_create_render_target(context, &rt_desc, &render_target);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to create render target: " << lab_get_error_string(result);
+        return false;
+    }
+    
+    // Set the render target
+    result = lab_set_render_target(context, render_target);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to set render target: " << lab_get_error_string(result);
         return false;
     }
 
@@ -122,10 +146,17 @@ lab_result Render() {
         std::cerr << "Failed to end frame: " << lab_get_error_string(result);
         return result;
     }
+    
+    return LAB_RESULT_OK;
 }
 
 // Cleanup resources
 void Cleanup() {
+    if (render_target && context) {
+        lab_destroy_render_target(context, render_target);
+        render_target = nullptr;
+    }
+    
     if (context) {
         lab_destroy_context(context);
         context = nullptr;

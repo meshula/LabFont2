@@ -19,13 +19,19 @@ class ConfigurationManager:
     Class that orchestrates the configuration process.
     """
 
-    def __init__(self):
-        """Initialize the ConfigurationManager."""
+    def __init__(self, use_xcode=False):
+        """
+        Initialize the ConfigurationManager.
+        
+        Args:
+            use_xcode (bool, optional): Whether to use Xcode generator instead of make. Defaults to False.
+        """
         self.dependency_detector = DependencyDetector()
         self.vulkan_sdk_path = None
         self.emscripten_path = None
         self.has_glfw = False
         self.has_tkinter = self._check_tkinter()
+        self.use_xcode = use_xcode
 
     @staticmethod
     def _check_tkinter():
@@ -158,9 +164,17 @@ class ConfigurationManager:
         script_generator = ScriptGenerator(
             vulkan_sdk_path=self.vulkan_sdk_path,
             emscripten_path=self.emscripten_path,
-            has_glfw=self.has_glfw
+            has_glfw=self.has_glfw,
+            use_xcode=self.use_xcode
         )
         script_generator.generate_all_scripts()
+        
+        # Print information about the generator being used
+        if self.use_xcode:
+            print("Using Xcode generator for CMake")
+        else:
+            print("Using default generator for CMake")
+            
         print("Build scripts created successfully.")
 
     def _update_readme(self):

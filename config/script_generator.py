@@ -14,7 +14,7 @@ class ScriptGenerator:
     Class for generating build scripts for different backends.
     """
 
-    def __init__(self, vulkan_sdk_path=None, emscripten_path=None, has_glfw=False):
+    def __init__(self, vulkan_sdk_path=None, emscripten_path=None, has_glfw=False, use_xcode=False):
         """
         Initialize the ScriptGenerator.
         
@@ -22,10 +22,12 @@ class ScriptGenerator:
             vulkan_sdk_path (str, optional): Path to the Vulkan SDK.
             emscripten_path (str or bool, optional): Path to Emscripten or True if in PATH.
             has_glfw (bool, optional): Whether GLFW is available.
+            use_xcode (bool, optional): Whether to use Xcode generator instead of make. Defaults to False.
         """
         self.vulkan_sdk_path = vulkan_sdk_path
         self.emscripten_path = emscripten_path
         self.has_glfw = has_glfw
+        self.use_xcode = use_xcode
         self.script_ext = '.bat' if platform.system() == 'Windows' else '.sh'
 
     def generate_all_scripts(self):
@@ -65,8 +67,15 @@ class ScriptGenerator:
             else:
                 f.write('#!/bin/bash\n')
                 f.write('mkdir -p build_core && cd build_core\n')
-                f.write('cmake .. -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
-                f.write('make\n')
+                
+                # Use Xcode generator if specified and on macOS
+                if self.use_xcode and platform.system() == 'Darwin':
+                    f.write('cmake .. -G Xcode -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
+                    f.write('cmake --build . --config Release\n')
+                else:
+                    f.write('cmake .. -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
+                    f.write('make\n')
+                
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
@@ -86,8 +95,15 @@ class ScriptGenerator:
             else:
                 f.write('#!/bin/bash\n')
                 f.write('mkdir -p build_examples_cpu && cd build_examples_cpu\n')
-                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
-                f.write('make\n')
+                
+                # Use Xcode generator if specified and on macOS
+                if self.use_xcode and platform.system() == 'Darwin':
+                    f.write('cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('cmake --build . --config Release\n')
+                else:
+                    f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('make\n')
+                
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
@@ -108,8 +124,15 @@ class ScriptGenerator:
             else:
                 f.write('#!/bin/bash\n')
                 f.write('mkdir -p build_examples_vulkan && cd build_examples_vulkan\n')
-                f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
-                f.write('make\n')
+                
+                # Use Xcode generator if specified and on macOS
+                if self.use_xcode and platform.system() == 'Darwin':
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('cmake --build . --config Release\n')
+                else:
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('make\n')
+                
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
@@ -121,8 +144,15 @@ class ScriptGenerator:
         with open('build_examples_metal.sh', 'w') as f:
             f.write('#!/bin/bash\n')
             f.write('mkdir -p build_examples_metal && cd build_examples_metal\n')
-            f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
-            f.write('make\n')
+            
+            # Use Xcode generator if specified
+            if self.use_xcode:
+                f.write('cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write('cmake --build . --config Release\n')
+            else:
+                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write('make\n')
+            
             f.write('cd ..\n')
         
         # Make the script executable
@@ -176,8 +206,15 @@ class ScriptGenerator:
             else:
                 f.write('#!/bin/bash\n')
                 f.write('mkdir -p build_vk && cd build_vk\n')
-                f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
-                f.write('make\n')
+                
+                # Use Xcode generator if specified and on macOS
+                if self.use_xcode and platform.system() == 'Darwin':
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -G Xcode -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('cmake --build . --config Release\n')
+                else:
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write('make\n')
+                
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
@@ -253,8 +290,15 @@ class ScriptGenerator:
         with open('build_mtl.sh', 'w') as f:
             f.write('#!/bin/bash\n')
             f.write('mkdir -p build_mtl && cd build_mtl\n')
-            f.write('cmake .. -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
-            f.write('make\n')
+            
+            # Use Xcode generator if specified
+            if self.use_xcode:
+                f.write('cmake .. -G Xcode -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write('cmake --build . --config Release\n')
+            else:
+                f.write('cmake .. -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write('make\n')
+            
             f.write('cd ..\n')
         
         # Make the script executable

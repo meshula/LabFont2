@@ -26,7 +26,8 @@ if(NOT glfw3_FOUND AND NOT GLFW_FOUND)
   return()
 endif()
 
-add_executable(basic_drawing "basic/drawing_main.cpp")
+# on mac, prevent a terminal window from popping open by setting MACOSX_BUNDLE
+add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.cpp")
 target_link_libraries(basic_drawing
     PRIVATE
         labfont
