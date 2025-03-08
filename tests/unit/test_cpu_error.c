@@ -36,16 +36,14 @@ static MunitResult test_error_propagation(const MunitParameter params[], void* d
         .native_window = desc.native_window
     };
     lab_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
-    munit_assert_not_null(result.message);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_DIMENSION);
     
     // Test error propagation through resource creation
     lab_texture tex = NULL;
     lab_texture_desc tex_desc = {0};  // Invalid desc (width and height are 0)
     
     result = lab_create_texture(ctx, &tex_desc, &tex);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
-    munit_assert_not_null(result.message);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_CONTEXT);
 
     return MUNIT_OK;
 }
@@ -70,13 +68,12 @@ static MunitResult test_error_clearing(const MunitParameter params[], void* data
     };
     lab_result result = lab_create_context(&backend_desc, &ctx);
     munit_assert_int(result, ==, LAB_RESULT_OK);
-    munit_assert_null(result.message);
     
     // Failed operation
     lab_texture tex = NULL;
     lab_texture_desc tex_desc = {0};  // Invalid desc
     result = lab_create_texture(ctx, &tex_desc, &tex);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_DIMENSION);
     
     // Next valid operation should succeed with no error
     lab_texture_desc valid_desc = {
@@ -86,7 +83,6 @@ static MunitResult test_error_clearing(const MunitParameter params[], void* data
     };
     result = lab_create_texture(ctx, &valid_desc, &tex);
     munit_assert_int(result, ==, LAB_RESULT_OK);
-    munit_assert_null(result.message);
     
     // Cleanup
     lab_destroy_texture(ctx, tex);

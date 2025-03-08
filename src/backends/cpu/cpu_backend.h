@@ -107,17 +107,17 @@ public:
         if (width == 0 || height == 0) {
             return LAB_RESULT_INVALID_DIMENSION;
         }
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     lab_result Resize(uint32_t width, uint32_t height) override {
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     lab_result CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) override {
         try {
             out_texture = std::make_shared<CPUTexture>(desc);
-            return lab_result(LAB_RESULT_OK);
+            return LAB_RESULT_OK;
         }
         catch (const std::exception& e) {
             return LAB_RESULT_OUT_OF_MEMORY;
@@ -142,13 +142,13 @@ public:
             return LAB_RESULT_READBACK_NOT_SUPPORTED;
         }
         memcpy(data, cpuTexture->GetData(), size);
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     lab_result CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) override {
         try {
             out_target = std::make_shared<CPURenderTarget>(desc);
-            return lab_result(LAB_RESULT_OK);
+            return LAB_RESULT_OK;
         } catch (const std::exception& e) {
             return LAB_RESULT_OUT_OF_MEMORY;
         }
@@ -156,17 +156,17 @@ public:
     
     lab_result SetRenderTarget(RenderTarget* target) override {
         m_currentRenderTarget = static_cast<CPURenderTarget*>(target);
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     lab_result BeginFrame() override {
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override;
     
     lab_result EndFrame() override {
-        return lab_result(LAB_RESULT_OK);
+        return LAB_RESULT_OK;
     }
     
     void DestroyTexture(Texture* texture) override {}

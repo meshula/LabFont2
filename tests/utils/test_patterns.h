@@ -108,7 +108,7 @@ inline lab_result test_draw_triangle(lab_context ctx) {
         return result;
     }
     
-    return (lab_result){LAB_RESULT_OK, nullptr};
+    return LAB_RESULT_OK;
 }
 
 #ifdef __cplusplus

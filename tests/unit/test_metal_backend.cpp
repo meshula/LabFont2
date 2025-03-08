@@ -21,19 +21,17 @@ static MunitResult test_metal_initialization(const MunitParameter params[], void
     auto backend = std::make_unique<metal::MetalBackend>();
     
     // Initialize backend
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     
     // In a test environment, we may not have the Metal shader library available,
-    // so we accept either success or initialization failed
+    // so we accept either success or specific initialization failure codes
     if (result != LAB_RESULT_OK) {
-        munit_assert_int(result, ==, LAB_RESULT_INITIALIZATION_FAILED);
-        munit_assert_not_null(result.message.c_str());
+        munit_assert(result == LAB_RESULT_DEVICE_INITIALIZATION_FAILED || 
+                    result == LAB_RESULT_SHADER_LIBRARY_INITIALIZATION_FAILED);
         
         // Display the error message with clear formatting
-        printf("Metal initialization failed as expected: %s\n", result.message.c_str());
-        
-        // The detailed error information is captured in the stderr output
-        // which is redirected to the result.message in MetalBackend::Initialize
+        printf("Metal initialization failed as expected with code: %d\n", result);
+        printf("Error message: %s\n", lab_get_error_string(result));
         
         return MUNIT_SKIP;  // Skip the test since we can't proceed without initialization
     }
@@ -48,11 +46,11 @@ static MunitResult test_metal_render_target(const MunitParameter params[], void*
     (void)data;
     
     auto backend = std::make_unique<metal::MetalBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     
     // Skip test if initialization fails
     if (result != LAB_RESULT_OK) {
-        printf("Skipping render target test due to initialization failure: %s\n", result.message.c_str());
+        printf("Skipping render target test due to initialization failure: %s\n", lab_get_error_string(result));
         return MUNIT_SKIP;
     }
     
@@ -122,11 +120,11 @@ static MunitResult test_metal_texture(const MunitParameter params[], void* data)
     (void)data;
     
     auto backend = std::make_unique<metal::MetalBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     
     // Skip test if initialization fails
     if (result != LAB_RESULT_OK) {
-        printf("Skipping texture test due to initialization failure: %s\n", result.message.c_str());
+        printf("Skipping texture test due to initialization failure: %s\n", lab_get_error_string(result));
         return MUNIT_SKIP;
     }
     

@@ -23,7 +23,7 @@ static MunitResult test_vulkan_initialization(const MunitParameter params[], voi
     auto backend = std::make_unique<vulkan::VulkanBackend>();
     
     // Initialize backend
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     return MUNIT_OK;
@@ -34,7 +34,7 @@ static MunitResult test_vulkan_render_target(const MunitParameter params[], void
     (void)data;
     
     auto backend = std::make_unique<vulkan::VulkanBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target
@@ -101,7 +101,7 @@ static MunitResult test_vulkan_texture(const MunitParameter params[], void* data
     (void)data;
     
     auto backend = std::make_unique<vulkan::VulkanBackend>();
-    labfont::lab_result result = backend->Initialize(800, 600);
+    lab_result result = backend->Initialize(800, 600);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture

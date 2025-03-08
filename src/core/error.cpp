@@ -62,6 +62,8 @@ const char* GetResultString(lab_result error) {
             return "Command buffer initialization failed";
         case LAB_RESULT_COMMAND_ENCODER_INITIALIZATION_FAILED:
             return "Command encoder initialization failed";
+        case LAB_RESULT_INVALID_COMMAND_BUFFER:
+            return "Invalid command buffer";
         default:
             return "Unknown error";
     }
