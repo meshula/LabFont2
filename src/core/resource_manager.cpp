@@ -92,6 +92,60 @@ lab_result ResourceManagerImpl::CreateBuffer(
     return LAB_RESULT_OK;
 }
 
+lab_result ResourceManagerImpl::CreateRenderTarget(
+    const std::string& name,
+    const RenderTargetParams& params,
+    std::shared_ptr<RenderTargetResource>& out_target)
+{
+    LAB_RESULT_GUARD();
+
+    if (name.empty()) {
+        return LAB_RESULT_INVALID_RESOURCE_NAME;
+    }
+
+    if (params.width == 0 || params.height == 0) {
+        return LAB_RESULT_INVALID_DIMENSION;
+    }
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+    
+    if (ResourceExists(name)) {
+        return LAB_RESULT_DUPLICATE_RESOURCE_NAME;
+    }
+
+    auto target = std::make_shared<RenderTargetResource>(
+        name,
+        params.width,
+        params.height,
+        params.format,
+        params.hasDepth
+    );
+
+    // Create the actual GPU render target
+    RenderTargetDesc desc;
+    desc.width = params.width;
+    desc.height = params.height;
+    desc.format = params.format;
+    desc.hasDepth = params.hasDepth;
+    
+    // Create the backend render target
+    std::shared_ptr<RenderTarget> backendTarget;
+    if (m_backend) {
+        lab_result result = m_backend->CreateRenderTarget(desc, backendTarget);
+        if (result != LAB_RESULT_OK) {
+            return result;
+        }
+        
+        // Store the backend render target in the resource
+        target->SetBackendTarget(backendTarget);
+    }
+
+    // Store the resource
+    m_resources[name] = target;
+    out_target = target;
+    return LAB_RESULT_OK;
+}
+
 void ResourceManagerImpl::DestroyResource(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -126,6 +180,52 @@ void ResourceManagerImpl::RemoveResource(const std::string& name)
 
 // C API implementations for resource management
 extern "C" {
+
+lab_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+    if (!out_target) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    if (!desc) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    // Convert C API render target desc to internal format
+    labfont::RenderTargetParams params;
+    params.width = desc->width;
+    params.height = desc->height;
+    params.format = static_cast<labfont::TextureFormat>(desc->format);
+    params.hasDepth = desc->hasDepth;
+    
+    // Generate a unique name for the render target
+    std::string name = "render_target_" + std::to_string(reinterpret_cast<uintptr_t>(desc));
+    
+    std::shared_ptr<labfont::RenderTargetResource> target;
+    auto result = resourceManager->CreateRenderTarget(name, params, target);
+    
+    if (result == LAB_RESULT_OK) {
+        *out_target = reinterpret_cast<lab_render_target>(target.get());
+    }
+    
+    return result;
+}
+
+void lab_destroy_render_target(lab_context ctx, lab_render_target target) {
+    if (!ctx || !target) {
+        return;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto resourceManager = context->GetResourceManager();
+    
+    auto targetResource = reinterpret_cast<labfont::RenderTargetResource*>(target);
+    resourceManager->DestroyResource(targetResource->GetName());
+}
 
 lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture) {
     if (!ctx) {

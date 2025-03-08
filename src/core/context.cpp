@@ -167,39 +167,7 @@ lab_result lab_submit_commands(lab_context ctx, const lab_draw_command* commands
     return result;
 }
 
-lab_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target) {
-    if (!ctx) {
-        return LAB_RESULT_INVALID_CONTEXT;
-    }
-
-    if (!desc || !out_target) {
-        return LAB_RESULT_INVALID_PARAMETER;
-    }
-    
-    auto context = labfont::GetContextImpl(ctx);
-    labfont::RenderTargetDesc internal_desc = {
-        .width = desc->width,
-        .height = desc->height,
-        .format = static_cast<labfont::TextureFormat>(desc->format),
-        .hasDepth = desc->hasDepth
-    };
-    
-    std::shared_ptr<labfont::RenderTarget> target;
-    auto result = context->GetBackend()->CreateRenderTarget(internal_desc, target);
-    if (result == LAB_RESULT_OK) {
-        *out_target = reinterpret_cast<lab_render_target>(target.get());
-    }
-    return result;
-}
-
-void lab_destroy_render_target(lab_context ctx, lab_render_target target) {
-    if (!ctx || !target) {
-        return;
-    }
-    
-    auto context = labfont::GetContextImpl(ctx);
-    context->GetBackend()->DestroyRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
-}
+// Render target creation and destruction moved to resource_manager.cpp
 
 lab_result lab_set_render_target(lab_context ctx, lab_render_target target) {
     if (!ctx) {
@@ -207,7 +175,10 @@ lab_result lab_set_render_target(lab_context ctx, lab_render_target target) {
     }
 
     auto context = labfont::GetContextImpl(ctx);
-    auto result = context->GetBackend()->SetRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
+    auto targetResource = reinterpret_cast<labfont::RenderTargetResource*>(target);
+    auto backendTarget = targetResource->GetBackendTarget();
+    
+    auto result = context->GetBackend()->SetRenderTarget(backendTarget);
     return result;
 }
 

@@ -2,6 +2,7 @@
 #define LABFONT_CPU_BACKEND_H
 
 #include "core/backend.h"
+#include <iostream>
 #include <vector>
 
 namespace labfont {
@@ -78,6 +79,10 @@ public:
             };
             m_depthTexture = std::make_shared<CPUTexture>(depthDesc);
         }
+    }
+    
+    virtual ~CPURenderTarget() {
+        std::cout << "destructing CPURenderTarget\n";
     }
     
     uint32_t GetWidth() const override { return m_width; }
@@ -170,7 +175,9 @@ public:
     }
     
     void DestroyTexture(Texture* texture) override {}
-    void DestroyRenderTarget(RenderTarget* target) override {}
+    void DestroyRenderTarget(RenderTarget* target) override {
+        // The actual resource will be destroyed when the shared_ptr goes out of scope
+    }
     
     size_t GetTextureMemoryUsage() const override { return 0; }
     size_t GetTotalMemoryUsage() const override { return 0; }

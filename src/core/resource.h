@@ -15,7 +15,8 @@ class Backend;
 enum class ResourceType {
     Texture,
     Buffer,
-    Font
+    Font,
+    RenderTarget
 };
 
 // Base resource class
@@ -74,6 +75,37 @@ private:
     bool m_dynamic;
 };
 
+// Render target resource
+class RenderTargetResource : public Resource {
+public:
+    RenderTargetResource(const std::string& name, unsigned int width, unsigned int height, 
+                         TextureFormat format, bool hasDepth)
+        : Resource(ResourceType::RenderTarget, name)
+        , m_width(width)
+        , m_height(height)
+        , m_format(format)
+        , m_hasDepth(hasDepth)
+        , m_backendTarget(nullptr) {}
+    
+    unsigned int GetWidth() const { return m_width; }
+    unsigned int GetHeight() const { return m_height; }
+    TextureFormat GetFormat() const { return m_format; }
+    bool HasDepth() const { return m_hasDepth; }
+    
+    // Set the backend render target
+    void SetBackendTarget(std::shared_ptr<RenderTarget> target) { m_backendTarget = target; }
+    
+    // Get the backend render target
+    RenderTarget* GetBackendTarget() const { return m_backendTarget.get(); }
+
+private:
+    unsigned int m_width;
+    unsigned int m_height;
+    TextureFormat m_format;
+    bool m_hasDepth;
+    std::shared_ptr<RenderTarget> m_backendTarget;
+};
+
 // Resource creation parameters
 struct TextureParams {
     unsigned int width;
@@ -88,6 +120,13 @@ struct BufferParams {
     const void* data;      // Changed from initial_data to data to match usage
 };
 
+struct RenderTargetParams {
+    unsigned int width;
+    unsigned int height;
+    TextureFormat format;
+    bool hasDepth;
+};
+
 // Resource manager interface
 class ResourceManager {
 public:
@@ -99,6 +138,9 @@ public:
     virtual lab_result CreateBuffer(const std::string& name,
                                     const BufferParams& params,
                                     std::shared_ptr<BufferResource>& out_buffer) = 0;
+    virtual lab_result CreateRenderTarget(const std::string& name,
+                                         const RenderTargetParams& params,
+                                         std::shared_ptr<RenderTargetResource>& out_target) = 0;
     
     virtual void DestroyResource(const std::string& name) = 0;
     virtual std::shared_ptr<Resource> GetResource(const std::string& name) = 0;

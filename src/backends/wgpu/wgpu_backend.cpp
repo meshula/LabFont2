@@ -211,12 +211,15 @@ void WGPUBackend::DestroyTexture(Texture* texture) {
 }
 
 void WGPUBackend::DestroyRenderTarget(RenderTarget* target) {
+    // Remove from our internal list
     for (auto it = m_renderTargets.begin(); it != m_renderTargets.end(); ++it) {
         if (it->get() == target) {
             m_renderTargets.erase(it);
             break;
         }
     }
+    
+    // The actual resource will be destroyed when the shared_ptr goes out of scope
 }
 
 bool WGPUBackend::SupportsTextureFormat(TextureFormat format) const {
