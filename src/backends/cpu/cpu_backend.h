@@ -1,6 +1,7 @@
 #ifndef LABFONT_CPU_BACKEND_H
 #define LABFONT_CPU_BACKEND_H
 
+#include "labfont/labfont_types.h"
 #include "core/backend.h"
 #include <iostream>
 #include <vector>
@@ -24,7 +25,7 @@ public:
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
-    TextureFormat GetFormat() const override { return m_format; }
+    lab_texture_format GetFormat() const override { return m_format; }
     bool IsRenderTarget() const override { return m_renderTarget; }
     bool SupportsReadback() const override { return m_readback; }
     
@@ -40,7 +41,7 @@ public:
 private:
     uint32_t m_width;
     uint32_t m_height;
-    TextureFormat m_format;
+    lab_texture_format m_format;
     bool m_renderTarget;
     bool m_readback;
     std::vector<uint8_t> m_data;
@@ -71,7 +72,7 @@ public:
             TextureDesc depthDesc = {
                 .width = desc.width,
                 .height = desc.height,
-                .format = TextureFormat::R32F,
+                .format = LAB_TEXTURE_FORMAT_D32F,
                 .data = nullptr,
                 .renderTarget = true,
                 .readback = true,
@@ -87,7 +88,7 @@ public:
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
-    TextureFormat GetFormat() const override { return m_format; }
+    lab_texture_format GetFormat() const override { return m_format; }
     bool HasDepth() const override { return m_hasDepth; }
     
     Texture* GetColorTexture() override { return m_colorTexture.get(); }
@@ -96,7 +97,7 @@ public:
 private:
     uint32_t m_width;
     uint32_t m_height;
-    TextureFormat m_format;
+    lab_texture_format m_format;
     bool m_hasDepth;
     std::shared_ptr<CPUTexture> m_colorTexture;
     std::shared_ptr<CPUTexture> m_depthTexture;
@@ -182,7 +183,7 @@ public:
     size_t GetTextureMemoryUsage() const override { return 0; }
     size_t GetTotalMemoryUsage() const override { return 0; }
     
-    bool SupportsTextureFormat(TextureFormat format) const override {
+    bool SupportsTextureFormat(lab_texture_format format) const override {
         return true; // CPU backend supports all formats
     }
     

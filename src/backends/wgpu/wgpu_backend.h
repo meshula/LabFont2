@@ -40,7 +40,7 @@ public:
     size_t GetTotalMemoryUsage() const override { return 0; }
     
     // Backend capabilities
-    bool SupportsTextureFormat(TextureFormat format) const override;
+    bool SupportsTextureFormat(lab_texture_format format) const override;
     bool SupportsBlendMode(BlendMode mode) const override;
     uint32_t GetMaxTextureSize() const override { return 8192; }
     

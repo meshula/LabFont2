@@ -19,12 +19,13 @@ class ConfigurationManager:
     Class that orchestrates the configuration process.
     """
 
-    def __init__(self, use_xcode=False):
+    def __init__(self, use_xcode=False, build_dir="build"):
         """
         Initialize the ConfigurationManager.
         
         Args:
             use_xcode (bool, optional): Whether to use Xcode generator instead of make. Defaults to False.
+            build_dir (str, optional): Directory to place the build scripts. Defaults to "build".
         """
         self.dependency_detector = DependencyDetector()
         self.vulkan_sdk_path = None
@@ -32,6 +33,7 @@ class ConfigurationManager:
         self.has_glfw = False
         self.has_tkinter = self._check_tkinter()
         self.use_xcode = use_xcode
+        self.build_dir = build_dir
 
     @staticmethod
     def _check_tkinter():
@@ -165,7 +167,8 @@ class ConfigurationManager:
             vulkan_sdk_path=self.vulkan_sdk_path,
             emscripten_path=self.emscripten_path,
             has_glfw=self.has_glfw,
-            use_xcode=self.use_xcode
+            use_xcode=self.use_xcode,
+            build_dir=self.build_dir
         )
         script_generator.generate_all_scripts()
         

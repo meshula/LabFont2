@@ -27,7 +27,7 @@ WebGPURenderTarget::WebGPURenderTarget(const WebGPUDevice* device, const RenderT
         TextureDesc depthDesc = {
             .width = desc.width,
             .height = desc.height,
-            .format = TextureFormat::D32F,
+            .format = LAB_TEXTURE_FORMAT_D32F,
             .renderTarget = true,
             .readback = false,
             .data = nullptr

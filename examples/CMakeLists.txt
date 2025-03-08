@@ -38,6 +38,7 @@ if(APPLE)
           "-framework CoreGraphics"
           "-framework QuartzCore"
           "-framework Cocoa"
+          "-framework Metal"
   )
 else()
   add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.cpp")

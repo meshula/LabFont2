@@ -199,7 +199,7 @@ lab_result lab_create_render_target(lab_context ctx, const lab_render_target_des
     labfont::RenderTargetParams params;
     params.width = desc->width;
     params.height = desc->height;
-    params.format = static_cast<labfont::TextureFormat>(desc->format);
+    params.format = desc->format;
     params.hasDepth = desc->hasDepth;
     
     // Generate a unique name for the render target
@@ -245,7 +245,7 @@ lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab
     labfont::TextureParams params;
     params.width = desc->width;
     params.height = desc->height;
-    params.format = static_cast<labfont::TextureFormat>(desc->format);
+    params.format = desc->format;
     params.data = desc->initial_data;
     
     // Generate a unique name for the texture

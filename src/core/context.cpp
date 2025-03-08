@@ -297,7 +297,9 @@ lab_result lab_resize_render_target(lab_context ctx, lab_render_target target, u
     return LAB_RESULT_OK;
 }
 
-lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target, uint8_t** out_data, size_t* out_size) {
+lab_result lab_get_render_target_data(
+        lab_context ctx, lab_render_target target,
+        lab_render_target_desc* desc, uint8_t** out_data, size_t* out_size) {
     if (!ctx || !target || !out_data || !out_size) {
         return LAB_RESULT_INVALID_PARAMETER;
     }
@@ -346,6 +348,13 @@ lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target,
     lab_result result = context->GetBackend()->ReadbackTexture(colorTexture, *out_data, dataSize);
     if (result != LAB_RESULT_OK) {
         return result;
+    }
+
+    // Fill the descriptor
+    if (desc) {
+        desc->width = width;
+        desc->height = height;
+        desc->format = colorTexture->GetFormat();
     }
     
     return LAB_RESULT_OK;

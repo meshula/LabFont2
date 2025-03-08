@@ -301,7 +301,7 @@ bool InitLabFont() {
     lab_render_target_desc rt_desc = {
         .width = kWidth,
         .height = kHeight,
-        .format = LAB_FORMAT_RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_UNKNOWN,
         .hasDepth = true
     };
     
@@ -397,14 +397,15 @@ lab_result Render() {
 
 lab_result Blit() {
     // Get the framebuffer data from the render target
-    lab_result result = lab_get_render_target_data(context, render_target, &framebuffer, &framebuffer_size);
+    lab_render_target_desc rt_desc;
+    lab_result result = lab_get_render_target_data(context, render_target, &rt_desc, &framebuffer, &framebuffer_size);
     if (result != LAB_RESULT_OK) {
         std::cerr << "Failed to get render target data: " << lab_get_error_string(result);
         return result;
     }
     
     // Blit the framebuffer to the window
-    BlitToWindow(fb_texture_width, fb_texture_width, framebuffer, framebuffer_size);
+    BlitToWindow(rt_desc.width, rt_desc.height, framebuffer, framebuffer_size);
     
     // Save the render target to a file (only once)
     static bool saved = false;

@@ -113,7 +113,7 @@ VulkanRenderTarget::VulkanRenderTarget(const labfont::RenderTargetDesc& desc, Vu
             labfont::TextureDesc depthDesc = {};
             depthDesc.width = m_width;
             depthDesc.height = m_height;
-            depthDesc.format = TextureFormat::D32F;
+            depthDesc.format = LAB_TEXTURE_FORMAT_D32F;
             depthDesc.renderTarget = true;
             depthDesc.readback = false;
             m_depthTexture = std::make_shared<VulkanTexture>(depthDesc, device);
@@ -334,7 +334,7 @@ size_t VulkanBackend::GetTotalMemoryUsage() const {
     return 0;
 }
 
-bool VulkanBackend::SupportsTextureFormat(TextureFormat format) const {
+bool VulkanBackend::SupportsTextureFormat(lab_texture_format format) const {
     return m_device->SupportsFormat(format);
 }
 

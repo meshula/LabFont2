@@ -45,7 +45,7 @@ public:
     virtual size_t GetTotalMemoryUsage() const = 0;
     
     // Backend capabilities
-    virtual bool SupportsTextureFormat(TextureFormat format) const = 0;
+    virtual bool SupportsTextureFormat(lab_texture_format format) const = 0;
     virtual bool SupportsBlendMode(BlendMode mode) const = 0;
     virtual uint32_t GetMaxTextureSize() const = 0;
     
@@ -64,7 +64,7 @@ public:
     
     virtual uint32_t GetWidth() const = 0;
     virtual uint32_t GetHeight() const = 0;
-    virtual TextureFormat GetFormat() const = 0;
+    virtual lab_texture_format GetFormat() const = 0;
     virtual bool IsRenderTarget() const = 0;
     virtual bool SupportsReadback() const = 0;
     
@@ -78,7 +78,7 @@ public:
     
     virtual uint32_t GetWidth() const = 0;
     virtual uint32_t GetHeight() const = 0;
-    virtual TextureFormat GetFormat() const = 0;
+    virtual lab_texture_format GetFormat() const = 0;
     virtual bool HasDepth() const = 0;
     virtual Texture* GetColorTexture() = 0;
     virtual Texture* GetDepthTexture() = 0;

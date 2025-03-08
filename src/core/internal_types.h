@@ -5,25 +5,10 @@
 #include <cstring>
 
 namespace labfont {
-
-enum class TextureFormat {
-    Unknown,
-    R8_UNORM,
-    RG8_UNORM,
-    RGBA8_UNORM,
-    R16F,
-    RG16F,
-    RGBA16F,
-    R32F,
-    RG32F,
-    RGBA32F,
-    D32F     // 32-bit floating point depth format with no stencil
-};
-
 struct TextureDesc {
     uint32_t width;
     uint32_t height;
-    TextureFormat format;
+    lab_texture_format format;
     const void* data;
     bool renderTarget;
     bool readback;
@@ -52,7 +37,7 @@ enum class BlendMode {
 struct RenderTargetDesc {
     uint32_t width;
     uint32_t height;
-    TextureFormat format;
+    lab_texture_format format;
     bool hasDepth;
 };
 

@@ -60,7 +60,7 @@ static MunitResult test_metal_render_target(const MunitParameter params[], void*
     RenderTargetDesc desc = {
         .width = 512,
         .height = 512,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
     
@@ -134,7 +134,7 @@ static MunitResult test_metal_texture(const MunitParameter params[], void* data)
     TextureDesc desc = {
         .width = 256,
         .height = 256,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .renderTarget = false,
         .readback = true,
         .data = nullptr

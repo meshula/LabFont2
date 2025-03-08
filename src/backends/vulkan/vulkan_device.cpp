@@ -164,27 +164,27 @@ uint32_t VulkanDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
     return 0;
 }
 
-VkFormat VulkanDevice::GetVulkanFormat(TextureFormat format) const {
+VkFormat VulkanDevice::GetVulkanFormat(lab_texture_format format) const {
     switch (format) {
-        case TextureFormat::R8_UNORM:
+        case LAB_TEXTURE_FORMAT_R8_UNORM:
             return VK_FORMAT_R8_UNORM;
-        case TextureFormat::RG8_UNORM:
+        case LAB_TEXTURE_FORMAT_RG8_UNORM:
             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormat::RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::R16F:
+        case LAB_TEXTURE_FORMAT_R16F:
             return VK_FORMAT_R16_SFLOAT;
-        case TextureFormat::RG16F:
+        case LAB_TEXTURE_FORMAT_RG16F:
             return VK_FORMAT_R16G16_SFLOAT;
-        case TextureFormat::RGBA16F:
+        case LAB_TEXTURE_FORMAT_RGBA16F:
             return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case TextureFormat::R32F:
+        case LAB_TEXTURE_FORMAT_R32F:
             return VK_FORMAT_R32_SFLOAT;
-        case TextureFormat::RG32F:
+        case LAB_TEXTURE_FORMAT_RG32F:
             return VK_FORMAT_R32G32_SFLOAT;
-        case TextureFormat::RGBA32F:
+        case LAB_TEXTURE_FORMAT_RGBA32F:
             return VK_FORMAT_R32G32B32A32_SFLOAT;
-        case TextureFormat::D32F:
+        case LAB_TEXTURE_FORMAT_D32F:
             return VK_FORMAT_D32_SFLOAT;
         default:
             assert(false && "Unsupported texture format");
@@ -192,7 +192,7 @@ VkFormat VulkanDevice::GetVulkanFormat(TextureFormat format) const {
     }
 }
 
-bool VulkanDevice::SupportsFormat(TextureFormat format) const {
+bool VulkanDevice::SupportsFormat(lab_texture_format format) const {
     VkFormat vulkanFormat = GetVulkanFormat(format);
     if (vulkanFormat == VK_FORMAT_UNDEFINED) {
         return false;
@@ -206,7 +206,7 @@ bool VulkanDevice::SupportsFormat(TextureFormat format) const {
     
     // For depth/stencil format, check depth/stencil attachment support
     bool supportsDepthStencil = true;
-    if (format == TextureFormat::D32F) {
+    if (format == LAB_TEXTURE_FORMAT_D32F) {
         supportsDepthStencil = (props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
         return supportsDepthStencil;  // Don't check color support for depth formats
     }

@@ -16,36 +16,36 @@ WGPUTextureDescriptor WebGPUTexture::GetWGPUTextureDescriptor(const TextureDesc&
     textureDesc.sampleCount = 1;
     textureDesc.dimension = WGPUTextureDimension_2D;
     
-    // Set format based on TextureFormat
+    // Set format based on lab_texture_format
     switch (desc.format) {
-        case TextureFormat::R8_UNORM:
+        case LAB_TEXTURE_FORMAT_R8_UNORM:
             textureDesc.format = WGPUTextureFormat_R8Unorm;
             break;
-        case TextureFormat::RG8_UNORM:
+        case LAB_TEXTURE_FORMAT_RG8_UNORM:
             textureDesc.format = WGPUTextureFormat_RG8Unorm;
             break;
-        case TextureFormat::RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
             textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
             break;
-        case TextureFormat::R16F:
+        case LAB_TEXTURE_FORMAT_R16F:
             textureDesc.format = WGPUTextureFormat_R16Float;
             break;
-        case TextureFormat::RG16F:
+        case LAB_TEXTURE_FORMAT_RG16F:
             textureDesc.format = WGPUTextureFormat_RG16Float;
             break;
-        case TextureFormat::RGBA16F:
+        case LAB_TEXTURE_FORMAT_RGBA16F:
             textureDesc.format = WGPUTextureFormat_RGBA16Float;
             break;
-        case TextureFormat::R32F:
+        case LAB_TEXTURE_FORMAT_R32F:
             textureDesc.format = WGPUTextureFormat_R32Float;
             break;
-        case TextureFormat::RG32F:
+        case LAB_TEXTURE_FORMAT_RG32F:
             textureDesc.format = WGPUTextureFormat_RG32Float;
             break;
-        case TextureFormat::RGBA32F:
+        case LAB_TEXTURE_FORMAT_RGBA32F:
             textureDesc.format = WGPUTextureFormat_RGBA32Float;
             break;
-        case TextureFormat::D32F:
+        case LAB_TEXTURE_FORMAT_D32F:
             textureDesc.format = WGPUTextureFormat_Depth32Float;
             break;
         default:

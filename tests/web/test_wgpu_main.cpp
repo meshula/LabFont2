@@ -12,7 +12,7 @@ static wgpu::Instance instance;
 static wgpu::Adapter adapter;
 static wgpu::Device device;
 static wgpu::Surface surface;
-static wgpu::TextureFormat format;
+static wgpu::lab_texture_format format;
 static const uint32_t kWidth = 512;
 static const uint32_t kHeight = 512;
 

@@ -9,27 +9,27 @@
   
   namespace labfont {
   
-  inline WGPUTextureFormat GetWGPUTextureFormat(TextureFormat format) {
+  inline WGPUTextureFormat GetWGPUTextureFormat(lab_texture_format format) {
       switch (format) {
-          case TextureFormat::R8_UNORM:
+          case LAB_TEXTURE_FORMAT_R8_UNORM:
               return WGPUTextureFormat_R8Unorm;
-          case TextureFormat::RG8_UNORM:
+          case LAB_TEXTURE_FORMAT_RG8_UNORM:
               return WGPUTextureFormat_RG8Unorm;
-          case TextureFormat::RGBA8_UNORM:
+          case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
               return WGPUTextureFormat_RGBA8Unorm;
-          case TextureFormat::R16F:
+          case LAB_TEXTURE_FORMAT_R16F:
               return WGPUTextureFormat_R16Float;
-          case TextureFormat::RG16F:
+          case LAB_TEXTURE_FORMAT_RG16F:
               return WGPUTextureFormat_RG16Float;
-          case TextureFormat::RGBA16F:
+          case LAB_TEXTURE_FORMAT_RGBA16F:
               return WGPUTextureFormat_RGBA16Float;
-          case TextureFormat::R32F:
+          case LAB_TEXTURE_FORMAT_R32F:
               return WGPUTextureFormat_R32Float;
-          case TextureFormat::RG32F:
+          case LAB_TEXTURE_FORMAT_RG32F:
               return WGPUTextureFormat_RG32Float;
-          case TextureFormat::RGBA32F:
+          case LAB_TEXTURE_FORMAT_RGBA32F:
               return WGPUTextureFormat_RGBA32Float;
-          case TextureFormat::D32F:
+          case LAB_TEXTURE_FORMAT_D32F:
               return WGPUTextureFormat_Depth32Float;
           default:
               return WGPUTextureFormat_Undefined;
@@ -120,7 +120,7 @@
   };
   
   // Stub implementations of conversion functions
-  inline WGPUTextureFormat GetWGPUTextureFormat(TextureFormat format) {
+  inline WGPUTextureFormat GetWGPUTextureFormat(lab_texture_format format) {
       // Stub implementation for development
       return WGPUTextureFormat_Undefined;
   }

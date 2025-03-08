@@ -33,7 +33,7 @@ void lab_destroy_render_target(lab_context ctx, lab_render_target target);
 lab_result lab_resize_render_target(lab_context ctx, lab_render_target target, uint32_t width, uint32_t height);
 lab_result lab_set_render_target(lab_context ctx, lab_render_target target);
 lab_result lab_save_render_target(lab_context ctx, lab_render_target target, const char* filename);
-lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target, uint8_t** out_data, size_t* out_size);
+lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target, lab_render_target_desc* desc, uint8_t** out_data, size_t* out_size);
 
 /* Frame management */
 lab_result lab_begin_frame(lab_context ctx);

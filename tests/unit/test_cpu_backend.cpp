@@ -26,7 +26,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
     TextureDesc desc = {
         .width = 256,
         .height = 256,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .renderTarget = false,
         .readback = true,
         .data = nullptr
@@ -40,7 +40,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
     // Verify texture properties
     munit_assert_uint32(texture->GetWidth(), ==, 256);
     munit_assert_uint32(texture->GetHeight(), ==, 256);
-    munit_assert_int(static_cast<int>(texture->GetFormat()), ==, static_cast<int>(TextureFormat::RGBA8_UNORM));
+    munit_assert_int(static_cast<int>(texture->GetFormat()), ==, static_cast<int>(LAB_TEXTURE_FORMAT_RGBA8_UNORM));
     munit_assert_false(texture->IsRenderTarget());
     munit_assert_true(texture->SupportsReadback());
     
@@ -56,7 +56,7 @@ static MunitResult test_texture_update(const MunitParameter params[], void* data
     TextureDesc desc = {
         .width = 4,
         .height = 4,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .renderTarget = false,
         .readback = true,
         .data = nullptr
@@ -108,7 +108,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
     RenderTargetDesc desc = {
         .width = 512,
         .height = 512,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
     
@@ -120,7 +120,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
     // Verify render target properties
     munit_assert_uint32(target->GetWidth(), ==, 512);
     munit_assert_uint32(target->GetHeight(), ==, 512);
-    munit_assert_int(static_cast<int>(target->GetFormat()), ==, static_cast<int>(TextureFormat::RGBA8_UNORM));
+    munit_assert_int(static_cast<int>(target->GetFormat()), ==, static_cast<int>(LAB_TEXTURE_FORMAT_RGBA8_UNORM));
     munit_assert_true(target->HasDepth());
     
     // Verify textures
@@ -147,7 +147,7 @@ static MunitResult test_draw_commands(const MunitParameter params[], void* data)
     RenderTargetDesc rtDesc = {
         .width = 800,
         .height = 600,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = false
     };
     

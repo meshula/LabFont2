@@ -45,17 +45,17 @@ typedef enum lab_result
 
 /* Texture formats */
 typedef enum lab_texture_format {
-    LAB_FORMAT_UNKNOWN,
-    LAB_FORMAT_R8_UNORM,
-    LAB_FORMAT_RG8_UNORM,
-    LAB_FORMAT_RGBA8_UNORM,
-    LAB_FORMAT_R16F,
-    LAB_FORMAT_RG16F,
-    LAB_FORMAT_RGBA16F,
-    LAB_FORMAT_R32F,
-    LAB_FORMAT_RG32F,
-    LAB_FORMAT_RGBA32F,
-    LAB_FORMAT_D32F     /* 32-bit floating point depth format with no stencil */
+    LAB_TEXTURE_FORMAT_UNKNOWN,
+    LAB_TEXTURE_FORMAT_R8_UNORM,
+    LAB_TEXTURE_FORMAT_RG8_UNORM,
+    LAB_TEXTURE_FORMAT_RGBA8_UNORM,
+    LAB_TEXTURE_FORMAT_R16F,
+    LAB_TEXTURE_FORMAT_RG16F,
+    LAB_TEXTURE_FORMAT_RGBA16F,
+    LAB_TEXTURE_FORMAT_R32F,
+    LAB_TEXTURE_FORMAT_RG32F,
+    LAB_TEXTURE_FORMAT_RGBA32F,
+    LAB_TEXTURE_FORMAT_D32F     /* 32-bit floating point depth format with no stencil */
 } lab_texture_format;
 
 /* Backend types */

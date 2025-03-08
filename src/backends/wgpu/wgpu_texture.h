@@ -14,7 +14,7 @@ public:
     
     uint32_t GetWidth() const override { return m_width; }
     uint32_t GetHeight() const override { return m_height; }
-    TextureFormat GetFormat() const override { return m_format; }
+    lab_texture_format GetFormat() const override { return m_format; }
     bool IsRenderTarget() const override { return m_renderTarget; }
     bool SupportsReadback() const override { return m_readback; }
     
@@ -31,7 +31,7 @@ private:
 
     uint32_t m_width;
     uint32_t m_height;
-    TextureFormat m_format;
+    lab_texture_format m_format;
     bool m_renderTarget;
     bool m_readback;
     

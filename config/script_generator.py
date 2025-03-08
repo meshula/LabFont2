@@ -14,7 +14,7 @@ class ScriptGenerator:
     Class for generating build scripts for different backends.
     """
 
-    def __init__(self, vulkan_sdk_path=None, emscripten_path=None, has_glfw=False, use_xcode=False):
+    def __init__(self, vulkan_sdk_path=None, emscripten_path=None, has_glfw=False, use_xcode=False, build_dir="build"):
         """
         Initialize the ScriptGenerator.
         
@@ -23,12 +23,15 @@ class ScriptGenerator:
             emscripten_path (str or bool, optional): Path to Emscripten or True if in PATH.
             has_glfw (bool, optional): Whether GLFW is available.
             use_xcode (bool, optional): Whether to use Xcode generator instead of make. Defaults to False.
+            build_dir (str, optional): Directory to place the build scripts. Defaults to "build".
         """
         self.vulkan_sdk_path = vulkan_sdk_path
         self.emscripten_path = emscripten_path
         self.has_glfw = has_glfw
         self.use_xcode = use_xcode
+        self.build_dir = build_dir
         self.script_ext = '.bat' if platform.system() == 'Windows' else '.sh'
+        self.source_dir = os.getcwd()
 
     def generate_all_scripts(self):
         """Generate all build scripts based on detected dependencies."""
@@ -56,12 +59,14 @@ class ScriptGenerator:
 
     def generate_core_script(self):
         """Generate the core build script."""
-        with open(f'build_core{self.script_ext}', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_core{self.script_ext}')
+        with open(script_path, 'w') as f:
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 f.write('mkdir build_core 2>nul\n')
                 f.write('cd build_core\n')
-                f.write('cmake .. -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -70,26 +75,28 @@ class ScriptGenerator:
                 
                 # Use Xcode generator if specified and on macOS
                 if self.use_xcode and platform.system() == 'Darwin':
-                    f.write('cmake .. -G Xcode -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
+                    f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
                     f.write('cmake --build . --config Release\n')
                 else:
-                    f.write('cmake .. -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
+                    f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF -DLABFONT_BUILD_EXAMPLES=OFF\n')
                     f.write('make\n')
                 
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_core{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_examples_cpu_script(self):
-        """Generate the CPU examples build script."""
-        with open(f'build_examples_cpu{self.script_ext}', 'w') as f:
+        """Generate the examples cpubuild script."""
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_examples_cpu{self.script_ext}')
+        with open(script_path, 'w') as f:
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 f.write('mkdir build_examples_cpu 2>nul\n')
                 f.write('cd build_examples_cpu\n')
-                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -98,27 +105,29 @@ class ScriptGenerator:
                 
                 # Use Xcode generator if specified and on macOS
                 if self.use_xcode and platform.system() == 'Darwin':
-                    f.write('cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('cmake --build . --config Release\n')
                 else:
-                    f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('make\n')
                 
                 f.write('cd ..\n')
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_examples_cpu{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_examples_vulkan_script(self):
         """Generate the Vulkan examples build script."""
-        with open(f'build_examples_vulkan{self.script_ext}', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_examples_vulkan{self.script_ext}')
+        with open(script_path, 'w') as f:
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 f.write('mkdir build_examples_vulkan 2>nul\n')
                 f.write('cd build_examples_vulkan\n')
                 f.write(f'set VULKAN_SDK={self.vulkan_sdk_path}\n')
-                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -137,30 +146,34 @@ class ScriptGenerator:
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_examples_vulkan{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_examples_metal_script(self):
         """Generate the Metal examples build script."""
-        with open('build_examples_metal.sh', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_examples_metal{self.script_ext}')
+        with open(script_path, 'w') as f:
             f.write('#!/bin/bash\n')
             f.write('mkdir -p build_examples_metal && cd build_examples_metal\n')
             
             # Use Xcode generator if specified
             if self.use_xcode:
-                f.write('cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build . --config Release\n')
             else:
-                f.write('cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('make\n')
             
             f.write('cd ..\n')
         
         # Make the script executable
-        os.chmod('build_examples_metal.sh', 0o755)
+        os.chmod(script_path, 0o755)
 
     def generate_examples_wgpu_script(self):
         """Generate the WebGPU examples build script."""
-        with open(f'build_examples_wgpu{self.script_ext}', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_examples_wgpu{self.script_ext}')
+        with open(script_path, 'w') as f:
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 if self.emscripten_path is not True:  # If we found a specific path
@@ -190,17 +203,19 @@ class ScriptGenerator:
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_examples_wgpu{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_vulkan_script(self):
         """Generate the Vulkan build script."""
-        with open(f'build_vk{self.script_ext}', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_vk{self.script_ext}')
+        with open(script_path, 'w') as f:
             if platform.system() == 'Windows':
                 f.write('@echo off\n')
                 f.write('mkdir build_vk 2>nul\n')
                 f.write('cd build_vk\n')
                 f.write(f'set VULKAN_SDK={self.vulkan_sdk_path}\n')
-                f.write('cmake .. -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -219,11 +234,13 @@ class ScriptGenerator:
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_vk{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_wasm_script(self):
         """Generate the WebAssembly build script."""
-        with open(f'build_wasm{self.script_ext}', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_wasm{self.script_ext}')
+        with open(script_path, 'w') as f:
             if self.emscripten_path:
                 # If Emscripten was found, create a normal build script
                 if platform.system() == 'Windows':
@@ -283,23 +300,25 @@ class ScriptGenerator:
         
         # Make the script executable on Unix-like systems
         if platform.system() != 'Windows':
-            os.chmod(f'build_wasm{self.script_ext}', 0o755)
+            os.chmod(script_path, 0o755)
 
     def generate_metal_script(self):
         """Generate the Metal build script."""
-        with open('build_mtl.sh', 'w') as f:
+        os.makedirs(self.build_dir, exist_ok=True)
+        script_path = os.path.join(self.build_dir, f'build_metal{self.script_ext}')
+        with open(script_path, 'w') as f:
             f.write('#!/bin/bash\n')
             f.write('mkdir -p build_mtl && cd build_mtl\n')
             
             # Use Xcode generator if specified
             if self.use_xcode:
-                f.write('cmake .. -G Xcode -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build . --config Release\n')
             else:
-                f.write('cmake .. -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('make\n')
             
             f.write('cd ..\n')
         
         # Make the script executable
-        os.chmod('build_mtl.sh', 0o755)
+        os.chmod(script_path, 0o755)

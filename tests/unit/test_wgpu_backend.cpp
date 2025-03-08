@@ -13,7 +13,7 @@ static MunitResult test_wgpu_initialization(const MunitParameter params[], void*
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Verify supported features
-    munit_assert_true(backend->SupportsTextureFormat(TextureFormat::RGBA8_UNORM));
+    munit_assert_true(backend->SupportsTextureFormat(LAB_TEXTURE_FORMAT_RGBA8_UNORM));
     munit_assert_true(backend->SupportsBlendMode(BlendMode::Alpha));
     munit_assert_uint32(backend->GetMaxTextureSize(), >=, 8192);
     
@@ -28,7 +28,7 @@ static MunitResult test_wgpu_texture_operations(const MunitParameter params[], v
     TextureDesc desc = {
         .width = 256,
         .height = 256,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .renderTarget = false,
         .readback = true,
         .data = nullptr
@@ -80,7 +80,7 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     RenderTargetDesc desc = {
         .width = 512,
         .height = 512,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
     
@@ -158,7 +158,7 @@ static MunitResult test_wgpu_blend_modes(const MunitParameter params[], void* da
     RenderTargetDesc desc = {
         .width = 256,
         .height = 256,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = false
     };
     

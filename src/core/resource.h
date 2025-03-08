@@ -43,7 +43,7 @@ private:
 // Texture resource
 class TextureResource : public Resource {
 public:
-    TextureResource(const std::string& name, unsigned int width, unsigned int height, TextureFormat format)
+    TextureResource(const std::string& name, unsigned int width, unsigned int height, lab_texture_format format)
         : Resource(ResourceType::Texture, name)
         , m_width(width)
         , m_height(height)
@@ -51,12 +51,12 @@ public:
     
     unsigned int GetWidth() const { return m_width; }
     unsigned int GetHeight() const { return m_height; }
-    TextureFormat GetFormat() const { return m_format; }
+    lab_texture_format GetFormat() const { return m_format; }
 
 private:
     unsigned int m_width;
     unsigned int m_height;
-    TextureFormat m_format;
+    lab_texture_format m_format;
 };
 
 // Buffer resource
@@ -79,7 +79,7 @@ private:
 class RenderTargetResource : public Resource {
 public:
     RenderTargetResource(const std::string& name, unsigned int width, unsigned int height, 
-                         TextureFormat format, bool hasDepth)
+                         lab_texture_format format, bool hasDepth)
         : Resource(ResourceType::RenderTarget, name)
         , m_width(width)
         , m_height(height)
@@ -89,7 +89,7 @@ public:
     
     unsigned int GetWidth() const { return m_width; }
     unsigned int GetHeight() const { return m_height; }
-    TextureFormat GetFormat() const { return m_format; }
+    lab_texture_format GetFormat() const { return m_format; }
     bool HasDepth() const { return m_hasDepth; }
     
     // Set the backend render target
@@ -101,7 +101,7 @@ public:
 private:
     unsigned int m_width;
     unsigned int m_height;
-    TextureFormat m_format;
+    lab_texture_format m_format;
     bool m_hasDepth;
     std::shared_ptr<RenderTarget> m_backendTarget;
 };
@@ -110,7 +110,7 @@ private:
 struct TextureParams {
     unsigned int width;
     unsigned int height;
-    TextureFormat format;  // Changed from unsigned int to TextureFormat
+    lab_texture_format format;  // Changed from unsigned int to lab_texture_format
     const void* data;      // Changed from initial_data to data to match usage
 };
 
@@ -123,7 +123,7 @@ struct BufferParams {
 struct RenderTargetParams {
     unsigned int width;
     unsigned int height;
-    TextureFormat format;
+    lab_texture_format format;
     bool hasDepth;
 };
 

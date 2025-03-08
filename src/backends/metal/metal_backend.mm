@@ -10,14 +10,14 @@ namespace labfont {
 namespace metal {
 
 namespace {
-    MTLPixelFormat TextureFormatToMTLFormat(TextureFormat format) {
+    MTLPixelFormat TextureFormatToMTLFormat(lab_texture_format format) {
         switch (format) {
-            case TextureFormat::R8_UNORM:    return MTLPixelFormatR8Unorm;
-            case TextureFormat::RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
-            case TextureFormat::R16F:        return MTLPixelFormatR16Float;
-            case TextureFormat::RGBA16F:     return MTLPixelFormatRGBA16Float;
-            case TextureFormat::R32F:        return MTLPixelFormatR32Float;
-            case TextureFormat::D32F:        return MTLPixelFormatDepth32Float;
+            case LAB_TEXTURE_FORMAT_R8_UNORM:    return MTLPixelFormatR8Unorm;
+            case LAB_TEXTURE_FORMAT_RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
+            case LAB_TEXTURE_FORMAT_R16F:        return MTLPixelFormatR16Float;
+            case LAB_TEXTURE_FORMAT_RGBA16F:     return MTLPixelFormatRGBA16Float;
+            case LAB_TEXTURE_FORMAT_R32F:        return MTLPixelFormatR32Float;
+            case LAB_TEXTURE_FORMAT_D32F:        return MTLPixelFormatDepth32Float;
             default:
                 std::cerr << "Unsupported texture format" << std::endl;
                 return MTLPixelFormatInvalid;
@@ -89,7 +89,7 @@ MetalRenderTarget::MetalRenderTarget(MetalDevice* device, const RenderTargetDesc
         TextureDesc depthDesc = {
             .width = desc.width,
             .height = desc.height,
-            .format = TextureFormat::D32F,
+            .format = LAB_TEXTURE_FORMAT_D32F,
             .renderTarget = true,
             .readback = false,
             .data = nullptr
@@ -678,17 +678,17 @@ size_t MetalBackend::GetTotalMemoryUsage() const {
     return GetTextureMemoryUsage();
 }
 
-bool MetalBackend::SupportsTextureFormat(TextureFormat format) const {
+bool MetalBackend::SupportsTextureFormat(lab_texture_format format) const {
     switch (format) {
-        case TextureFormat::R8_UNORM:
-        case TextureFormat::RG8_UNORM:
-        case TextureFormat::RGBA8_UNORM:
-        case TextureFormat::R16F:
-        case TextureFormat::RG16F:
-        case TextureFormat::RGBA16F:
-        case TextureFormat::R32F:
-        case TextureFormat::RG32F:
-        case TextureFormat::RGBA32F:
+        case LAB_TEXTURE_FORMAT_R8_UNORM:
+        case LAB_TEXTURE_FORMAT_RG8_UNORM:
+        case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_R16F:
+        case LAB_TEXTURE_FORMAT_RG16F:
+        case LAB_TEXTURE_FORMAT_RGBA16F:
+        case LAB_TEXTURE_FORMAT_R32F:
+        case LAB_TEXTURE_FORMAT_RG32F:
+        case LAB_TEXTURE_FORMAT_RGBA32F:
             return true;
         default:
             return false;

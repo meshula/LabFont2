@@ -8,6 +8,9 @@ cmake-build-*/
 build*.sh
 build*.bat
 
+# prototype
+third_party/lvgl/
+
 # IDE files
 .vscode/
 .idea/

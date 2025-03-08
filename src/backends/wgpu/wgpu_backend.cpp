@@ -222,11 +222,11 @@ void WGPUBackend::DestroyRenderTarget(RenderTarget* target) {
     // The actual resource will be destroyed when the shared_ptr goes out of scope
 }
 
-bool WGPUBackend::SupportsTextureFormat(TextureFormat format) const {
+bool WGPUBackend::SupportsTextureFormat(lab_texture_format format) const {
     switch (format) {
-        case TextureFormat::RGBA8_UNORM:
-        case TextureFormat::RGBA16F:
-        case TextureFormat::RGBA32F:
+        case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_RGBA16F:
+        case LAB_TEXTURE_FORMAT_RGBA32F:
             return true;
         default:
             return false;

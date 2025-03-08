@@ -39,7 +39,7 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     RenderTargetDesc desc = {
         .width = 512,
         .height = 512,
-        .format = TextureFormat::RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
     

@@ -26,8 +26,8 @@ public:
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
     // Format support
-    VkFormat GetVulkanFormat(TextureFormat format) const;
-    bool SupportsFormat(TextureFormat format) const;
+    VkFormat GetVulkanFormat(lab_texture_format format) const;
+    bool SupportsFormat(lab_texture_format format) const;
 
     // Getters
     VkDevice GetDevice() const { return m_device; }
