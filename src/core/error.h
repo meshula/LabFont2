@@ -7,49 +7,49 @@
 namespace labfont {
 
 // Get a string representation of an error code
-const char* GetErrorString(lab_error error);
+const char* GetResultString(lab_result error);
 
 class ErrorState {
 public:
-    ErrorState() : m_lastError(LAB_ERROR_NONE) {}
+    ErrorState() : m_lastResult(LAB_RESULT_OK) {}
 
-    void SetError(lab_error error, const char* message = nullptr) {
-        m_lastError = error;
+    void SetError(lab_result error, const char* message = nullptr) {
+        m_lastResult = error;
         if (message) {
-            m_lastMessage = std::string(GetErrorString(error)) + ": " + message;
+            m_lastMessage = std::string(GetResultString(error)) + ": " + message;
         } else {
-            m_lastMessage = GetErrorString(error);
+            m_lastMessage = GetResultString(error);
         }
     }
 
-    void SetError(lab_error error, const std::string& message) {
-        m_lastError = error;
+    void SetError(lab_result error, const std::string& message) {
+        m_lastResult = error;
         if (!message.empty()) {
-            m_lastMessage = std::string(GetErrorString(error)) + ": " + message;
+            m_lastMessage = std::string(GetResultString(error)) + ": " + message;
         } else {
-            m_lastMessage = GetErrorString(error);
+            m_lastMessage = GetResultString(error);
         }
     }
 
-    void SetErrorWithContext(lab_error error, const std::string& context, const std::string& message) {
-        m_lastError = error;
-        m_lastMessage = std::string(GetErrorString(error)) + " in " + context;
+    void SetErrorWithContext(lab_result error, const std::string& context, const std::string& message) {
+        m_lastResult = error;
+        m_lastMessage = std::string(GetResultString(error)) + " in " + context;
         if (!message.empty()) {
             m_lastMessage += ": " + message;
         }
     }
 
     void ClearError() {
-        m_lastError = LAB_ERROR_NONE;
+        m_lastResult = LAB_RESULT_OK;
         m_lastMessage.clear();
     }
 
     lab_result GetLastError() const {
-        return lab_result(m_lastError, m_lastMessage.c_str());
+        return m_lastResult;
     }
 
 protected:
-    lab_error m_lastError;
+    lab_result m_lastResult;
     std::string m_lastMessage;
 };
 

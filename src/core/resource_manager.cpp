@@ -24,20 +24,20 @@ lab_result ResourceManagerImpl::CreateTexture(
     const TextureParams& params,
     std::shared_ptr<TextureResource>& out_texture)
 {
-    LAB_ERROR_GUARD();
+    LAB_RESULT_GUARD();
 
     if (name.empty()) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty");
+        return LAB_RESULT_INVALID_RESOURCE_NAME;
     }
 
     if (params.width == 0 || params.height == 0) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Invalid texture dimensions");
+        return LAB_RESULT_INVALID_DIMENSION;
     }
 
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if (ResourceExists(name)) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists");
+        return LAB_RESULT_DUPLICATE_RESOURCE_NAME;
     }
 
     auto texture = std::make_shared<TextureResource>(
@@ -53,7 +53,7 @@ lab_result ResourceManagerImpl::CreateTexture(
 
     m_resources[name] = texture;
     out_texture = texture;
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result ResourceManagerImpl::CreateBuffer(
@@ -61,20 +61,20 @@ lab_result ResourceManagerImpl::CreateBuffer(
     const BufferParams& params,
     std::shared_ptr<BufferResource>& out_buffer)
 {
-    LAB_ERROR_GUARD();
+    LAB_RESULT_GUARD();
 
     if (name.empty()) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource name cannot be empty");
+        return LAB_RESULT_INVALID_RESOURCE_NAME;
     }
 
     if (params.size == 0) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Buffer size cannot be zero");
-    }
+        return LAB_RESULT_INVALID_BUFFER_SIZE;
+   }
 
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if (ResourceExists(name)) {
-        LAB_RETURN_ERROR(LAB_ERROR_INVALID_PARAMETER, "Resource with this name already exists");
+        return LAB_RESULT_DUPLICATE_RESOURCE_NAME;
     }
 
     auto buffer = std::make_shared<BufferResource>(
@@ -89,7 +89,7 @@ lab_result ResourceManagerImpl::CreateBuffer(
 
     m_resources[name] = buffer;
     out_buffer = buffer;
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 void ResourceManagerImpl::DestroyResource(const std::string& name)
@@ -127,9 +127,15 @@ void ResourceManagerImpl::RemoveResource(const std::string& name)
 // C API implementations for resource management
 extern "C" {
 
-lab_operation_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture) {
-    if (!ctx || !desc || !out_texture) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+    if (!out_texture) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    if (!desc) {
+        return LAB_RESULT_INVALID_PARAMETER;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -148,7 +154,7 @@ lab_operation_result lab_create_texture(lab_context ctx, const lab_texture_desc*
     std::shared_ptr<labfont::TextureResource> texture;
     auto result = resourceManager->CreateTexture(name, params, texture);
     
-    if (result.error == LAB_ERROR_NONE) {
+    if (result == LAB_RESULT_OK) {
         *out_texture = reinterpret_cast<lab_texture>(texture.get());
     }
     
@@ -167,9 +173,15 @@ void lab_destroy_texture(lab_context ctx, lab_texture texture) {
     resourceManager->DestroyResource(textureResource->GetName());
 }
 
-lab_operation_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* desc, lab_buffer* out_buffer) {
-    if (!ctx || !desc || !out_buffer) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+lab_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* desc, lab_buffer* out_buffer) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+    if (!out_buffer) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    if (!desc) {
+        return LAB_RESULT_INVALID_BUFFER;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -187,7 +199,7 @@ lab_operation_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* d
     std::shared_ptr<labfont::BufferResource> buffer;
     auto result = resourceManager->CreateBuffer(name, params, buffer);
     
-    if (result.error == LAB_ERROR_NONE) {
+    if (result == LAB_RESULT_OK) {
         *out_buffer = reinterpret_cast<lab_buffer>(buffer.get());
     }
     

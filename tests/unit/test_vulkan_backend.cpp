@@ -24,7 +24,7 @@ static MunitResult test_vulkan_initialization(const MunitParameter params[], voi
     
     // Initialize backend
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     return MUNIT_OK;
 }
@@ -35,7 +35,7 @@ static MunitResult test_vulkan_render_target(const MunitParameter params[], void
     
     auto backend = std::make_unique<vulkan::VulkanBackend>();
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target
     RenderTargetDesc desc = {
@@ -47,16 +47,16 @@ static MunitResult test_vulkan_render_target(const MunitParameter params[], void
     
     std::shared_ptr<RenderTarget> target;
     result = backend->CreateRenderTarget(desc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(target.get());
     
     // Set as current render target
     result = backend->SetRenderTarget(target.get());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Begin frame
     result = backend->BeginFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create test vertices for a triangle
     lab_vertex_2TC vertices[3] = {
@@ -87,11 +87,11 @@ static MunitResult test_vulkan_render_target(const MunitParameter params[], void
     commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // End frame
     result = backend->EndFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     return MUNIT_OK;
 }
@@ -102,7 +102,7 @@ static MunitResult test_vulkan_texture(const MunitParameter params[], void* data
     
     auto backend = std::make_unique<vulkan::VulkanBackend>();
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture
     TextureDesc desc = {
@@ -116,7 +116,7 @@ static MunitResult test_vulkan_texture(const MunitParameter params[], void* data
     
     std::shared_ptr<Texture> texture;
     result = backend->CreateTexture(desc, texture);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(texture.get());
     
     // Generate test pattern
@@ -131,12 +131,12 @@ static MunitResult test_vulkan_texture(const MunitParameter params[], void* data
     
     // Update texture
     result = backend->UpdateTexture(texture.get(), pattern.data(), pattern.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Read back texture
     std::vector<uint8_t> readback(pattern.size());
     result = backend->ReadbackTexture(texture.get(), readback.data(), readback.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Compare patterns
     bool matches = PixelComparator::CompareBuffers<uint8_t>(

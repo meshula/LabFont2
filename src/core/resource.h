@@ -93,8 +93,12 @@ class ResourceManager {
 public:
     virtual ~ResourceManager() = default;
 
-    virtual labfont::lab_result CreateTexture(const std::string& name, const TextureParams& params, std::shared_ptr<TextureResource>& out_texture) = 0;
-    virtual labfont::lab_result CreateBuffer(const std::string& name, const BufferParams& params, std::shared_ptr<BufferResource>& out_buffer) = 0;
+    virtual lab_result CreateTexture(const std::string& name,
+                                     const TextureParams& params,
+                                     std::shared_ptr<TextureResource>& out_texture) = 0;
+    virtual lab_result CreateBuffer(const std::string& name,
+                                    const BufferParams& params,
+                                    std::shared_ptr<BufferResource>& out_buffer) = 0;
     
     virtual void DestroyResource(const std::string& name) = 0;
     virtual std::shared_ptr<Resource> GetResource(const std::string& name) = 0;

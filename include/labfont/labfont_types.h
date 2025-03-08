@@ -10,21 +10,38 @@ extern "C" {
 #endif
 
 /* Error codes */
-typedef enum lab_error
+typedef enum lab_result
 {
-    LAB_ERROR_NONE = 0,
-    LAB_ERROR_INVALID_PARAMETER = -1,
-    LAB_ERROR_OUT_OF_MEMORY = -2,
-    LAB_ERROR_BACKEND_ERROR = -3,
-    LAB_ERROR_FONT_LOAD_FAILED = -4,
-    LAB_ERROR_NOT_INITIALIZED = -5,
-    LAB_ERROR_INVALID_STATE = -6,
-    LAB_ERROR_INITIALIZATION_FAILED = -7,
-    LAB_ERROR_INVALID_OPERATION = -8,
-    LAB_ERROR_COMMAND_BUFFER = -9,
-    LAB_ERROR_UNSUPPORTED_FORMAT = -10,
-    LAB_ERROR_DEVICE_LOST = -11
-} lab_error;
+    LAB_RESULT_OK = 0,
+    LAB_RESULT_INVALID_PARAMETER = -1,
+    LAB_RESULT_OUT_OF_MEMORY = -2,
+    LAB_RESULT_BACKEND_ERROR = -3,
+    LAB_RESULT_FONT_LOAD_FAILED = -4,
+    LAB_RESULT_NOT_INITIALIZED = -5,
+    LAB_RESULT_UNSUPPORTED_BACKEND = -6,
+    LAB_RESULT_INITIALIZATION_FAILED = -7,
+    LAB_RESULT_INVALID_OPERATION = -8,
+    LAB_RESULT_COMMAND_BUFFER = -9,
+    LAB_RESULT_UNSUPPORTED_FORMAT = -10,
+    LAB_RESULT_DEVICE_LOST = -11,
+    LAB_RESULT_STATE_NO_RENDER_TARGET_SET = -12,
+    LAB_RESULT_INVALID_DIMENSION = -13,
+    LAB_RESULT_INVALID_TEXTURE = -14,
+    LAB_RESULT_READBACK_NOT_SUPPORTED = -15,
+    LAB_RESULT_INVALID_RENDER_TARGET = -16,
+    LAB_RESULT_INVALID_CONTEXT = -17,
+    LAB_RESULT_INVALID_RESOURCE_NAME = -18,
+    LAB_RESULT_DUPLICATE_RESOURCE_NAME = -19,
+    LAB_RESULT_INVALID_BUFFER_SIZE = -20,
+    LAB_RESULT_INVALID_BUFFER = -21,
+    LAB_RESULT_TEXTURE_CREATION_FAILED = -22,
+    LAB_RESULT_SHADER_LIBRARY_INITIALIZATION_FAILED = -23,
+    LAB_RESULT_DEVICE_INITIALIZATION_FAILED = -24,
+    LAB_RESULT_RENDERTARGET_INITIALIZATION_FAILED = -25,
+    LAB_RESULT_COMMAND_BUFFER_INITIALIZATION_FAILED = -26,
+    LAB_RESULT_COMMAND_ENCODER_INITIALIZATION_FAILED = -27,
+    LAB_RESULT_INVALID_COMMAND_BUFFER = -28,
+} lab_result;
 
 /* Texture formats */
 typedef enum lab_texture_format {
@@ -137,12 +154,6 @@ typedef struct lab_buffer_desc {
     bool dynamic;
     const void* initial_data;
 } lab_buffer_desc;
-
-/* Result type for operations that can fail */
-typedef struct lab_operation_result {
-    lab_error error;
-    const char* message;  /* Optional error message, NULL if no error */
-} lab_operation_result;
 
 /* Text alignment */
 typedef enum lab_text_align

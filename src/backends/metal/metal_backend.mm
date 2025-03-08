@@ -3,6 +3,8 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 #include <iostream>
+#include <sstream>
+#include <sys/sysctl.h>
 
 namespace labfont {
 namespace metal {
@@ -202,13 +204,68 @@ bool MetalDevice::Initialize() {
     m_device = MTLCreateSystemDefaultDevice();
     if (!m_device) {
         std::cerr << "Error: No Metal device found!\n";
+        std::cerr << "System information:\n";
+        
+        // Get macOS version
+        NSProcessInfo* processInfo = [NSProcessInfo processInfo];
+        NSOperatingSystemVersion osVersion = [processInfo operatingSystemVersion];
+        std::cerr << "  - macOS version: " << osVersion.majorVersion << "." 
+                  << osVersion.minorVersion << "." << osVersion.patchVersion << "\n";
+        
+        // Check if Metal is supported on this system
+        if (@available(macOS 10.11, *)) {
+            std::cerr << "  - Metal API should be available (macOS 10.11+)\n";
+        } else {
+            std::cerr << "  - Metal API may not be available (requires macOS 10.11+)\n";
+        }
+        
+        // Check if we're running in a virtual machine
+        size_t size;
+        sysctlbyname("hw.model", NULL, &size, NULL, 0);
+        char* model = (char*)malloc(size);
+        sysctlbyname("hw.model", model, &size, NULL, 0);
+        std::string modelStr(model);
+        free(model);
+        
+        bool isVirtualMachine = (modelStr.find("VMware") != std::string::npos || 
+                                modelStr.find("Virtual") != std::string::npos ||
+                                modelStr.find("QEMU") != std::string::npos ||
+                                modelStr.find("Parallels") != std::string::npos);
+        
+        std::cerr << "  - Hardware model: " << modelStr << "\n";
+        if (isVirtualMachine) {
+            std::cerr << "  - Running in a virtual machine. Metal may have limited or no support.\n";
+        }
+        
         return false;
+    }
+    
+    // Log device information
+    std::cerr << "Metal device information:\n";
+    std::cerr << "  - Device name: " << [[m_device name] UTF8String] << "\n";
+    std::cerr << "  - Registry ID: " << [m_device registryID] << "\n";
+    
+    if (@available(macOS 10.15, *)) {
+        std::cerr << "  - Is low power: " << ([m_device isLowPower] ? "Yes" : "No") << "\n";
+        std::cerr << "  - Is removable: " << ([m_device isRemovable] ? "Yes" : "No") << "\n";
+    }
+    
+    if (@available(macOS 11.0, *)) {
+        std::cerr << "  - Has unified memory: " << ([m_device hasUnifiedMemory] ? "Yes" : "No") << "\n";
     }
     
     // Create command queue
     m_commandQueue = [m_device newCommandQueue];
     if (!m_commandQueue) {
         std::cerr << "Error: Failed to create command queue!\n";
+        std::cerr << "  - Device: " << [[m_device name] UTF8String] << "\n";
+        
+        // Check if there are any resource limits
+        if (@available(macOS 11.0, *)) {
+            std::cerr << "  - Max buffer length: " << [m_device maxBufferLength] << " bytes\n";
+            std::cerr << "  - Max threadgroup memory length: " << [m_device maxThreadgroupMemoryLength] << " bytes\n";
+        }
+        
         return false;
     }
     
@@ -226,14 +283,32 @@ bool MetalDevice::Initialize() {
 }
 
 bool MetalDevice::LoadShaders() {
+    // First, try to find the shader library in the app bundle
     NSString* libraryPath = [[NSBundle mainBundle] pathForResource:@"primitives" ofType:@"metallib"];
     if (!libraryPath) {
-        // if the library path is not found, check if the library exists in the
-        // same directory as the executable.
+        // If not found in the bundle, check the executable directory
         NSString* executablePath = [[NSBundle mainBundle] executablePath];
         NSString* executableDir = [executablePath stringByDeletingLastPathComponent];
         libraryPath = [executableDir stringByAppendingPathComponent:@"primitives.metallib"];
+        
         if (![[NSFileManager defaultManager] fileExistsAtPath:libraryPath]) {
+            // Log all the places we looked for the shader library
+            std::cerr << "Error: Metal shader library 'primitives.metallib' not found." << std::endl;
+            std::cerr << "  - Searched in app bundle: " << [[[NSBundle mainBundle] bundlePath] UTF8String] << std::endl;
+            std::cerr << "  - Searched in executable directory: " << [executableDir UTF8String] << std::endl;
+            
+            // Also check the current working directory
+            NSString* currentDir = [[NSFileManager defaultManager] currentDirectoryPath];
+            NSString* currentDirLibPath = [currentDir stringByAppendingPathComponent:@"primitives.metallib"];
+            std::cerr << "  - Searched in current directory: " << [currentDir UTF8String] << std::endl;
+            
+            // Check if the shader source file exists
+            NSString* shaderSourcePath = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"src/backends/metal/shaders/primitives.metal"];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:shaderSourcePath]) {
+                std::cerr << "  - Metal shader source file exists at: " << [shaderSourcePath UTF8String] << std::endl;
+                std::cerr << "  - Try running the shader compilation script: src/backends/metal/shaders/compile_shaders.sh" << std::endl;
+            }
+            
             return false;
         }
     }
@@ -242,9 +317,14 @@ bool MetalDevice::LoadShaders() {
     NSError* error = nil;
     m_shaderLibrary = [m_device newLibraryWithURL:libraryURL error:&error];
     if (!m_shaderLibrary) {
+        std::cerr << "Error: Failed to load Metal shader library from: " << [libraryPath UTF8String] << std::endl;
+        if (error) {
+            std::cerr << "  - Error details: " << [[error localizedDescription] UTF8String] << std::endl;
+        }
         return false;
     }
     
+    std::cout << "Successfully loaded Metal shader library from: " << [libraryPath UTF8String] << std::endl;
     return true;
 }
 
@@ -281,6 +361,21 @@ bool MetalDevice::CreatePipelineStates() {
     id<MTLFunction> vertexFunc = [m_shaderLibrary newFunctionWithName:@"vertex_main"];
     id<MTLFunction> fragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_main"];
     
+    if (!vertexFunc) {
+        std::cerr << "Error: Failed to find vertex shader function 'vertex_main' in shader library\n";
+        [vertexDesc release];
+        [pipelineDesc release];
+        return false;
+    }
+    
+    if (!fragmentFunc) {
+        std::cerr << "Error: Failed to find fragment shader function 'fragment_main' in shader library\n";
+        [vertexFunc release];
+        [vertexDesc release];
+        [pipelineDesc release];
+        return false;
+    }
+    
     pipelineDesc.vertexFunction = vertexFunc;
     pipelineDesc.fragmentFunction = fragmentFunc;
     
@@ -291,6 +386,10 @@ bool MetalDevice::CreatePipelineStates() {
     [fragmentFunc release];
     
     if (!m_trianglePipeline) {
+        std::cerr << "Error: Failed to create triangle pipeline state\n";
+        if (error) {
+            std::cerr << "  - Error details: " << [[error localizedDescription] UTF8String] << "\n";
+        }
         [vertexDesc release];
         [pipelineDesc release];
         return false;
@@ -298,8 +397,16 @@ bool MetalDevice::CreatePipelineStates() {
     
     // Line pipeline
     fragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_line"];
+    if (!fragmentFunc) {
+        std::cerr << "Error: Failed to find fragment shader function 'fragment_line' in shader library\n";
+        [vertexDesc release];
+        [pipelineDesc release];
+        return false;
+    }
+    
     pipelineDesc.fragmentFunction = fragmentFunc;
     
+    error = nil;
     m_linePipeline = [m_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
     
     [fragmentFunc release];
@@ -307,6 +414,10 @@ bool MetalDevice::CreatePipelineStates() {
     [pipelineDesc release];
     
     if (!m_linePipeline) {
+        std::cerr << "Error: Failed to create line pipeline state\n";
+        if (error) {
+            std::cerr << "  - Error details: " << [[error localizedDescription] UTF8String] << "\n";
+        }
         return false;
     }
     
@@ -319,6 +430,7 @@ bool MetalDevice::CreatePipelineStates() {
     [depthDesc release];
     
     if (!m_depthState) {
+        std::cerr << "Error: Failed to create depth stencil state\n";
         return false;
     }
     
@@ -337,28 +449,76 @@ lab_result MetalBackend::Initialize(uint32_t width, uint32_t height) {
     m_width = width;
     m_height = height;
     
-    if (!m_device->Initialize()) {
-        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to initialize Metal device"};
+    // Capture stderr output to get detailed error messages
+    std::stringstream errorStream;
+    std::streambuf* oldCerr = std::cerr.rdbuf(errorStream.rdbuf());
+    
+    std::cerr << "=== Metal Initialization Begin ===\n";
+    
+    // Log system information
+    NSProcessInfo* processInfo = [NSProcessInfo processInfo];
+    NSOperatingSystemVersion osVersion = [processInfo operatingSystemVersion];
+    std::cerr << "System information:\n";
+    std::cerr << "  - macOS version: " << osVersion.majorVersion << "." 
+              << osVersion.minorVersion << "." << osVersion.patchVersion << "\n";
+    
+    // Check physical memory
+    std::cerr << "  - Physical memory: " << ([processInfo physicalMemory] / (1024 * 1024)) << " MB\n";
+    
+    // Check processor count
+    std::cerr << "  - Processor count: " << [processInfo processorCount] << "\n";
+    std::cerr << "  - Active processor count: " << [processInfo activeProcessorCount] << "\n";
+    
+    // Check if Metal framework is available
+    NSBundle* metalBundle = [NSBundle bundleWithPath:@"/System/Library/Frameworks/Metal.framework"];
+    if (metalBundle) {
+        std::cerr << "  - Metal framework is available\n";
+        NSDictionary* infoDictionary = [metalBundle infoDictionary];
+        NSString* version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
+        if (version) {
+            std::cerr << "  - Metal framework version: " << [version UTF8String] << "\n";
+        }
+    } else {
+        std::cerr << "  - Metal framework is NOT available\n";
     }
     
-    return {LAB_ERROR_NONE, nullptr};
+    // Initialize the Metal device
+    bool success = m_device->Initialize();
+    
+    std::cerr << "=== Metal Initialization End ===\n";
+    
+    // Restore stderr
+    std::cerr.rdbuf(oldCerr);
+    
+    if (!success) {
+        std::string errorMsg = errorStream.str();
+        if (errorMsg.find("Metal shader library") != std::string::npos) {
+            std::cerr <<  "Failed to initialize Metal device: Metal shader library not found. "
+            "Please ensure primitives.metallib is available in the executable directory." << std::endl;
+            return LAB_RESULT_SHADER_LIBRARY_INITIALIZATION_FAILED;
+        } else {
+            return LAB_RESULT_DEVICE_INITIALIZATION_FAILED;
+        }
+    }
+    
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::Resize(uint32_t width, uint32_t height) {
     m_width = width;
     m_height = height;
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) {
     auto texture = std::make_shared<MetalTexture>(m_device.get(), desc);
     if (!texture->GetMTLTexture()) {
-        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create Metal texture"};
+        return LAB_RESULT_TEXTURE_CREATION_FAILED;
     }
     
     out_texture = texture;
     m_textures.push_back(texture);
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::UpdateTexture(Texture* texture, const void* data, size_t size) {
@@ -370,7 +530,7 @@ lab_result MetalBackend::UpdateTexture(Texture* texture, const void* data, size_
                 withBytes:data
                 bytesPerRow:texture->GetWidth() * 4];
     
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::ReadbackTexture(Texture* texture, void* data, size_t size) {
@@ -384,41 +544,42 @@ lab_result MetalBackend::ReadbackTexture(Texture* texture, void* data, size_t si
               fromRegion:region
              mipmapLevel:0];
     
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) {
     auto target = std::make_shared<MetalRenderTarget>(m_device.get(), desc);
     if (!target->GetRenderPassDescriptor()) {
-        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create Metal render target"};
+        return LAB_RESULT_RENDERTARGET_INITIALIZATION_FAILED;
     }
     
     out_target = target;
     m_renderTargets.push_back(target);
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::SetRenderTarget(RenderTarget* target) {
     m_currentRenderTarget = target;
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::BeginFrame() {
     m_currentCommandBuffer = std::make_unique<MetalCommandBuffer>(m_device.get());
     if (!m_currentCommandBuffer->Begin()) {
-        return {LAB_ERROR_INITIALIZATION_FAILED, "Failed to create Metal command buffer"};
+        return LAB_RESULT_COMMAND_BUFFER_INITIALIZATION_FAILED;
     }
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::SubmitCommands(const std::vector<DrawCommand>& commands) {
     if (!m_currentRenderTarget) {
-        return {LAB_ERROR_INVALID_STATE, "No render target set"};
+        return LAB_RESULT_INVALID_RENDER_TARGET;
     }
     
     auto metalTarget = static_cast<MetalRenderTarget*>(m_currentRenderTarget);
-    if (!m_currentCommandBuffer->BeginRenderPass(metalTarget)) {
-        return {LAB_ERROR_INVALID_STATE, "Failed to begin render pass"};
+    auto result = m_currentCommandBuffer->BeginRenderPass(metalTarget);
+    if (result != LAB_RESULT_OK) {
+        return result;
     }
     
     for (const auto& cmd : commands) {
@@ -479,15 +640,15 @@ lab_result MetalBackend::SubmitCommands(const std::vector<DrawCommand>& commands
     }
     
     m_currentCommandBuffer->EndRenderPass();
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 lab_result MetalBackend::EndFrame() {
     if (!m_currentCommandBuffer->End()) {
-        return {LAB_ERROR_INVALID_STATE, "Failed to end command buffer"};
+        return LAB_RESULT_INVALID_COMMAND_BUFFER;
     }
     m_currentCommandBuffer.reset();
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 void MetalBackend::DestroyTexture(Texture* texture) {

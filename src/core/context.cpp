@@ -31,12 +31,12 @@ Context::~Context() = default;
 lab_result Context::Create(lab_backend_type type, const lab_context_desc* desc, Context** out_context) {
     auto context = std::make_unique<ContextImpl>();
     auto result = context->Initialize(type, desc);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
     *out_context = context.release();
-    return lab_result(LAB_ERROR_NONE);
+    return lab_result(LAB_RESULT_OK);
 }
 
 // Factory function to create the appropriate backend based on the backend type
@@ -69,12 +69,12 @@ std::unique_ptr<Backend> Context::CreateBackend(lab_backend_type type) {
 lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* desc) {
     m_backend = CreateBackend(type);
     if (!m_backend) {
-        return lab_result(LAB_ERROR_INVALID_PARAMETER, "Unsupported backend type");
+        return LAB_RESULT_UNSUPPORTED_BACKEND;
     }
     
     // Initialize backend
     auto result = m_backend->Initialize(desc ? desc->width : 0, desc ? desc->height : 0);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
@@ -88,7 +88,7 @@ lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* de
     m_inTextMode = false;
     m_inDrawMode = false;
     
-    return lab_result(LAB_ERROR_NONE);
+    return lab_result(LAB_RESULT_OK);
 }
 
 void Context::BeginFrame() {
@@ -103,9 +103,9 @@ void Context::EndFrame() {
 
 extern "C" {
 
-lab_operation_result lab_create_context(const lab_backend_desc* desc, lab_context* out_context) {
+lab_result lab_create_context(const lab_backend_desc* desc, lab_context* out_context) {
     if (!desc || !out_context) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+        return LAB_RESULT_INVALID_PARAMETER;
     }
     
     // Convert backend_desc to context_desc
@@ -120,21 +120,21 @@ lab_operation_result lab_create_context(const lab_backend_desc* desc, lab_contex
     
     labfont::Context* context = nullptr;
     auto result = labfont::Context::Create(desc->type, &context_desc, &context);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
     *out_context = labfont::GetContextHandle(context);
-    return lab_operation_result{LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 void lab_destroy_context(lab_context ctx) {
     delete labfont::GetContextImpl(ctx);
 }
 
-lab_operation_result lab_begin_frame(lab_context ctx) {
+lab_result lab_begin_frame(lab_context ctx) {
     if (!ctx) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
+        return LAB_RESULT_INVALID_PARAMETER;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -142,9 +142,9 @@ lab_operation_result lab_begin_frame(lab_context ctx) {
     return result;
 }
 
-lab_operation_result lab_end_frame(lab_context ctx) {
+lab_result lab_end_frame(lab_context ctx) {
     if (!ctx) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
+        return LAB_RESULT_INVALID_CONTEXT;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -152,9 +152,13 @@ lab_operation_result lab_end_frame(lab_context ctx) {
     return result;
 }
 
-lab_operation_result lab_submit_commands(lab_context ctx, const lab_draw_command* commands, uint32_t commandCount) {
-    if (!ctx || !commands || commandCount == 0) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+lab_result lab_submit_commands(lab_context ctx, const lab_draw_command* commands, uint32_t commandCount) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+
+    if (!commands || commandCount == 0) {
+        return LAB_RESULT_INVALID_PARAMETER;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -163,9 +167,13 @@ lab_operation_result lab_submit_commands(lab_context ctx, const lab_draw_command
     return result;
 }
 
-lab_operation_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target) {
-    if (!ctx || !desc || !out_target) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid parameters"};
+lab_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+
+    if (!desc || !out_target) {
+        return LAB_RESULT_INVALID_PARAMETER;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -178,7 +186,7 @@ lab_operation_result lab_create_render_target(lab_context ctx, const lab_render_
     
     std::shared_ptr<labfont::RenderTarget> target;
     auto result = context->GetBackend()->CreateRenderTarget(internal_desc, target);
-    if (result.error == LAB_ERROR_NONE) {
+    if (result == LAB_RESULT_OK) {
         *out_target = reinterpret_cast<lab_render_target>(target.get());
     }
     return result;
@@ -193,11 +201,11 @@ void lab_destroy_render_target(lab_context ctx, lab_render_target target) {
     context->GetBackend()->DestroyRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
 }
 
-lab_operation_result lab_set_render_target(lab_context ctx, lab_render_target target) {
+lab_result lab_set_render_target(lab_context ctx, lab_render_target target) {
     if (!ctx) {
-        return lab_operation_result{LAB_ERROR_INVALID_PARAMETER, "Invalid context"};
+        return LAB_RESULT_INVALID_CONTEXT;
     }
-    
+
     auto context = labfont::GetContextImpl(ctx);
     auto result = context->GetBackend()->SetRenderTarget(reinterpret_cast<labfont::RenderTarget*>(target));
     return result;

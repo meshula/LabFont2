@@ -6,20 +6,14 @@
 namespace labfont {
 
 // Error handling macros
-#define LAB_ERROR_GUARD() \
+#define LAB_RESULT_GUARD() \
     ErrorState errorState; \
-    lab_result result = {LAB_ERROR_NONE, nullptr}
-
-#define LAB_RETURN_ERROR(error, message) \
-    do { \
-        errorState.SetError(error, message); \
-        return errorState.GetLastError(); \
-    } while (0)
+    lab_result result = LAB_RESULT_OK
 
 #define LAB_RETURN_IF_ERROR(expr) \
     do { \
         auto result = (expr); \
-        if (result.error != LAB_ERROR_NONE) { \
+        if (result != LAB_RESULT_OK) { \
             return result; \
         } \
     } while (0)

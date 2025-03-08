@@ -43,10 +43,9 @@ bool InitLabFont() {
     };
 
     // Create the context
-    lab_operation_result result = lab_create_context(&backend_desc, &context);
-    if (result.error != LAB_ERROR_NONE) {
-        std::cerr << "Failed to create LabFont context: " << 
-            (result.message ? result.message : "Unknown error") << std::endl;
+    lab_result result = lab_create_context(&backend_desc, &context);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result);
         return false;
     }
 
@@ -81,13 +80,12 @@ std::vector<lab_vertex_2TC> CreateTriangleVertices() {
 }
 
 // Render a frame
-void Render() {
+lab_result Render() {
     // Begin the frame
-    lab_operation_result result = lab_begin_frame(context);
-    if (result.error != LAB_ERROR_NONE) {
-        std::cerr << "Failed to begin frame: " << 
-            (result.message ? result.message : "Unknown error") << std::endl;
-        return;
+    lab_result result = lab_begin_frame(context);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to begin frame: " << lab_get_error_string(result);
+        return result;
     }
 
     // Create clear command (black background)
@@ -113,18 +111,16 @@ void Render() {
     // Submit commands
     lab_draw_command commands[] = {clear_cmd, triangle_cmd};
     result = lab_submit_commands(context, commands, 2);
-    if (result.error != LAB_ERROR_NONE) {
-        std::cerr << "Failed to submit commands: " << 
-            (result.message ? result.message : "Unknown error") << std::endl;
-        return;
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to submit commands: " << lab_get_error_string(result);
+        return result;
     }
 
     // End the frame
     result = lab_end_frame(context);
-    if (result.error != LAB_ERROR_NONE) {
-        std::cerr << "Failed to end frame: " << 
-            (result.message ? result.message : "Unknown error") << std::endl;
-        return;
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to end frame: " << lab_get_error_string(result);
+        return result;
     }
 }
 
@@ -158,7 +154,9 @@ int main() {
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        Render();
+        if (Render() != LAB_RESULT_OK) {
+            break;
+        }
     }
 
     // Cleanup

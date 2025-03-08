@@ -119,26 +119,25 @@ void ValidateCommandBuffer(id<MTLCommandBuffer> commandBuffer) {
     }
 }
 
-bool MetalCommandBuffer::BeginRenderPass(MetalRenderTarget* target) {
+lab_result MetalCommandBuffer::BeginRenderPass(MetalRenderTarget* target) {
     if (m_inRenderPass) {
         EndRenderPass();
     }
     
     MTLRenderPassDescriptor* renderPass = target->GetRenderPassDescriptor();
     if (!renderPass || !m_commandBuffer) {
-        return false;
+        return LAB_RESULT_INVALID_BUFFER;
     }
 
     ValidateRenderPassDescriptor(renderPass);
     ValidateCommandBuffer(m_commandBuffer);
     m_renderEncoder = [m_commandBuffer renderCommandEncoderWithDescriptor:renderPass];
     if (!m_renderEncoder) {
-        std::cerr << "Error: Failed to create render command encoder!\n";
-        return false;
+        return LAB_RESULT_COMMAND_ENCODER_INITIALIZATION_FAILED;
     }
     
     m_inRenderPass = true;
-    return true;
+    return LAB_RESULT_OK;
 }
 
 void MetalCommandBuffer::EndRenderPass() {

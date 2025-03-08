@@ -26,7 +26,7 @@ static MunitResult test_wgpu_initialization(const MunitParameter params[], void*
     
     // Initialize backend
     lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     return MUNIT_OK;
 }
@@ -45,16 +45,16 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     
     std::shared_ptr<RenderTarget> target;
     lab_result result = backend->CreateRenderTarget(desc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(target.get());
     
     // Set as current render target
     result = backend->SetRenderTarget(target.get());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Begin frame
     result = backend->BeginFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create test vertices for a triangle
     lab_vertex_2TC vertices[3] = {
@@ -85,11 +85,11 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // End frame
     result = backend->EndFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     return MUNIT_OK;
 }

@@ -19,8 +19,8 @@ static MunitResult test_resource_creation(const MunitParameter params[], void* d
         .height = desc.height,
         .native_window = desc.native_window
     };
-    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    lab_result result = lab_create_context(&backend_desc, &ctx);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(ctx);
 
     // Create texture
@@ -31,7 +31,7 @@ static MunitResult test_resource_creation(const MunitParameter params[], void* d
         .format = 1  // Assuming 1 is RGBA8
     };
     result = lab_create_texture(ctx, &tex_desc, &tex);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(tex);
 
     // Create buffer
@@ -41,17 +41,17 @@ static MunitResult test_resource_creation(const MunitParameter params[], void* d
         .dynamic = true
     };
     result = lab_create_buffer(ctx, &buf_desc, &buf);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(buf);
 
     // Test invalid parameters
     result = lab_create_texture(NULL, &tex_desc, &tex);
-    munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
 
     // The test for null name parameter is removed as there's no name parameter in the API
 
     result = lab_create_texture(ctx, NULL, &tex);
-    munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
 
     // Cleanup
     lab_destroy_texture(ctx, tex);

@@ -51,7 +51,7 @@ public:
     bool Begin();
     bool End();
     
-    bool BeginRenderPass(MetalRenderTarget* target);
+    lab_result BeginRenderPass(MetalRenderTarget* target);
     void EndRenderPass();
     
     void SetBlendMode(BlendMode mode);

@@ -10,7 +10,7 @@ static MunitResult test_wgpu_initialization(const MunitParameter params[], void*
     
     // Initialize backend
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Verify supported features
     munit_assert_true(backend->SupportsTextureFormat(TextureFormat::RGBA8_UNORM));
@@ -36,7 +36,7 @@ static MunitResult test_wgpu_texture_operations(const MunitParameter params[], v
     
     std::shared_ptr<Texture> texture;
     labfont::lab_result result = backend->CreateTexture(desc, texture);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(texture.get());
     
     // Generate test pattern
@@ -52,12 +52,12 @@ static MunitResult test_wgpu_texture_operations(const MunitParameter params[], v
     
     // Update texture
     result = backend->UpdateTexture(texture.get(), pattern.data(), pattern.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Read back and verify
     std::vector<uint8_t> readback(pattern.size());
     result = backend->ReadbackTexture(texture.get(), readback.data(), readback.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Compare with original pattern
     bool matches = PixelComparator::CompareBuffers<uint8_t>(
@@ -86,16 +86,16 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     
     std::shared_ptr<RenderTarget> target;
     labfont::lab_result result = backend->CreateRenderTarget(desc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(target.get());
     
     // Set as current render target
     result = backend->SetRenderTarget(target.get());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Begin frame
     result = backend->BeginFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create test vertices for a triangle
     lab_vertex_2TC vertices[3] = {
@@ -126,16 +126,16 @@ static MunitResult test_wgpu_render_target(const MunitParameter params[], void* 
     commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // End frame
     result = backend->EndFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Read back render target
     std::vector<uint8_t> readback(512 * 512 * 4);
     result = backend->ReadbackTexture(target->GetColorTexture(), readback.data(), readback.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Verify some pixels are colored (not just black)
     bool hasColoredPixels = false;
@@ -164,7 +164,7 @@ static MunitResult test_wgpu_blend_modes(const MunitParameter params[], void* da
     
     std::shared_ptr<RenderTarget> target;
     labfont::lab_result result = backend->CreateRenderTarget(desc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     backend->SetRenderTarget(target.get());
     backend->BeginFrame();
@@ -223,14 +223,14 @@ static MunitResult test_wgpu_blend_modes(const MunitParameter params[], void* da
     commands.push_back(DrawCommand(blueSquare_cmd));
     
     result = backend->SubmitCommands(commands);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     backend->EndFrame();
     
     // Read back and verify blending
     std::vector<uint8_t> readback(256 * 256 * 4);
     result = backend->ReadbackTexture(target->GetColorTexture(), readback.data(), readback.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Verify we have some purple pixels (blended red and blue)
     bool hasBlendedPixels = false;

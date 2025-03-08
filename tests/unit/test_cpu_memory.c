@@ -36,8 +36,8 @@ static MunitResult test_memory_tracking(const MunitParameter params[], void* dat
         .height = desc.height,
         .native_window = desc.native_window
     };
-    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    lab_result result = lab_create_context(&backend_desc, &ctx);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
 
     // Get initial stats
     lab_memory_stats stats = lab_get_memory_stats();
@@ -92,8 +92,8 @@ static MunitResult test_memory_categories(const MunitParameter params[], void* d
         .height = desc.height,
         .native_window = desc.native_window
     };
-    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    lab_result result = lab_create_context(&backend_desc, &ctx);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
 
     // Allocate memory in different categories
     void* ptr1 = lab_alloc(1024, LAB_MEMORY_GENERAL);

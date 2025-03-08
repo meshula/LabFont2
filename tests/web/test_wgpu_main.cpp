@@ -80,8 +80,8 @@ void RunTests() {
         .native_window = nullptr
     };
     
-    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
-    if (result.error != LAB_ERROR_NONE) {
+    lab_result result = lab_create_context(&backend_desc, &ctx);
+    if (result != LAB_RESULT_OK) {
         printf("Failed to create context: %s\n", result.message);
         test_result = 1;
         tests_completed = true;
@@ -90,7 +90,7 @@ void RunTests() {
 
     // Run basic drawing tests
     result = test_draw_triangle(ctx);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         printf("Triangle test failed: %s\n", result.message);
         test_result = 1;
         tests_completed = true;

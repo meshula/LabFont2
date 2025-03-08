@@ -224,20 +224,20 @@ lab_result VulkanBackend::Initialize(uint32_t width, uint32_t height) {
     
     m_device = std::make_unique<VulkanDevice>();
     if (!m_device->Initialize()) {
-        return lab_result{ LAB_ERROR_INITIALIZATION_FAILED };
+        return lab_result{ LAB_RESULT_INITIALIZATION_FAILED };
     }
     
     if (!CreatePipelines()) {
-        return lab_result{ LAB_ERROR_INITIALIZATION_FAILED };
+        return lab_result{ LAB_RESULT_INITIALIZATION_FAILED };
     }
     
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::Resize(uint32_t width, uint32_t height) {
     m_width = width;
     m_height = height;
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::CreateTexture(const labfont::TextureDesc& desc, std::shared_ptr<labfont::Texture>& out_texture) {
@@ -245,25 +245,25 @@ lab_result VulkanBackend::CreateTexture(const labfont::TextureDesc& desc, std::s
         auto texture = std::make_shared<VulkanTexture>(desc, m_device.get());
         m_textures.push_back(texture);
         out_texture = texture;
-        return lab_result{ LAB_ERROR_NONE };
+        return lab_result{ LAB_RESULT_OK };
     } catch (const std::exception&) {
-        return lab_result{ LAB_ERROR_OUT_OF_MEMORY };
+        return lab_result{ LAB_RESULT_OUT_OF_MEMORY };
     }
 }
 
 lab_result VulkanBackend::UpdateTexture(labfont::Texture* texture, const void* data, size_t size) {
     auto vulkanTexture = static_cast<VulkanTexture*>(texture);
     // TODO: Implement texture update
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::ReadbackTexture(labfont::Texture* texture, void* data, size_t size) {
     auto vulkanTexture = static_cast<VulkanTexture*>(texture);
     if (!vulkanTexture->SupportsReadback()) {
-        return lab_result{ LAB_ERROR_INVALID_OPERATION };
+        return lab_result{ LAB_RESULT_INVALID_OPERATION };
     }
     // TODO: Implement texture readback
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::CreateRenderTarget(const labfont::RenderTargetDesc& desc, std::shared_ptr<labfont::RenderTarget>& out_target) {
@@ -271,36 +271,36 @@ lab_result VulkanBackend::CreateRenderTarget(const labfont::RenderTargetDesc& de
         auto target = std::make_shared<VulkanRenderTarget>(desc, m_device.get());
         m_renderTargets.push_back(target);
         out_target = target;
-        return lab_result{ LAB_ERROR_NONE };
+        return lab_result{ LAB_RESULT_OK };
     } catch (const std::exception&) {
-        return lab_result{ LAB_ERROR_OUT_OF_MEMORY };
+        return lab_result{ LAB_RESULT_OUT_OF_MEMORY };
     }
 }
 
 lab_result VulkanBackend::SetRenderTarget(labfont::RenderTarget* target) {
     m_currentRenderTarget = target;
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::BeginFrame() {
     m_currentCommandBuffer = std::make_unique<VulkanCommandBuffer>(m_device.get());
     if (!m_currentCommandBuffer->Begin()) {
-        return lab_result{ LAB_ERROR_COMMAND_BUFFER };
+        return lab_result{ LAB_RESULT_COMMAND_BUFFER };
     }
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::SubmitCommands(const std::vector<DrawCommand>& commands) {
     // TODO: Implement command submission
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 lab_result VulkanBackend::EndFrame() {
     if (!m_currentCommandBuffer->End()) {
-        return lab_result{ LAB_ERROR_COMMAND_BUFFER };
+        return lab_result{ LAB_RESULT_COMMAND_BUFFER };
     }
     m_currentCommandBuffer.reset();
-    return lab_result{ LAB_ERROR_NONE };
+    return lab_result{ LAB_RESULT_OK };
 }
 
 void VulkanBackend::DestroyTexture(labfont::Texture* texture) {

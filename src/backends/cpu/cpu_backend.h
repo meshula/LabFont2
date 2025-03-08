@@ -105,64 +105,68 @@ public:
     lab_result Initialize(uint32_t width, uint32_t height) override {
         // Validate parameters
         if (width == 0 || height == 0) {
-            return lab_result(LAB_ERROR_INVALID_PARAMETER, "Width and height must be greater than 0");
+            return LAB_RESULT_INVALID_DIMENSION;
         }
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     lab_result Resize(uint32_t width, uint32_t height) override {
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     lab_result CreateTexture(const TextureDesc& desc, std::shared_ptr<Texture>& out_texture) override {
         try {
             out_texture = std::make_shared<CPUTexture>(desc);
-            return lab_result(LAB_ERROR_NONE);
-        } catch (const std::exception& e) {
-            return lab_result(LAB_ERROR_OUT_OF_MEMORY, e.what());
+            return lab_result(LAB_RESULT_OK);
+        }
+        catch (const std::exception& e) {
+            return LAB_RESULT_OUT_OF_MEMORY;
         }
     }
     
     lab_result UpdateTexture(Texture* texture, const void* data, size_t size) override {
         auto cpuTexture = static_cast<CPUTexture*>(texture);
         if (!cpuTexture) {
-            return lab_result(LAB_ERROR_INVALID_PARAMETER, "Invalid texture");
+            return LAB_RESULT_INVALID_TEXTURE;
         }
         cpuTexture->SetData(data, size);
-        return lab_result(LAB_ERROR_NONE);
+        return LAB_RESULT_OK;
     }
     
     lab_result ReadbackTexture(Texture* texture, void* data, size_t size) override {
         auto cpuTexture = static_cast<CPUTexture*>(texture);
+        if (!cpuTexture) {
+            return LAB_RESULT_INVALID_TEXTURE;
+        }
         if (!cpuTexture || !cpuTexture->SupportsReadback()) {
-            return lab_result(LAB_ERROR_INVALID_PARAMETER, "Invalid texture or readback not supported");
+            return LAB_RESULT_READBACK_NOT_SUPPORTED;
         }
         memcpy(data, cpuTexture->GetData(), size);
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     lab_result CreateRenderTarget(const RenderTargetDesc& desc, std::shared_ptr<RenderTarget>& out_target) override {
         try {
             out_target = std::make_shared<CPURenderTarget>(desc);
-            return lab_result(LAB_ERROR_NONE);
+            return lab_result(LAB_RESULT_OK);
         } catch (const std::exception& e) {
-            return lab_result(LAB_ERROR_OUT_OF_MEMORY, e.what());
+            return LAB_RESULT_OUT_OF_MEMORY;
         }
     }
     
     lab_result SetRenderTarget(RenderTarget* target) override {
         m_currentRenderTarget = static_cast<CPURenderTarget*>(target);
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     lab_result BeginFrame() override {
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     lab_result SubmitCommands(const std::vector<DrawCommand>& commands) override;
     
     lab_result EndFrame() override {
-        return lab_result(LAB_ERROR_NONE);
+        return lab_result(LAB_RESULT_OK);
     }
     
     void DestroyTexture(Texture* texture) override {}

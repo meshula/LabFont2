@@ -19,13 +19,13 @@ static MunitResult test_context_creation(const MunitParameter params[], void* da
         .height = desc.height,
         .native_window = desc.native_window
     };
-    lab_operation_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    lab_result result = lab_create_context(&backend_desc, &ctx);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(ctx);
 
     // Test invalid parameters
     result = lab_create_context(NULL, &ctx);
-    munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
 
     lab_backend_desc valid_desc = {
         .type = LAB_BACKEND_METAL,
@@ -34,7 +34,7 @@ static MunitResult test_context_creation(const MunitParameter params[], void* da
         .native_window = desc.native_window
     };
     result = lab_create_context(&valid_desc, NULL);
-    munit_assert_int(result.error, ==, LAB_ERROR_INVALID_PARAMETER);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_PARAMETER);
 
     // Test cleanup
     lab_destroy_context(ctx);

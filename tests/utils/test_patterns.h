@@ -55,7 +55,7 @@ extern "C" {
 #endif
 
 // Draw a simple red triangle to test basic rendering
-inline lab_operation_result test_draw_triangle(lab_context ctx) {
+inline lab_result test_draw_triangle(lab_context ctx) {
     // Create a render target
     lab_render_target target = nullptr;
     lab_render_target_desc target_desc = {
@@ -65,20 +65,20 @@ inline lab_operation_result test_draw_triangle(lab_context ctx) {
         .hasDepth = false
     };
     
-    lab_operation_result result = lab_create_render_target(ctx, &target_desc, &target);
-    if (result.error != LAB_ERROR_NONE) {
+    lab_result result = lab_create_render_target(ctx, &target_desc, &target);
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
     // Begin frame
     result = lab_begin_frame(ctx);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
     // Set render target
     result = lab_set_render_target(ctx, target);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
@@ -98,17 +98,17 @@ inline lab_operation_result test_draw_triangle(lab_context ctx) {
     };
     
     result = lab_submit_commands(ctx, &cmd, 1);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
     // End frame
     result = lab_end_frame(ctx);
-    if (result.error != LAB_ERROR_NONE) {
+    if (result != LAB_RESULT_OK) {
         return result;
     }
     
-    return (lab_operation_result){LAB_ERROR_NONE, nullptr};
+    return (lab_result){LAB_RESULT_OK, nullptr};
 }
 
 #ifdef __cplusplus

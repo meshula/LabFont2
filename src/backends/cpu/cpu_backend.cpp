@@ -7,12 +7,12 @@ namespace labfont {
 lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) {
     // Get current render target
     if (!m_currentRenderTarget) {
-        return {LAB_ERROR_INVALID_STATE, "No render target set"};
+        return LAB_RESULT_STATE_NO_RENDER_TARGET_SET;
     }
     
     auto colorTexture = static_cast<CPUTexture*>(m_currentRenderTarget->GetColorTexture());
     if (!colorTexture) {
-        return {LAB_ERROR_INVALID_STATE, "Invalid render target"};
+        return LAB_RESULT_INVALID_RENDER_TARGET;
     }
     
     // Get render target dimensions and buffer
@@ -75,7 +75,7 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
     // Store commands for testing/debugging
     m_commands.insert(m_commands.end(), commands.begin(), commands.end());
     
-    return {LAB_ERROR_NONE, nullptr};
+    return LAB_RESULT_OK;
 }
 
 } // namespace labfont

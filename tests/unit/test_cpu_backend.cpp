@@ -20,7 +20,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
     
     // Initialize backend
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture
     TextureDesc desc = {
@@ -34,7 +34,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
     
     std::shared_ptr<Texture> texture;
     result = backend->CreateTexture(desc, texture);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(texture.get());
     
     // Verify texture properties
@@ -50,7 +50,7 @@ static MunitResult test_texture_creation(const MunitParameter params[], void* da
 static MunitResult test_texture_update(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create texture
     TextureDesc desc = {
@@ -64,7 +64,7 @@ static MunitResult test_texture_update(const MunitParameter params[], void* data
     
     std::shared_ptr<Texture> texture;
     result = backend->CreateTexture(desc, texture);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Generate test pattern
     uint8_t color1[] = {255, 0, 0, 255};  // Red
@@ -79,12 +79,12 @@ static MunitResult test_texture_update(const MunitParameter params[], void* data
     
     // Update texture
     result = backend->UpdateTexture(texture.get(), pattern.data(), pattern.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Read back and verify
     std::vector<uint8_t> readback(pattern.size());
     result = backend->ReadbackTexture(texture.get(), readback.data(), readback.size());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Compare with original pattern
     bool matches = PixelComparator::CompareBuffers<uint8_t>(
@@ -102,7 +102,7 @@ static MunitResult test_texture_update(const MunitParameter params[], void* data
 static MunitResult test_render_target(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target
     RenderTargetDesc desc = {
@@ -114,7 +114,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
     
     std::shared_ptr<RenderTarget> target;
     result = backend->CreateRenderTarget(desc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(target.get());
     
     // Verify render target properties
@@ -131,7 +131,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
     
     // Set as current render target
     result = backend->SetRenderTarget(target.get());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     // Note: GetCurrentRenderTarget() is not implemented in CPUBackend
     // munit_assert_ptr_equal(backend->GetCurrentRenderTarget(), target.get());
     
@@ -141,7 +141,7 @@ static MunitResult test_render_target(const MunitParameter params[], void* data)
 static MunitResult test_draw_commands(const MunitParameter params[], void* data) {
     auto backend = std::make_unique<CPUBackend>();
     labfont::lab_result result = backend->Initialize(800, 600);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create render target
     RenderTargetDesc rtDesc = {
@@ -153,15 +153,15 @@ static MunitResult test_draw_commands(const MunitParameter params[], void* data)
     
     std::shared_ptr<RenderTarget> target;
     result = backend->CreateRenderTarget(rtDesc, target);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Set render target
     result = backend->SetRenderTarget(target.get());
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Begin frame
     result = backend->BeginFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Create some test vertices
     lab_vertex_2TC vertices[3] = {
@@ -192,11 +192,11 @@ static MunitResult test_draw_commands(const MunitParameter params[], void* data)
     commands.push_back(DrawCommand(draw_cmd));
     
     result = backend->SubmitCommands(commands);
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // End frame
     result = backend->EndFrame();
-    munit_assert_int(result.error, ==, LAB_ERROR_NONE);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
     
     // Note: GetSubmittedCommands() is not implemented in CPUBackend
     // const auto& submitted = backend->GetSubmittedCommands();

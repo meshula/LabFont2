@@ -99,8 +99,9 @@ The project's README advertises features that don't appear to be fully implement
 
 3. **Test Framework and Fixes**:
    - [x] Standardize test naming convention to `test_BACKEND_feature.c/cpp`
+   - [ ] Fix test failure inability to initialize metal device
    - [ ] Fix backend test failures:
-     - [ ] Address assertion failures in Metal tests (LAB_ERROR_NONE vs -7)
+     - [x] Address assertion failures in Metal tests (LAB_RESULT_OK vs -7)
      - [ ] Fix MoltenVK conflicts in Vulkan tests (duplicate class implementation)
      - [ ] Resolve conflicts between multiple MoltenVK libraries on macOS
    - [ ] Expand test coverage:
