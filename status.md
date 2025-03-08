@@ -87,6 +87,11 @@ The project's README advertises features that don't appear to be fully implement
 2. **Backend Implementations**:
    - [x] Fix Metal backend errors
    - [x] Fix Vulkan backend errors
+   - [ ] Implement CPU backend drawing functions using LVGL:
+     - [ ] Integrate LVGL library for software rendering
+     - [ ] Implement DrawTriangle using LVGL's triangle drawing capabilities
+     - [ ] Implement DrawLine using LVGL's line drawing capabilities
+     - [ ] Add font rasterization support using LVGL's font engine
    - [ ] Fix WebGPU backend errors:
      - [x] Update build_wasm.sh to properly source the Emscripten environment
      - [x] Implement conditional compilation for WebGPU headers
@@ -129,6 +134,7 @@ The project's README advertises features that don't appear to be fully implement
 
 6. **Feature Implementation**:
    - [ ] Implement missing advertised features:
-     - [ ] Text rendering with styling
+     - [ ] Text rendering with styling (leveraging LVGL's font capabilities)
      - [ ] Text layout capabilities
      - [ ] Additional drawing operations
+     - [ ] Font rasterization using LVGL's font engine
