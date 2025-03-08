@@ -5,6 +5,10 @@
 #include <memory>
 #include <vector>
 
+// Use stb_image_write to save the image
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../third_party/stb/stb_image_write.h"
+
 #ifdef LABFONT_METAL_ENABLED
 #include "backends/metal/metal_backend.h"
 #endif
@@ -180,6 +184,171 @@ lab_result lab_set_render_target(lab_context ctx, lab_render_target target) {
     
     auto result = context->GetBackend()->SetRenderTarget(backendTarget);
     return result;
+}
+
+lab_result lab_save_render_target(lab_context ctx, lab_render_target target, const char* filename) {
+    if (!ctx || !target || !filename) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto targetResource = reinterpret_cast<labfont::RenderTargetResource*>(target);
+    auto backendTarget = targetResource->GetBackendTarget();
+    
+    // Get the color texture from the render target
+    auto colorTexture = backendTarget->GetColorTexture();
+    if (!colorTexture) {
+        return LAB_RESULT_INVALID_RENDER_TARGET;
+    }
+    
+    // Check if the texture supports readback
+    if (!colorTexture->SupportsReadback()) {
+        return LAB_RESULT_READBACK_NOT_SUPPORTED;
+    }
+    
+    // Get texture dimensions
+    uint32_t width = colorTexture->GetWidth();
+    uint32_t height = colorTexture->GetHeight();
+    
+    // Allocate memory for the pixel data (RGBA8 format)
+    size_t dataSize = width * height * 4;
+    uint8_t* pixelData = (uint8_t*)lab_alloc(dataSize, LAB_MEMORY_TEMPORARY);
+    if (!pixelData) {
+        return LAB_RESULT_OUT_OF_MEMORY;
+    }
+    
+    // Read back the texture data
+    lab_result result = context->GetBackend()->ReadbackTexture(colorTexture, pixelData, dataSize);
+    if (result != LAB_RESULT_OK) {
+        lab_free(pixelData);
+        return result;
+    }
+    
+    // Determine file format based on extension
+    const char* ext = strrchr(filename, '.');
+    if (!ext) {
+        lab_free(pixelData);
+        return LAB_RESULT_INVALID_PARAMETER; // No extension
+    }
+    
+    int success = 0;
+    if (strcmp(ext, ".png") == 0) {
+        success = stbi_write_png(filename, width, height, 4, pixelData, width * 4);
+    } else if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) {
+        success = stbi_write_jpg(filename, width, height, 4, pixelData, 90); // Quality 90
+    } else if (strcmp(ext, ".bmp") == 0) {
+        success = stbi_write_bmp(filename, width, height, 4, pixelData);
+    } else if (strcmp(ext, ".tga") == 0) {
+        success = stbi_write_tga(filename, width, height, 4, pixelData);
+    } else {
+        lab_free(pixelData);
+        return LAB_RESULT_UNSUPPORTED_FORMAT;
+    }
+    
+    lab_free(pixelData);
+    
+    if (!success) {
+        return LAB_RESULT_BACKEND_ERROR;
+    }
+    
+    return LAB_RESULT_OK;
+}
+
+lab_result lab_resize_render_target(lab_context ctx, lab_render_target target, uint32_t width, uint32_t height) {
+    if (!ctx || !target) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    if (width == 0 || height == 0) {
+        return LAB_RESULT_INVALID_DIMENSION;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto targetResource = reinterpret_cast<labfont::RenderTargetResource*>(target);
+    auto backendTarget = targetResource->GetBackendTarget();
+    
+    // Get current render target properties
+    auto format = backendTarget->GetFormat();
+    bool hasDepth = backendTarget->HasDepth();
+    
+    // Create a new render target descriptor with the new dimensions
+    labfont::RenderTargetDesc desc;
+    desc.width = width;
+    desc.height = height;
+    desc.format = format;
+    desc.hasDepth = hasDepth;
+    
+    // Create a new backend render target
+    std::shared_ptr<labfont::RenderTarget> newBackendTarget;
+    lab_result result = context->GetBackend()->CreateRenderTarget(desc, newBackendTarget);
+    if (result != LAB_RESULT_OK) {
+        return result;
+    }
+    
+    // Update the resource with the new backend target
+    targetResource->SetBackendTarget(newBackendTarget);
+    
+    // Set the render target to ensure it's active
+    result = context->GetBackend()->SetRenderTarget(newBackendTarget.get());
+    if (result != LAB_RESULT_OK) {
+        return result;
+    }
+    
+    return LAB_RESULT_OK;
+}
+
+lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target, uint8_t** out_data, size_t* out_size) {
+    if (!ctx || !target || !out_data || !out_size) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    auto context = labfont::GetContextImpl(ctx);
+    auto targetResource = reinterpret_cast<labfont::RenderTargetResource*>(target);
+    auto backendTarget = targetResource->GetBackendTarget();
+    
+    // Get the color texture from the render target
+    auto colorTexture = backendTarget->GetColorTexture();
+    if (!colorTexture) {
+        return LAB_RESULT_INVALID_RENDER_TARGET;
+    }
+    
+    // Check if the texture supports readback
+    if (!colorTexture->SupportsReadback()) {
+        return LAB_RESULT_READBACK_NOT_SUPPORTED;
+    }
+    
+    // Get texture dimensions
+    uint32_t width = colorTexture->GetWidth();
+    uint32_t height = colorTexture->GetHeight();
+    
+    // Calculate data size (RGBA8 format)
+    size_t dataSize = width * height * 4;
+    
+    // Check if we need to allocate or reallocate memory
+    if (*out_data == nullptr || *out_size < dataSize) {
+        // Free existing memory if it's too small
+        if (*out_data != nullptr) {
+            lab_free(*out_data);
+        }
+        
+        // Allocate new memory
+        *out_data = (uint8_t*)lab_alloc(dataSize, LAB_MEMORY_GRAPHICS);
+        if (!*out_data) {
+            *out_size = 0;
+            return LAB_RESULT_OUT_OF_MEMORY;
+        }
+    }
+    
+    // Update the size
+    *out_size = dataSize;
+    
+    // Read back the texture data
+    lab_result result = context->GetBackend()->ReadbackTexture(colorTexture, *out_data, dataSize);
+    if (result != LAB_RESULT_OK) {
+        return result;
+    }
+    
+    return LAB_RESULT_OK;
 }
 
 } // extern "C"

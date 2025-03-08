@@ -26,8 +26,22 @@ if(NOT glfw3_FOUND AND NOT GLFW_FOUND)
   return()
 endif()
 
-# on mac, prevent a terminal window from popping open by setting MACOSX_BUNDLE
-add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.cpp")
+if(APPLE)
+  add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.mm")
+
+  # Add drawing_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
+  target_sources(basic_drawing PRIVATE basic/drawing_main.cpp)
+  set_source_files_properties(basic/drawing_main.cpp PROPERTIES HEADER_FILE_ONLY ON)
+
+  target_link_libraries(basic_drawing
+      PRIVATE
+          "-framework CoreGraphics"
+          "-framework QuartzCore"
+          "-framework Cocoa"
+  )
+else()
+  add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.cpp")
+endif()
 target_link_libraries(basic_drawing
     PRIVATE
         labfont
