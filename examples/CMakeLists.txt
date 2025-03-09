@@ -26,6 +26,30 @@ if(NOT glfw3_FOUND AND NOT GLFW_FOUND)
   return()
 endif()
 
+set(LAB_BACKEND "" CACHE STRING "The backend to use for rendering")
+
+# validate the backend
+if(NOT LAB_BACKEND STREQUAL "CPU" AND
+   NOT LAB_BACKEND STREQUAL "METAL" AND
+   NOT LAB_BACKEND STREQUAL "WEBGPU" AND
+   NOT LAB_BACKEND STREQUAL "DX11" AND
+   NOT LAB_BACKEND STREQUAL "VULKAN")
+  message(FATAL_ERROR "Invalid LAB_BACKEND: ${LAB_BACKEND}, must be one of CPU, METAL, WEBGPU, DX11,VULKAN")
+endif()
+
+# Set the resolved backend
+if(LAB_BACKEND STREQUAL "CPU")
+  set(RESOLVED_BACKEND "LAB_BACKEND_CPU")
+elseif(LAB_BACKEND STREQUAL "METAL")
+  set(RESOLVED_BACKEND "LAB_BACKEND_METAL")
+elseif(LAB_BACKEND STREQUAL "WEBGPU")
+  set(RESOLVED_BACKEND "LAB_BACKEND_WEBGPU")
+elseif(LAB_BACKEND STREQUAL "DX11")
+  set(RESOLVED_BACKEND "LAB_BACKEND_DX11")
+elseif(LAB_BACKEND STREQUAL "VULKAN")
+  set(RESOLVED_BACKEND "LAB_BACKEND_VULKAN")
+endif()
+
 if(APPLE)
   add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.mm")
 
@@ -40,8 +64,38 @@ if(APPLE)
           "-framework Cocoa"
           "-framework Metal"
   )
+
+  # Copy Metal shader library to test executable directory
+  add_custom_command(TARGET basic_drawing POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_SOURCE_DIR}/src/backends/metal/shaders/compiled/primitives.metallib
+          $<TARGET_FILE_DIR:basic_drawing>/primitives.metallib
+      COMMENT "Copying Metal shader library to test executable directory"
+  )
+
+  set(ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/src/Lab.entitlements")
+    
+  set(APP_VERSION "1.0.0")
+  set_target_properties(basic_drawing PROPERTIES
+    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+    OUTPUT_NAME "Lab Font Basic Drawing Example"
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_BUNDLE_NAME "Lab Font Basic Drawing Example"
+    #MACOSX_BUNDLE_INFO_PLIST path/to/Info.plist
+    MACOSX_BUNDLE_BUNDLE_VERSION ${APP_VERSION}
+    MACOSX_BUNDLE_LONG_VERSION_STRING "My nice application name v${APP_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${APP_VERSION}"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.planetix.labfont.basicdrawing"
+    MACOSX_BUNDLE_COPYRIGHT "(C) 2025 Nick Porcino"
+    MACOSX_RPATH TRUE
+    MACOSX_FRAMEWORK_IDENTIFIER com.planetix.labfont.basicdrawing
+    XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@loader_path/Libraries"
+    RESOURCE "${RESOURCE_FILES}"
+    XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME FALSE
+    XCODE_ATTRIBUTE_EXECUTABLE_NAME "Lab Font Basic Drawing Example"
+  )
 else()
-  add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.cpp")
+  add_executable(basic_drawing "basic/drawing_main.cpp")
 endif()
 target_link_libraries(basic_drawing
     PRIVATE
@@ -63,6 +117,12 @@ if(EMSCRIPTEN)
   set_target_properties(basic_drawing PROPERTIES SUFFIX ".html")
   target_link_options(basic_drawing PRIVATE "-sUSE_GLFW=3")
 endif()
+
+if(NOT RESOLVED_BACKEND)
+  message(FATAL_ERROR "RESOLVED_BACKEND is not set")
+endif()
+
+target_compile_definitions(basic_drawing PRIVATE LAB_BACKEND=${RESOLVED_BACKEND})
 
 # Advanced examples
 # add_executable(advanced_text_styling)

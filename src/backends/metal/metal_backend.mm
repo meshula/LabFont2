@@ -42,7 +42,7 @@ MetalTexture::MetalTexture(MetalDevice* device, const TextureDesc& desc)
 
     if (desc.renderTarget) {
         textureDesc.usage |= MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-        textureDesc.storageMode = MTLStorageModePrivate;  // GPU-only memory
+        textureDesc.storageMode = MTLStorageModeShared;
     }
     else {
         textureDesc.usage = MTLTextureUsageShaderRead;
@@ -147,7 +147,7 @@ void TestMetalOffscreenRendering() {
     colorDesc.width = 512;
     colorDesc.height = 512;
     colorDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-    colorDesc.storageMode = MTLStorageModePrivate;  // GPU-only memory
+    colorDesc.storageMode = MTLStorageModeShared;
 
     id<MTLTexture> colorTexture = [device newTextureWithDescriptor:colorDesc];
     if (!colorTexture) {

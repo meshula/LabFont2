@@ -284,7 +284,7 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
 bool InitLabFont() {
     // Create a backend descriptor
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND_CPU, // Use CPU backend for portability
+        .type = LAB_BACKEND, // Use CPU backend for portability
         .width = kWidth,
         .height = kHeight,
         .native_window = window
@@ -301,7 +301,7 @@ bool InitLabFont() {
     lab_render_target_desc rt_desc = {
         .width = kWidth,
         .height = kHeight,
-        .format = LAB_TEXTURE_FORMAT_UNKNOWN,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
     

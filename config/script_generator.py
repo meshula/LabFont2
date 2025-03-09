@@ -96,7 +96,7 @@ class ScriptGenerator:
                 f.write('@echo off\n')
                 f.write('mkdir build_examples_cpu 2>nul\n')
                 f.write('cd build_examples_cpu\n')
-                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLAB_BACKEND=CPU -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -105,10 +105,10 @@ class ScriptGenerator:
                 
                 # Use Xcode generator if specified and on macOS
                 if self.use_xcode and platform.system() == 'Darwin':
-                    f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'cmake {self.source_dir} -G Xcode -DLAB_BACKEND=CPU -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('cmake --build . --config Release\n')
                 else:
-                    f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'cmake {self.source_dir} -DLAB_BACKEND=CPU -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('make\n')
                 
                 f.write('cd ..\n')
@@ -127,7 +127,7 @@ class ScriptGenerator:
                 f.write('mkdir build_examples_vulkan 2>nul\n')
                 f.write('cd build_examples_vulkan\n')
                 f.write(f'set VULKAN_SDK={self.vulkan_sdk_path}\n')
-                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLAB_BACKEND=VULKAN -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -136,10 +136,10 @@ class ScriptGenerator:
                 
                 # Use Xcode generator if specified and on macOS
                 if self.use_xcode and platform.system() == 'Darwin':
-                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -G Xcode -DLAB_BACKEND=VULKAN -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('cmake --build . --config Release\n')
                 else:
-                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLAB_BACKEND=VULKAN -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('make\n')
                 
                 f.write('cd ..\n')
@@ -158,10 +158,10 @@ class ScriptGenerator:
             
             # Use Xcode generator if specified
             if self.use_xcode:
-                f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -G Xcode -DLAB_BACKEND=METAL -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build . --config Release\n')
             else:
-                f.write(f'cmake {self.source_dir} -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLAB_BACKEND=METAL -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('make\n')
             
             f.write('cd ..\n')
@@ -180,7 +180,7 @@ class ScriptGenerator:
                     f.write(f'call {self.emscripten_path}\n')
                 f.write('mkdir build_examples_wgpu 2>nul\n')
                 f.write('cd build_examples_wgpu\n')
-                f.write('emcmake cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n')
+                f.write('emcmake cmake {self.source_dir} -DLAB_BACKEND=WGPU -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n')
                 f.write('emmake cmake --build .\n')
                 f.write('echo "Build complete. Run \'npx http-server build_examples_wgpu\' to start the server"\n')
                 f.write('echo "Then open http://localhost:8080/examples/basic_drawing.html in Chrome"\n')
@@ -195,7 +195,7 @@ class ScriptGenerator:
                 f.write('mkdir -p $BUILD_DIR\n')
                 f.write('cd $BUILD_DIR\n\n')
                 f.write('# Configure with CMake\n')
-                f.write('emcmake cmake .. -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n\n')
+                f.write('emcmake cmake {self.source_dir} -DLAB_BACKEND=WGPU -DLABFONT_BUILD_EXAMPLES=ON -DLABFONT_BUILD_TESTS=OFF -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n\n')
                 f.write('# Build\n')
                 f.write('emmake make -j$(nproc 2>/dev/null || echo 4)  # Use 4 cores if nproc not available\n\n')
                 f.write('echo "Build complete. Run \'npx http-server build_examples_wgpu\' to start the server"\n')
@@ -215,7 +215,7 @@ class ScriptGenerator:
                 f.write('mkdir build_vk 2>nul\n')
                 f.write('cd build_vk\n')
                 f.write(f'set VULKAN_SDK={self.vulkan_sdk_path}\n')
-                f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLAB_BACKEND=VULKAN -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build .\n')
                 f.write('cd ..\n')
             else:
@@ -224,10 +224,10 @@ class ScriptGenerator:
                 
                 # Use Xcode generator if specified and on macOS
                 if self.use_xcode and platform.system() == 'Darwin':
-                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -G Xcode -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake {self.source_dir} -DLAB_BACKEND=VULKAN -G Xcode -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('cmake --build . --config Release\n')
                 else:
-                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake .. -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                    f.write(f'VULKAN_SDK={self.vulkan_sdk_path} cmake {self.source_dir} -DLAB_BACKEND=VULKAN -DLABFONT_ENABLE_VULKAN=ON -DLABFONT_ENABLE_METAL=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                     f.write('make\n')
                 
                 f.write('cd ..\n')
@@ -249,7 +249,7 @@ class ScriptGenerator:
                         f.write(f'call {self.emscripten_path}\n')
                     f.write('mkdir build_wasm 2>nul\n')
                     f.write('cd build_wasm\n')
-                    f.write('emcmake cmake .. -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n')
+                    f.write('emcmake cmake {self.source_dir} -DLAB_BACKEND=GPU -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n')
                     f.write('emmake cmake --build .\n')
                     f.write('echo "Build complete. Run \'npx http-server build_wasm\' to start the server"\n')
                     f.write('echo "Then open http://localhost:8080/labfont_wgpu_tests.html in Chrome"\n')
@@ -264,7 +264,7 @@ class ScriptGenerator:
                     f.write('mkdir -p $BUILD_DIR\n')
                     f.write('cd $BUILD_DIR\n\n')
                     f.write('# Configure with CMake\n')
-                    f.write('emcmake cmake .. -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n\n')
+                    f.write('emcmake cmake {self.source_dir} -DLAB_BACKEND=GPU -DLABFONT_ENABLE_WGPU=ON -DCMAKE_BUILD_TYPE=Debug\n\n')
                     f.write('# Build\n')
                     f.write('emmake make -j$(nproc 2>/dev/null || echo 4)  # Use 4 cores if nproc not available\n\n')
                     f.write('echo "Build complete. Run \'npx http-server build_wasm\' to start the server"\n')
@@ -312,10 +312,10 @@ class ScriptGenerator:
             
             # Use Xcode generator if specified
             if self.use_xcode:
-                f.write(f'cmake {self.source_dir} -G Xcode -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -G Xcode -DLAB_BACKEND=METAL -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('cmake --build . --config Release\n')
             else:
-                f.write(f'cmake {self.source_dir} -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
+                f.write(f'cmake {self.source_dir} -DLAB_BACKEND=METAL -DLABFONT_ENABLE_METAL=ON -DLABFONT_ENABLE_VULKAN=OFF -DLABFONT_ENABLE_WGPU=OFF\n')
                 f.write('make\n')
             
             f.write('cd ..\n')
