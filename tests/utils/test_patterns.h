@@ -61,7 +61,7 @@ inline lab_result test_draw_triangle(lab_context ctx) {
     lab_render_target_desc target_desc = {
         .width = 512,
         .height = 512,
-        .format = LAB_FORMAT_RGBA8_UNORM,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = false
     };
     

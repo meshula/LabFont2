@@ -136,3 +136,11 @@ endif()
 
 # Add test
 add_test(NAME labfont_tests COMMAND labfont_tests)
+
+add_executable(labfont_style_parser_tests
+    unit/test_labfont_style_parser.cpp
+)
+target_link_libraries(labfont_style_parser_tests
+PRIVATE
+    labfont
+)

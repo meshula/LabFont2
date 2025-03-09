@@ -86,6 +86,14 @@ target_include_directories(labfont
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb
 )
 
+set(CORE_INCLUDES
+    include/labfont/labfont.h
+    include/labfont/labfont_types.h
+    include/labfont/labfont_renderer.h
+    include/labfont/labfont_rich.h
+    include/labfont/labfont_style_parser.h
+)
+
 set(CORE_SRC
     src/core/backend_types.h
     src/core/backend.h
@@ -95,6 +103,8 @@ set(CORE_SRC
     src/core/error.cpp
     src/core/error.h
     src/core/font_manager.h
+    src/core/internal_types.h
+    #src/core/labfont_renderer.c
     src/core/memory.cpp
     src/core/memory.h
     src/core/resource_manager.cpp
@@ -202,21 +212,12 @@ endif()
 # Source files will be added here as they are created
 target_sources(labfont
     PRIVATE
+        ${CORE_INCLUDES}
         ${CORE_SRC}
         ${CPU_BACKEND_SRC}
         ${METAL_BACKEND_SRC}
         ${WGPU_BACKEND_SRC}
         ${VULKAN_BACKEND_SRC}
-        # src/core/font.cpp
-        # src/core/atlas.cpp
-        
-        # Text rendering
-        # src/text/shaping.cpp
-        # src/text/layout.cpp
-        
-        # Drawing
-        # src/draw/primitives.cpp
-        # src/draw/path.cpp
 )
 
 if(LABFONT_ENABLE_METAL AND NOT EMSCRIPTEN)    
