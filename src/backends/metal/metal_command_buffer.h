@@ -63,7 +63,7 @@ public:
     void DrawLines(const Vertex* vertices, uint32_t vertexCount, float lineWidth);
     
 private:
-    enum class DrawMode { Triangles, Lines };
+    enum class DrawMode { None, Triangles, Lines };
     bool CreateVertexBuffer();
     void UpdateVertexBuffer();
     void Flush(DrawMode mode);

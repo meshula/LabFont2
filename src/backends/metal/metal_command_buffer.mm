@@ -129,8 +129,12 @@ lab_result MetalCommandBuffer::BeginRenderPass(MetalRenderTarget* target) {
         return LAB_RESULT_INVALID_BUFFER;
     }
 
-    ValidateRenderPassDescriptor(renderPass);
-    ValidateCommandBuffer(m_commandBuffer);
+    static bool validate = false;
+    if (validate) {
+        ValidateRenderPassDescriptor(renderPass);
+        ValidateCommandBuffer(m_commandBuffer);
+    }
+    
     m_renderEncoder = [m_commandBuffer renderCommandEncoderWithDescriptor:renderPass];
     if (!m_renderEncoder) {
         return LAB_RESULT_COMMAND_ENCODER_INITIALIZATION_FAILED;
@@ -141,6 +145,7 @@ lab_result MetalCommandBuffer::BeginRenderPass(MetalRenderTarget* target) {
 }
 
 void MetalCommandBuffer::EndRenderPass() {
+    Flush(m_currentDrawMode);
     if (m_renderEncoder) {
         [m_renderEncoder endEncoding];
         m_renderEncoder = nil;
@@ -266,7 +271,9 @@ void MetalCommandBuffer::DrawLines(const Vertex* vertices, uint32_t vertexCount,
 
 
 void MetalCommandBuffer::Flush(DrawMode mode) {
-    if (m_vertexData.empty()) return;
+    if (m_vertexData.empty() || (m_currentDrawMode == DrawMode::None)) {
+        return;
+    }
 
     if (m_vertexBufferCapacity < m_vertexData.size()) {
         // Resize Metal buffer if necessary
@@ -289,6 +296,7 @@ void MetalCommandBuffer::Flush(DrawMode mode) {
                       vertexCount:m_vertexData.size()];
 
     m_vertexData.clear();
+    m_currentDrawMode = DrawMode::None;
 }
 
 
