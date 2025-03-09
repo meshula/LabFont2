@@ -83,6 +83,7 @@ target_include_directories(labfont
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/labfont
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb
 )
 
@@ -90,8 +91,13 @@ set(CORE_INCLUDES
     include/labfont/labfont.h
     include/labfont/labfont_types.h
     include/labfont/labfont_renderer.h
-    include/labfont/labfont_rich.h
+    include/labfont/labfont_draw.h
     include/labfont/labfont_style_parser.h
+    third_party/cJSON/cJSON.h
+    third_party/stb/stb_truetype.h
+    third_party/stb/stb_image.h
+    third_party/stb/stb_image_write.h
+    third_party/stb/fontstash.h
 )
 
 set(CORE_SRC
@@ -104,12 +110,14 @@ set(CORE_SRC
     src/core/error.h
     src/core/font_manager.h
     src/core/internal_types.h
-    #src/core/labfont_renderer.c
+    src/core/labfont_draw.cpp
+    src/core/labfont_renderer.c
     src/core/memory.cpp
     src/core/memory.h
     src/core/resource_manager.cpp
     src/core/resource_manager.h
     src/core/resource.h
+    third_party/cJSON/cJSON.c
 )
 
 set(CPU_BACKEND_SRC

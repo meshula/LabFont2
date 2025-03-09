@@ -318,4 +318,40 @@ void lab_destroy_buffer(lab_context ctx, lab_buffer buffer) {
     resourceManager->DestroyResource(bufferResource->GetName());
 }
 
+// Include stb_image.h for texture loading
+#include "../third_party/stb/stb_image.h"
+
+lab_result lab_load_texture(lab_context ctx, const char* path, lab_texture* out_texture) {
+    if (!ctx) {
+        return LAB_RESULT_INVALID_CONTEXT;
+    }
+    if (!path || !out_texture) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    // Use stb_image to load the texture
+    int width, height, channels;
+    unsigned char* data = stbi_load(path, &width, &height, &channels, 4); // Force RGBA
+    
+    if (!data) {
+        return LAB_RESULT_TEXTURE_CREATION_FAILED;
+    }
+    
+    // Create texture descriptor
+    lab_texture_desc desc = {
+        .width = (unsigned int)width,
+        .height = (unsigned int)height,
+        .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
+        .initial_data = data
+    };
+    
+    // Create the texture
+    lab_result result = lab_create_texture(ctx, &desc, out_texture);
+    
+    // Free the image data
+    stbi_image_free(data);
+    
+    return result;
+}
+
 } // extern "C"

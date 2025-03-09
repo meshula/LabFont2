@@ -51,11 +51,19 @@ elseif(LAB_BACKEND STREQUAL "VULKAN")
 endif()
 
 if(APPLE)
+  # Basic drawing example
   add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.mm")
 
   # Add drawing_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
   target_sources(basic_drawing PRIVATE basic/drawing_main.cpp)
   set_source_files_properties(basic/drawing_main.cpp PROPERTIES HEADER_FILE_ONLY ON)
+  
+  # Texture example
+  add_executable(texture_example MACOSX_BUNDLE "basic/drawing_main.mm")
+  
+  # Add texture_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
+  target_sources(texture_example PRIVATE basic/texture_main.cpp)
+  set_source_files_properties(basic/texture_main.cpp PROPERTIES HEADER_FILE_ONLY ON)
 
   target_link_libraries(basic_drawing
       PRIVATE
@@ -96,7 +104,9 @@ if(APPLE)
   )
 else()
   add_executable(basic_drawing "basic/drawing_main.cpp")
+  add_executable(texture_example "basic/texture_main.cpp")
 endif()
+# Link libraries for basic_drawing
 target_link_libraries(basic_drawing
     PRIVATE
         labfont
@@ -104,8 +114,17 @@ target_link_libraries(basic_drawing
         $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
 )
 
-# set C++20 on basic_drawing
+# Link libraries for texture_example
+target_link_libraries(texture_example
+    PRIVATE
+        labfont
+        $<$<BOOL:${glfw3_FOUND}>:glfw>
+        $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
+)
+
+# set C++20 on examples
 set_target_properties(basic_drawing PROPERTIES CXX_STANDARD 20)
+set_target_properties(texture_example PROPERTIES CXX_STANDARD 20)
 
 # Include directories for LabFont headers
 target_include_directories(basic_drawing
@@ -113,9 +132,17 @@ target_include_directories(basic_drawing
         ${CMAKE_SOURCE_DIR}/include
 )
 
+target_include_directories(texture_example
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+)
+
 if(EMSCRIPTEN)
   set_target_properties(basic_drawing PROPERTIES SUFFIX ".html")
   target_link_options(basic_drawing PRIVATE "-sUSE_GLFW=3")
+  
+  set_target_properties(texture_example PROPERTIES SUFFIX ".html")
+  target_link_options(texture_example PRIVATE "-sUSE_GLFW=3")
 endif()
 
 if(NOT RESOLVED_BACKEND)
@@ -123,6 +150,15 @@ if(NOT RESOLVED_BACKEND)
 endif()
 
 target_compile_definitions(basic_drawing PRIVATE LAB_BACKEND=${RESOLVED_BACKEND})
+target_compile_definitions(texture_example PRIVATE LAB_BACKEND=${RESOLVED_BACKEND})
+
+# Copy resources folder to build directory for examples
+add_custom_command(TARGET texture_example POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources
+        $<TARGET_FILE_DIR:texture_example>/resources
+    COMMENT "Copying resources folder to texture_example build directory"
+)
 
 # Advanced examples
 # add_executable(advanced_text_styling)

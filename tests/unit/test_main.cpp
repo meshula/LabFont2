@@ -8,6 +8,7 @@ extern "C" {
     extern MunitSuite error_suite;
     extern MunitSuite memory_suite;
     extern MunitSuite backend_suite;
+    extern MunitSuite texture_suite;
     
     // Other backend test suites
     #ifdef LABFONT_VULKAN_ENABLED
@@ -31,7 +32,7 @@ static const char* suite_name = "/labfont";
 
 int main(int argc, char* argv[]) {
     // Count number of enabled suites
-    int suite_count = 5; // Core suites
+    int suite_count = 6; // Core suites
     
     #ifdef LABFONT_VULKAN_ENABLED
     suite_count++;
@@ -59,6 +60,7 @@ int main(int argc, char* argv[]) {
     suites[idx++] = error_suite;
     suites[idx++] = memory_suite;
     suites[idx++] = backend_suite;
+    suites[idx++] = texture_suite;
     
     // Add backend-specific suites
     #ifdef LABFONT_VULKAN_ENABLED

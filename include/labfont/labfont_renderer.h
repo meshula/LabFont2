@@ -8,7 +8,7 @@
  #ifndef LABFONT_RENDERER_H
  #define LABFONT_RENDERER_H
  
- #include "labfont.h"  /* Original LabFont API */
+ #include "labfont_draw.h"
  #include "labfont_style_parser.h"
  
  #ifdef __cplusplus

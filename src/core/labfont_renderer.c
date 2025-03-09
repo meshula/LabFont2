@@ -3,6 +3,8 @@
  */
 
  #include "labfont/labfont_renderer.h"
+ #include <ctype.h>
+ #include <math.h>
  #include <stdlib.h>
  #include <stdio.h>
  #include <string.h>
@@ -106,7 +108,7 @@
                  case LABFONT_PROP_SPACING:
                  case LABFONT_PROP_BLUR:
                      // Compare floats with small epsilon
-                     if (fabs(a->properties[i].float_val - b->properties[i].float_val) > 0.0001f) {
+                     if (fabsf(a->properties[i].float_val - b->properties[i].float_val) > 0.0001f) {
                          return false;
                      }
                      break;

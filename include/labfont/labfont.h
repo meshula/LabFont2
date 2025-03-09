@@ -23,6 +23,7 @@ void lab_destroy_font(lab_context ctx, lab_font font);
 
 /* Resource management */
 lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture);
+lab_result lab_load_texture(lab_context ctx, const char* path, lab_texture* out_texture);
 void lab_destroy_texture(lab_context ctx, lab_texture texture);
 lab_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* desc, lab_buffer* out_buffer);
 void lab_destroy_buffer(lab_context ctx, lab_buffer buffer);

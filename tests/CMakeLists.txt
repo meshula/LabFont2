@@ -17,6 +17,7 @@ add_executable(labfont_tests
     unit/test_cpu_error.c
     unit/test_cpu_memory.c
     unit/test_cpu_backend.cpp
+    unit/test_texture_loading.cpp
 )
 
 # Add backend-specific tests based on enabled backends
@@ -133,6 +134,14 @@ if(EMSCRIPTEN)
         COMMENT "Copying web test files"
     )
 endif()
+
+# Copy resources folder to build directory for tests
+add_custom_command(TARGET labfont_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources
+        $<TARGET_FILE_DIR:labfont_tests>/resources
+    COMMENT "Copying resources folder to tests build directory"
+)
 
 # Add test
 add_test(NAME labfont_tests COMMAND labfont_tests)
