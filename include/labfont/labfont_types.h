@@ -49,6 +49,7 @@ typedef enum lab_texture_format {
     LAB_TEXTURE_FORMAT_R8_UNORM,
     LAB_TEXTURE_FORMAT_RG8_UNORM,
     LAB_TEXTURE_FORMAT_RGBA8_UNORM,
+    LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB,  /* BGRA format with sRGB encoding */
     LAB_TEXTURE_FORMAT_R16F,
     LAB_TEXTURE_FORMAT_RG16F,
     LAB_TEXTURE_FORMAT_RGBA16F,
@@ -83,8 +84,7 @@ typedef struct lab_backend_desc {
 } lab_backend_desc;
 
 /* Context description */
-typedef struct lab_context_desc
-{
+typedef struct lab_context_desc {
     unsigned int width;         /* Initial viewport width */
     unsigned int height;        /* Initial viewport height */
     void* native_window;       /* Native window handle (platform-specific) */

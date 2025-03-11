@@ -44,9 +44,11 @@ static MunitResult test_resource_creation(const MunitParameter params[], void* d
     munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(buf);
 
-    // Test invalid parameters
+    // Test with NULL context - this should now work
     result = lab_create_texture(NULL, &tex_desc, &tex);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_CONTEXT);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
+    munit_assert_not_null(tex);
+    lab_destroy_texture(ctx, tex);
 
     // The test for null name parameter is removed as there's no name parameter in the API
 

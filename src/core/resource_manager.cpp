@@ -3,6 +3,8 @@
 #include "error_macros.h"
 #include "context_internal.h"
 #include <cassert>
+#define STB_IMAGE_IMPLEMENTATION
+#include "../third_party/stb/stb_image.h"
 
 namespace labfont {
 
@@ -228,14 +230,25 @@ void lab_destroy_render_target(lab_context ctx, lab_render_target target) {
 }
 
 lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab_texture* out_texture) {
-    if (!ctx) {
-        return LAB_RESULT_INVALID_CONTEXT;
-    }
     if (!out_texture) {
         return LAB_RESULT_INVALID_TEXTURE;
     }
     if (!desc) {
         return LAB_RESULT_INVALID_PARAMETER;
+    }
+    
+    // If context is NULL, we just create a texture descriptor without a backend
+    if (!ctx) {
+        // Create a simple texture descriptor that can be used later
+        auto texture = new labfont::TextureResource(
+            "texture_" + std::to_string(reinterpret_cast<uintptr_t>(desc)),
+            desc->width,
+            desc->height,
+            desc->format
+        );
+        
+        *out_texture = reinterpret_cast<lab_texture>(texture);
+        return LAB_RESULT_OK;
     }
     
     auto context = labfont::GetContextImpl(ctx);
@@ -318,13 +331,7 @@ void lab_destroy_buffer(lab_context ctx, lab_buffer buffer) {
     resourceManager->DestroyResource(bufferResource->GetName());
 }
 
-// Include stb_image.h for texture loading
-#include "../third_party/stb/stb_image.h"
-
 lab_result lab_load_texture(lab_context ctx, const char* path, lab_texture* out_texture) {
-    if (!ctx) {
-        return LAB_RESULT_INVALID_CONTEXT;
-    }
     if (!path || !out_texture) {
         return LAB_RESULT_INVALID_PARAMETER;
     }

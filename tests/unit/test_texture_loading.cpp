@@ -13,16 +13,16 @@ static MunitResult test_load_texture(const MunitParameter params[], void* data) 
         .native_window = NULL
     };
     
-    // Create context
-    lab_result result = lab_create_context(&backend_desc, &ctx);
-    munit_assert_int(result, ==, LAB_RESULT_OK);
-    munit_assert_not_null(ctx);
-    
-    // Load texture
+    // Load texture first (with null context)
     lab_texture texture = NULL;
-    result = lab_load_texture(ctx, "resources/labfont-logo1.jpg", &texture);
+    lab_result result = lab_load_texture(NULL, "resources/labfont-logo1.jpg", &texture);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     munit_assert_not_null(texture);
+    
+    // Create context
+    result = lab_create_context(&backend_desc, &ctx);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
+    munit_assert_not_null(ctx);
     
     // Create a render target with the same dimensions as the texture
     lab_render_target render_target = NULL;
@@ -157,10 +157,12 @@ static MunitResult test_load_texture_invalid_params(const MunitParameter params[
     lab_result result = lab_create_context(&backend_desc, &ctx);
     munit_assert_int(result, ==, LAB_RESULT_OK);
     
-    // Test with NULL context
+    // Test with NULL context - this should work now
     lab_texture texture = NULL;
     result = lab_load_texture(NULL, "resources/labfont-logo1.jpg", &texture);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_CONTEXT);
+    munit_assert_int(result, ==, LAB_RESULT_OK);
+    munit_assert_not_null(texture);
+    lab_destroy_texture(ctx, texture);
     
     // Test with NULL path
     result = lab_load_texture(ctx, NULL, &texture);
@@ -200,10 +202,12 @@ static MunitTest texture_tests[] = {
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };
 
-const MunitSuite texture_suite = {
-    "/texture",
-    texture_tests,
-    NULL,
-    1,
-    MUNIT_SUITE_OPTION_NONE
-};
+extern "C" {
+    MunitSuite texture_suite = {
+        "/texture",
+        texture_tests,
+        NULL,
+        1,
+        MUNIT_SUITE_OPTION_NONE
+    };
+}

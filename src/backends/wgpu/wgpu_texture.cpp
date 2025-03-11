@@ -27,6 +27,9 @@ WGPUTextureDescriptor WebGPUTexture::GetWGPUTextureDescriptor(const TextureDesc&
         case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
             textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
             break;
+        case LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB:
+            textureDesc.format = WGPUTextureFormat_BGRA8UnormSrgb;
+            break;
         case LAB_TEXTURE_FORMAT_R16F:
             textureDesc.format = WGPUTextureFormat_R16Float;
             break;

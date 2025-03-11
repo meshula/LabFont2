@@ -50,133 +50,116 @@ elseif(LAB_BACKEND STREQUAL "VULKAN")
   set(RESOLVED_BACKEND "LAB_BACKEND_VULKAN")
 endif()
 
+
+# on Apple platforms, the main extension is .mm, otherwise .cpp
 if(APPLE)
-  # Basic drawing example
-  add_executable(basic_drawing MACOSX_BUNDLE "basic/drawing_main.mm")
+  set(MAIN_EXTENSION "mm")
+else()
+  set(MAIN_EXTENSION "cpp")
+endif()
 
-  # Add drawing_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
-  target_sources(basic_drawing PRIVATE basic/drawing_main.cpp)
-  set_source_files_properties(basic/drawing_main.cpp PROPERTIES HEADER_FILE_ONLY ON)
-  
-  # Texture example
-  add_executable(texture_example MACOSX_BUNDLE "basic/drawing_main.mm")
-  
-  # Add texture_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
-  target_sources(texture_example PRIVATE basic/texture_main.cpp)
-  set_source_files_properties(basic/texture_main.cpp PROPERTIES HEADER_FILE_ONLY ON)
+# setting up the Apple specific build is very complex. we should create a function that
+# takes the target name and the source file and sets up the target properly
+# this will make it easier to add more examples in the future
+# we should also create the drawing_main, texture_main, and labfont_text_rendering demos using that function.
 
-  target_link_libraries(basic_drawing
+# function: add_labfont_example
+# parameters:
+#   target_name: the name of the target
+#   source_file: the source file for the target
+#   backend: the backend to use for rendering
+#   resources: the resources to copy to the build directory
+function(add_labfont_example target_name source_file backend resources)
+  if(APPLE)
+    add_executable(${target_name} MACOSX_BUNDLE ${source_file}.${MAIN_EXTENSION})
+    # Add drawing_main.cpp as a source file but prevent it from being compiled, so that it shows up in xcode
+   target_sources(${target_name} PRIVATE ${source_file}.cpp)
+   set_source_files_properties(${source_file}.cpp PROPERTIES HEADER_FILE_ONLY ON)
+  else()
+    add_executable(${target_name} ${source_file}.${MAIN_EXTENSION})
+  endif()
+
+  # Link libraries for the target
+  target_link_libraries(${target_name}
       PRIVATE
-          "-framework CoreGraphics"
-          "-framework QuartzCore"
-          "-framework Cocoa"
-          "-framework Metal"
+          labfont
+          $<$<BOOL:${glfw3_FOUND}>:glfw>
+          $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
+  )
+
+  if(APPLE)
+    target_link_libraries(${target_name}
+        PRIVATE
+            "-framework CoreGraphics"
+            "-framework QuartzCore"
+            "-framework Cocoa"
+            "-framework Foundation"
+            "-framework Metal"
+    )
+
+    set(ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/src/Lab.entitlements") 
+    set(APP_VERSION "1.0.0")
+    set_target_properties(${target_name} PROPERTIES
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+        OUTPUT_NAME "${target_name}"
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "${target_name}"
+        #MACOSX_BUNDLE_INFO_PLIST path/to/Info.plist
+        MACOSX_BUNDLE_BUNDLE_VERSION ${APP_VERSION}
+        MACOSX_BUNDLE_LONG_VERSION_STRING "${target_name} v${APP_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${APP_VERSION}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.planetix.labfont.basicdrawing"
+        MACOSX_BUNDLE_COPYRIGHT "(C) 2025 Nick Porcino"
+        MACOSX_RPATH TRUE
+        MACOSX_FRAMEWORK_IDENTIFIER com.planetix.labfont.basicdrawing
+        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@loader_path/Libraries"
+        RESOURCE "${RESOURCE_FILES}"
+        XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME FALSE
+        XCODE_ATTRIBUTE_EXECUTABLE_NAME "${target_name}"
+    )
+  endif()
+
+  # set C++20 on the target
+  set_target_properties(${target_name} PROPERTIES CXX_STANDARD 20)
+
+  # Include directories for LabFont headers
+  target_include_directories(${target_name}
+      PRIVATE
+          ${CMAKE_SOURCE_DIR}/include
+  )
+
+  # Set the backend for the target
+  target_compile_definitions(${target_name} PRIVATE LAB_BACKEND=${backend})
+
+  # Copy resources folder to build directory for the target
+  add_custom_command(TARGET ${target_name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${CMAKE_SOURCE_DIR}/resources
+          $<TARGET_FILE_DIR:${target_name}>/resources
+      COMMENT "Copying resources folder to ${target_name} build directory"
   )
 
   # Copy Metal shader library to test executable directory
-  add_custom_command(TARGET basic_drawing POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_SOURCE_DIR}/src/backends/metal/shaders/compiled/primitives.metallib
-          $<TARGET_FILE_DIR:basic_drawing>/primitives.metallib
-      COMMENT "Copying Metal shader library to test executable directory"
-  )
+  if(APPLE)
+    add_custom_command(TARGET ${target_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/src/backends/metal/shaders/compiled/primitives.metallib
+            $<TARGET_FILE_DIR:${target_name}>/primitives.metallib
+        COMMENT "Copying Metal shader library to ${target_name} build directory"
+    )
+  endif()
 
-  set(ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/src/Lab.entitlements")
-    
-  set(APP_VERSION "1.0.0")
-  set_target_properties(basic_drawing PROPERTIES
-    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
-    OUTPUT_NAME "Lab Font Basic Drawing Example"
-    MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_BUNDLE_NAME "Lab Font Basic Drawing Example"
-    #MACOSX_BUNDLE_INFO_PLIST path/to/Info.plist
-    MACOSX_BUNDLE_BUNDLE_VERSION ${APP_VERSION}
-    MACOSX_BUNDLE_LONG_VERSION_STRING "My nice application name v${APP_VERSION}"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "${APP_VERSION}"
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.planetix.labfont.basicdrawing"
-    MACOSX_BUNDLE_COPYRIGHT "(C) 2025 Nick Porcino"
-    MACOSX_RPATH TRUE
-    MACOSX_FRAMEWORK_IDENTIFIER com.planetix.labfont.basicdrawing
-    XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@loader_path/Libraries"
-    RESOURCE "${RESOURCE_FILES}"
-    XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME FALSE
-    XCODE_ATTRIBUTE_EXECUTABLE_NAME "Lab Font Basic Drawing Example"
-  )
-else()
-  add_executable(basic_drawing "basic/drawing_main.cpp")
-  add_executable(texture_example "basic/texture_main.cpp")
-endif()
-# Link libraries for basic_drawing
-target_link_libraries(basic_drawing
-    PRIVATE
-        labfont
-        $<$<BOOL:${glfw3_FOUND}>:glfw>
-        $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
-)
+  if(EMSCRIPTEN)
+    set_target_properties(${target_name} PROPERTIES SUFFIX ".html")
+    target_link_options(${target_name} PRIVATE "-sUSE_GLFW=3")
+  endif()
+endfunction()
 
-# Link libraries for texture_example
-target_link_libraries(texture_example
-    PRIVATE
-        labfont
-        $<$<BOOL:${glfw3_FOUND}>:glfw>
-        $<$<BOOL:${GLFW_FOUND}>:${GLFW_LIBRARIES}>
-)
+# Basic drawing example
+add_labfont_example(basic_drawing "basic/drawing_main" ${RESOLVED_BACKEND} "resources")
 
-# set C++20 on examples
-set_target_properties(basic_drawing PROPERTIES CXX_STANDARD 20)
-set_target_properties(texture_example PROPERTIES CXX_STANDARD 20)
+# Texture example
+add_labfont_example(texture_example "basic/texture_main" ${RESOLVED_BACKEND} "resources")
 
-# Include directories for LabFont headers
-target_include_directories(basic_drawing
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-)
-
-target_include_directories(texture_example
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-)
-
-if(EMSCRIPTEN)
-  set_target_properties(basic_drawing PROPERTIES SUFFIX ".html")
-  target_link_options(basic_drawing PRIVATE "-sUSE_GLFW=3")
-  
-  set_target_properties(texture_example PROPERTIES SUFFIX ".html")
-  target_link_options(texture_example PRIVATE "-sUSE_GLFW=3")
-endif()
-
-if(NOT RESOLVED_BACKEND)
-  message(FATAL_ERROR "RESOLVED_BACKEND is not set")
-endif()
-
-target_compile_definitions(basic_drawing PRIVATE LAB_BACKEND=${RESOLVED_BACKEND})
-target_compile_definitions(texture_example PRIVATE LAB_BACKEND=${RESOLVED_BACKEND})
-
-# Copy resources folder to build directory for examples
-add_custom_command(TARGET texture_example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/resources
-        $<TARGET_FILE_DIR:texture_example>/resources
-    COMMENT "Copying resources folder to texture_example build directory"
-)
-
-# Advanced examples
-# add_executable(advanced_text_styling)
-# target_sources(advanced_text_styling
-#     PRIVATE
-#         advanced/text_styling.c
-# )
-# target_link_libraries(advanced_text_styling
-#     PRIVATE
-#         labfont
-# )
-
-# add_executable(advanced_drawing)
-# target_sources(advanced_drawing
-#     PRIVATE
-#         advanced/complex_drawing.c
-# )
-# target_link_libraries(advanced_drawing
-#     PRIVATE
-#         labfont
-# )
+# Rich text
+add_labfont_example(rich_text "rich_text/labfont_text_rendering" ${RESOLVED_BACKEND} "resources")

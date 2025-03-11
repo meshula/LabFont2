@@ -225,6 +225,7 @@ void WGPUBackend::DestroyRenderTarget(RenderTarget* target) {
 bool WGPUBackend::SupportsTextureFormat(lab_texture_format format) const {
     switch (format) {
         case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB:
         case LAB_TEXTURE_FORMAT_RGBA16F:
         case LAB_TEXTURE_FORMAT_RGBA32F:
             return true;

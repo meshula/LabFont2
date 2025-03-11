@@ -38,12 +38,13 @@ static MunitResult test_error_propagation(const MunitParameter params[], void* d
     lab_result result = lab_create_context(&backend_desc, &ctx);
     munit_assert_int(result, ==, LAB_RESULT_INVALID_DIMENSION);
     
-    // Test error propagation through resource creation
+    // Test error propagation through resource creation with invalid dimensions
     lab_texture tex = NULL;
     lab_texture_desc tex_desc = {0};  // Invalid desc (width and height are 0)
     
-    result = lab_create_texture(ctx, &tex_desc, &tex);
-    munit_assert_int(result, ==, LAB_RESULT_INVALID_CONTEXT);
+    // Even with NULL context, invalid dimensions should still fail
+    result = lab_create_texture(NULL, &tex_desc, &tex);
+    munit_assert_int(result, ==, LAB_RESULT_INVALID_DIMENSION);
 
     return MUNIT_OK;
 }

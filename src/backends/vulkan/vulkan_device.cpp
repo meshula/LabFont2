@@ -172,6 +172,8 @@ VkFormat VulkanDevice::GetVulkanFormat(lab_texture_format format) const {
             return VK_FORMAT_R8G8_UNORM;
         case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
             return VK_FORMAT_R8G8B8A8_UNORM;
+        case LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB:
+            return VK_FORMAT_B8G8R8A8_SRGB;
         case LAB_TEXTURE_FORMAT_R16F:
             return VK_FORMAT_R16_SFLOAT;
         case LAB_TEXTURE_FORMAT_RG16F:

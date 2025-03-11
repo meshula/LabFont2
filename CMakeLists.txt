@@ -4,6 +4,9 @@ project(LabFont
     DESCRIPTION "Modern text rendering and immediate mode drawing library"
     LANGUAGES C CXX)
 
+# set C compiler to C11
+set(CMAKE_C_STANDARD 11)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +39,8 @@ if(LABFONT_ENABLE_VULKAN AND NOT EMSCRIPTEN)
         set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
     endif()
 endif()
+
+add_subdirectory(third_party/Tilengine)
 
 # Library target
 add_library(labfont)

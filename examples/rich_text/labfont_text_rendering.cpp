@@ -3,8 +3,8 @@
  */
 
  #include <stdio.h>
- #include "labfont.h"
- #include "labfont_renderer.h"
+ #include "labfont/labfont.h"
+ #include "labfont/labfont_renderer.h"
  
  // Font demo structure from your original example
  extern struct {

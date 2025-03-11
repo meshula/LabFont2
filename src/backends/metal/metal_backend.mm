@@ -12,12 +12,13 @@ namespace metal {
 namespace {
     MTLPixelFormat TextureFormatToMTLFormat(lab_texture_format format) {
         switch (format) {
-            case LAB_TEXTURE_FORMAT_R8_UNORM:    return MTLPixelFormatR8Unorm;
-            case LAB_TEXTURE_FORMAT_RGBA8_UNORM: return MTLPixelFormatRGBA8Unorm;
-            case LAB_TEXTURE_FORMAT_R16F:        return MTLPixelFormatR16Float;
-            case LAB_TEXTURE_FORMAT_RGBA16F:     return MTLPixelFormatRGBA16Float;
-            case LAB_TEXTURE_FORMAT_R32F:        return MTLPixelFormatR32Float;
-            case LAB_TEXTURE_FORMAT_D32F:        return MTLPixelFormatDepth32Float;
+            case LAB_TEXTURE_FORMAT_R8_UNORM:        return MTLPixelFormatR8Unorm;
+            case LAB_TEXTURE_FORMAT_RGBA8_UNORM:     return MTLPixelFormatRGBA8Unorm;
+            case LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB: return MTLPixelFormatBGRA8Unorm_sRGB;
+            case LAB_TEXTURE_FORMAT_R16F:            return MTLPixelFormatR16Float;
+            case LAB_TEXTURE_FORMAT_RGBA16F:         return MTLPixelFormatRGBA16Float;
+            case LAB_TEXTURE_FORMAT_R32F:            return MTLPixelFormatR32Float;
+            case LAB_TEXTURE_FORMAT_D32F:            return MTLPixelFormatDepth32Float;
             default:
                 std::cerr << "Unsupported texture format" << std::endl;
                 return MTLPixelFormatInvalid;
@@ -683,6 +684,7 @@ bool MetalBackend::SupportsTextureFormat(lab_texture_format format) const {
         case LAB_TEXTURE_FORMAT_R8_UNORM:
         case LAB_TEXTURE_FORMAT_RG8_UNORM:
         case LAB_TEXTURE_FORMAT_RGBA8_UNORM:
+        case LAB_TEXTURE_FORMAT_BGRA8_UNORM_SRGB:
         case LAB_TEXTURE_FORMAT_R16F:
         case LAB_TEXTURE_FORMAT_RG16F:
         case LAB_TEXTURE_FORMAT_RGBA16F:

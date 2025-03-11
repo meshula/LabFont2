@@ -169,3 +169,28 @@ LabFont2 includes several examples to demonstrate its capabilities:
 ## License
 
 BSD two clause
+
+
+## Build Dependencies Notes
+
+The following dependencies are required to build different components of LabFont2:
+
+- **Vulkan SDK**: Found at `/Users/nick/VulkanSDK/1.4.304.1/macOS`
+- **Emscripten**: Not found. Required for WebAssembly builds.
+  - Follow the installation instructions at [Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
+  - Run the configure.py script again after installation
+- **GLFW**: Found
+
+## Building
+
+The configure.py script has generated build scripts for the detected dependencies:
+
+- `build_core.sh`: Builds the core library without any backends
+- `build_vk.sh`: Builds with the Vulkan backend
+- `build_mtl.sh`: Builds with the Metal backend
+
+### Example Build Scripts
+
+- `build_examples_cpu.sh`: Builds examples with the CPU backend
+- `build_examples_vulkan.sh`: Builds examples with the Vulkan backend
+- `build_examples_metal.sh`: Builds examples with the Metal backend
