@@ -28,13 +28,33 @@ endif()
 
 set(LAB_BACKEND "" CACHE STRING "The backend to use for rendering")
 
-# validate the backend
+# Validate the backend with helpful metacognitive guidance
 if(NOT LAB_BACKEND STREQUAL "CPU" AND
    NOT LAB_BACKEND STREQUAL "METAL" AND
    NOT LAB_BACKEND STREQUAL "WEBGPU" AND
    NOT LAB_BACKEND STREQUAL "DX11" AND
    NOT LAB_BACKEND STREQUAL "VULKAN")
-  message(FATAL_ERROR "Invalid LAB_BACKEND: ${LAB_BACKEND}, must be one of CPU, METAL, WEBGPU, DX11,VULKAN")
+  message(FATAL_ERROR 
+    "\n"
+    "❌ Invalid LAB_BACKEND: '${LAB_BACKEND}', must be one of: CPU, METAL, WEBGPU, DX11, VULKAN\n"
+    "\n"
+    "🤖 AUTOCONFIGURATION AVAILABLE:\n"
+    "   Run: python configure.py\n"
+    "   Then use generated scripts: build/build_*.sh\n"
+    "\n"
+    "🛠️  MANUAL CONFIGURATION:\n"
+    "   cmake -B build -DLAB_BACKEND=METAL\n"
+    "   cmake -B build -DLAB_BACKEND=VULKAN\n"
+    "   cmake -B build -DLAB_BACKEND=CPU\n"
+    "\n"
+    "📋 AVAILABLE BACKENDS:\n"
+    "   CPU     - Software rendering (always available)\n"
+    "   METAL   - Hardware acceleration (macOS)\n"
+    "   VULKAN  - Cross-platform GPU acceleration\n"
+    "   WEBGPU  - Browser deployment\n"
+    "   DX11    - DirectX 11 (Windows)\n"
+    "\n"
+  )
 endif()
 
 # Set the resolved backend
