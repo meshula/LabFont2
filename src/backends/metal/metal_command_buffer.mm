@@ -308,7 +308,7 @@ void MetalCommandBuffer::Flush(DrawMode mode) {
     if (m_currentTexture) {
         auto textureResource = reinterpret_cast<labfont::TextureResource*>(m_currentTexture);
         if (!textureResource->IsValid()) {
-            return LAB_RESULT_INVALID_TEXTURE;
+            return; // Exit early if texture is invalid
         }
         if (textureResource->texture) {
             MetalTexture* mt = dynamic_cast<MetalTexture*>(textureResource->texture.get());
