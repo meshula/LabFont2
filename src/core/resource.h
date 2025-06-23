@@ -29,6 +29,7 @@ public:
     bool IsValid() const { return m_valid; }
 
 protected:
+    friend class ResourceManagerImpl;
     Resource(ResourceType type, const std::string& name)
         : m_type(type), m_name(name), m_valid(false) {}
     
@@ -52,6 +53,9 @@ public:
     unsigned int GetWidth() const { return m_width; }
     unsigned int GetHeight() const { return m_height; }
     lab_texture_format GetFormat() const { return m_format; }
+    
+    std::shared_ptr<Texture> texture;
+
 
 private:
     unsigned int m_width;
@@ -110,14 +114,14 @@ private:
 struct TextureParams {
     unsigned int width;
     unsigned int height;
-    lab_texture_format format;  // Changed from unsigned int to lab_texture_format
-    const void* data;      // Changed from initial_data to data to match usage
+    lab_texture_format format;
+    const void* data;
 };
 
 struct BufferParams {
     size_t size;
     bool dynamic;
-    const void* data;      // Changed from initial_data to data to match usage
+    const void* data;
 };
 
 struct RenderTargetParams {

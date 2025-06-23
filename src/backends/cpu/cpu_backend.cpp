@@ -66,6 +66,10 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 }
                 break;
             }
+                
+            case DrawCommandType::BindTexture: {
+                break;
+            }
         }
     }
     

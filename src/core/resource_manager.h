@@ -13,9 +13,12 @@ public:
     ResourceManagerImpl(Backend* backend);
     ~ResourceManagerImpl() override;
 
-    lab_result CreateTexture(const std::string& name, const TextureParams& params, std::shared_ptr<TextureResource>& out_texture) override;
-    lab_result CreateBuffer(const std::string& name, const BufferParams& params, std::shared_ptr<BufferResource>& out_buffer) override;
-    lab_result CreateRenderTarget(const std::string& name, const RenderTargetParams& params, std::shared_ptr<RenderTargetResource>& out_target) override;
+    lab_result CreateTexture(const std::string& name, const TextureParams& params,
+                             std::shared_ptr<TextureResource>& out_texture) override;
+    lab_result CreateBuffer(const std::string& name, const BufferParams& params,
+                            std::shared_ptr<BufferResource>& out_buffer) override;
+    lab_result CreateRenderTarget(const std::string& name, const RenderTargetParams& params,
+                                  std::shared_ptr<RenderTargetResource>& out_target) override;
     
     void DestroyResource(const std::string& name) override;
     std::shared_ptr<Resource> GetResource(const std::string& name) override;

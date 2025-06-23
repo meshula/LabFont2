@@ -20,6 +20,7 @@ enum class DrawCommandType {
     Clear = LAB_DRAW_COMMAND_CLEAR,
     DrawTriangles = LAB_DRAW_COMMAND_TRIANGLES,
     DrawLines = LAB_DRAW_COMMAND_LINES,
+    BindTexture = LAB_DRAW_COMMAND_BIND_TEXTURE,
     SetBlendMode,  // Extended commands for internal use
     SetScissor,
     SetViewport
@@ -56,6 +57,9 @@ struct DrawCommand {
             uint32_t vertexCount;
             float lineWidth;
         } lines;
+        struct {
+            lab_texture texture;
+        } bind_texture;
         struct {
             BlendMode mode;
         } blend;
@@ -96,6 +100,10 @@ struct DrawCommand {
             case LAB_DRAW_COMMAND_LINES:
                 type = DrawCommandType::DrawLines;
                 std::memcpy(&lines, &cmd.lines, sizeof(lines));
+                break;
+            case LAB_DRAW_COMMAND_BIND_TEXTURE:
+                type = DrawCommandType::BindTexture;
+                std::memcpy(&bind_texture, &cmd.bind_texture, sizeof(bind_texture));
                 break;
         }
     }

@@ -61,6 +61,7 @@ public:
     void Clear(const float color[4]);
     void DrawTriangles(const Vertex* vertices, uint32_t vertexCount);
     void DrawLines(const Vertex* vertices, uint32_t vertexCount, float lineWidth);
+    void BindTexture(lab_texture);
     
 private:
     enum class DrawMode { None, Triangles, Lines };
@@ -77,6 +78,7 @@ private:
     size_t m_vertexBufferCapacity;
     std::vector<MetalVertex> m_vertexData;
     BlendMode m_currentBlendMode;
+    lab_texture m_currentTexture;
     bool m_inRenderPass;
 };
 

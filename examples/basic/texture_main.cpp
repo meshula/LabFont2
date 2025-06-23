@@ -22,8 +22,8 @@
 #endif
 
 // Window dimensions - will be updated based on texture size
-uint32_t kWidth = 512;
-uint32_t kHeight = 512;
+int32_t kWidth = 512;
+int32_t kHeight = 512;
 
 // Global variables
 lab_context context = nullptr;
@@ -283,27 +283,17 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
 
 // Initialize LabFont context and load texture
 bool InitLabFont() {
-    // Load the logo texture first to get its dimensions
-    const char* logo_path = "resources/labfont-logo1.jpg";
-    lab_result result = lab_load_texture(nullptr, logo_path, &logo_texture);
-    if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
-        return false;
-    }
-    
-    // Get texture dimensions to resize the window and render target
-    lab_texture_desc* texture_desc = (lab_texture_desc*)logo_texture;
-    kWidth = texture_desc->width;
-    kHeight = texture_desc->height;
-    
+    int textureWidth, textureHeight;
+    lab_result result;
+        
     // Resize the window to match the texture dimensions
     glfwSetWindowSize(window, kWidth, kHeight);
     
     // Create a backend descriptor
     lab_backend_desc backend_desc = {
         .type = LAB_BACKEND, // Use CPU backend for portability
-        .width = kWidth,
-        .height = kHeight,
+        .width = (uint32_t) kWidth,
+        .height = (uint32_t) kHeight,
         .native_window = window
     };
 
@@ -313,11 +303,31 @@ bool InitLabFont() {
         std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result);
         return false;
     }
+    
+    // Load the logo texture first to get its dimensions
+    const char* logo_path = "resources/labfont-logo1.jpg";
+    result = lab_load_texture(context, logo_path, &logo_texture);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
+        return false;
+    }
+
+    // Verify that the texture loaded ok by checking dimensions
+    result = lab_texture_width(logo_texture, &textureWidth);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
+        return false;
+    }
+    result = lab_texture_height(logo_texture, &textureHeight);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
+        return false;
+    }
 
     // Create a render target
     lab_render_target_desc rt_desc = {
-        .width = kWidth,
-        .height = kHeight,
+        .width = (uint32_t) kWidth,
+        .height = (uint32_t) kHeight,
         .format = LAB_TEXTURE_FORMAT_RGBA8_UNORM,
         .hasDepth = true
     };
@@ -339,43 +349,43 @@ bool InitLabFont() {
 }
 
 // Create a textured quad using LabFont vertices
-std::vector<lab_vertex_2TC> CreateTexturedQuadVertices() {
+const std::vector<lab_vertex_2TC>& CreateTexturedQuadVertices() {
     // Define a textured quad that fills the screen
-    std::vector<lab_vertex_2TC> vertices = {
+    static std::vector<lab_vertex_2TC> vertices = {
         // Top-left vertex
         {
             .position = {-1.0f, 1.0f},
-            .texcoord = {0.0f, 0.0f},
+            .texcoord = {0.0f, 1.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         },
         // Bottom-left vertex
         {
             .position = {-1.0f, -1.0f},
-            .texcoord = {0.0f, 1.0f},
+            .texcoord = {0.0f, 0.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         },
         // Top-right vertex
         {
             .position = {1.0f, 1.0f},
-            .texcoord = {1.0f, 0.0f},
+            .texcoord = {1.0f, 1.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         },
         // Top-right vertex (repeated)
         {
             .position = {1.0f, 1.0f},
-            .texcoord = {1.0f, 0.0f},
+            .texcoord = {1.0f, 1.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         },
         // Bottom-left vertex (repeated)
         {
             .position = {-1.0f, -1.0f},
-            .texcoord = {0.0f, 1.0f},
+            .texcoord = {0.0f, 0.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         },
         // Bottom-right vertex
         {
             .position = {1.0f, -1.0f},
-            .texcoord = {1.0f, 1.0f},
+            .texcoord = {1.0f, 0.0f},
             .color = {1.0f, 1.0f, 1.0f, 1.0f}
         }
     };
@@ -401,7 +411,14 @@ lab_result Render() {
     };
     
     // Get textured quad vertices
-    std::vector<lab_vertex_2TC> vertices = CreateTexturedQuadVertices();
+    const std::vector<lab_vertex_2TC>& vertices = CreateTexturedQuadVertices();
+    
+    lab_draw_command bind_texture = {
+        .type = LAB_DRAW_COMMAND_BIND_TEXTURE,
+        .bind_texture = {
+            .texture = logo_texture
+        }
+    };
     
     // Create textured quad draw command
     lab_draw_command quad_cmd = {
@@ -413,8 +430,8 @@ lab_result Render() {
     };
     
     // Submit commands
-    lab_draw_command commands[] = {clear_cmd, quad_cmd};
-    result = lab_submit_commands(context, commands, 2);
+    lab_draw_command commands[] = {clear_cmd, bind_texture, quad_cmd};
+    result = lab_submit_commands(context, commands, 3);
     if (result != LAB_RESULT_OK) {
         std::cerr << "Failed to submit commands: " << lab_get_error_string(result);
         return result;

@@ -27,6 +27,16 @@ fragment float4 fragment_main(VertexOut in [[stage_in]]) {
     return in.color;
 }
 
+// fragment shader for textured triangles
+fragment float4 fragment_triangle(VertexOut in [[stage_in]],
+                               texture2d<float> colorTexture [[texture(0)]]) {
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    // Sample the texture to obtain a color
+    const float4 colorSample = colorTexture.sample(textureSampler, in.texcoord);
+    return colorSample;
+}
+
 // Fragment shader for lines with anti-aliasing
 fragment float4 fragment_line(VertexOut in [[stage_in]]) {
     // Calculate distance from center line

@@ -27,34 +27,50 @@ lab_result ResourceManagerImpl::CreateTexture(
     std::shared_ptr<TextureResource>& out_texture)
 {
     LAB_RESULT_GUARD();
-
+    
     if (name.empty()) {
         return LAB_RESULT_INVALID_RESOURCE_NAME;
     }
-
+    
     if (params.width == 0 || params.height == 0) {
         return LAB_RESULT_INVALID_DIMENSION;
     }
-
+    
     std::lock_guard<std::mutex> lock(m_mutex);
     
     if (ResourceExists(name)) {
         return LAB_RESULT_DUPLICATE_RESOURCE_NAME;
     }
-
-    auto texture = std::make_shared<TextureResource>(
-        name,
+    
+    auto textureResource = std::make_shared<TextureResource>(
+                                                             name,
+                                                             params.width,
+                                                             params.height,
+                                                             params.format
+                                                             );
+    
+    TextureDesc tdesc = {
         params.width,
         params.height,
-        params.format
-    );
+        params.format,
+        params.data,
+        false,   //bool renderTarget;
+        false,   //bool readback;
+        params.width * params.height * 4,       //size_t dataSize;
+    };
+    
+    /// @TODO add size to params
+    /// @TODO make texture resource private
+    ///
+    result = m_backend->CreateTexture(tdesc, textureResource->texture);
+    if (result != LAB_RESULT_OK || !textureResource->texture) {
+        return result;
+    }
 
-    // TODO: Once backend interface is implemented, create the actual GPU resource
-    // lab_result result = m_backend->CreateTexture(params, texture.get());
-    // LAB_RETURN_IF_ERROR(result);
+    textureResource->SetValid(true);
 
-    m_resources[name] = texture;
-    out_texture = texture;
+    m_resources[name] = textureResource;
+    out_texture = textureResource;
     return LAB_RESULT_OK;
 }
 
@@ -270,9 +286,39 @@ lab_result lab_create_texture(lab_context ctx, const lab_texture_desc* desc, lab
     if (result == LAB_RESULT_OK) {
         *out_texture = reinterpret_cast<lab_texture>(texture.get());
     }
-    
     return result;
 }
+
+lab_result lab_texture_width(lab_texture texture, int* width) {
+    if (!texture) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    if (!width) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    auto textureResource = reinterpret_cast<labfont::TextureResource*>(texture);
+    if (!textureResource->IsValid()) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    *width = textureResource->GetWidth();
+    return LAB_RESULT_OK;
+}
+
+lab_result lab_texture_height(lab_texture texture, int* height) {
+    if (!texture) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    if (!height) {
+        return LAB_RESULT_INVALID_PARAMETER;
+    }
+    auto textureResource = reinterpret_cast<labfont::TextureResource*>(texture);
+    if (!textureResource->IsValid()) {
+        return LAB_RESULT_INVALID_TEXTURE;
+    }
+    *height = textureResource->GetHeight();
+    return LAB_RESULT_OK;
+}
+
 
 void lab_destroy_texture(lab_context ctx, lab_texture texture) {
     if (!ctx || !texture) {
@@ -357,7 +403,6 @@ lab_result lab_load_texture(lab_context ctx, const char* path, lab_texture* out_
     
     // Free the image data
     stbi_image_free(data);
-    
     return result;
 }
 

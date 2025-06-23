@@ -185,6 +185,7 @@ MetalDevice::MetalDevice()
     , m_commandQueue(nil)
     , m_shaderLibrary(nil)
     , m_trianglePipeline(nil)
+    , m_texturedTrianglePipeline(nil)
     , m_linePipeline(nil)
     , m_depthState(nil)
 {
@@ -195,6 +196,7 @@ MetalDevice::~MetalDevice() {
     if (m_depthState) [m_depthState release];
     if (m_linePipeline) [m_linePipeline release];
     if (m_trianglePipeline) [m_trianglePipeline release];
+    if (m_texturedTrianglePipeline) [m_texturedTrianglePipeline release];
     if (m_shaderLibrary) [m_shaderLibrary release];
     if (m_commandQueue) [m_commandQueue release];
     if (m_device) [m_device release];
@@ -361,17 +363,23 @@ bool MetalDevice::CreatePipelineStates() {
     // Triangle pipeline
     id<MTLFunction> vertexFunc = [m_shaderLibrary newFunctionWithName:@"vertex_main"];
     id<MTLFunction> fragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_main"];
-    
+    id<MTLFunction> texturedFragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_triangle"];
+
     if (!vertexFunc) {
         std::cerr << "Error: Failed to find vertex shader function 'vertex_main' in shader library\n";
         [vertexDesc release];
         [pipelineDesc release];
         return false;
     }
-    
     if (!fragmentFunc) {
         std::cerr << "Error: Failed to find fragment shader function 'fragment_main' in shader library\n";
         [vertexFunc release];
+        [vertexDesc release];
+        [pipelineDesc release];
+        return false;
+    }
+    if (!texturedFragmentFunc) {
+        std::cerr << "Error: Failed to find fragment shader function 'fragment_textured' in shader library\n";
         [vertexDesc release];
         [pipelineDesc release];
         return false;
@@ -382,9 +390,13 @@ bool MetalDevice::CreatePipelineStates() {
     
     NSError* error = nil;
     m_trianglePipeline = [m_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-    
+
+    pipelineDesc.fragmentFunction = texturedFragmentFunc;
+    m_texturedTrianglePipeline = [m_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+
     [vertexFunc release];
     [fragmentFunc release];
+    [texturedFragmentFunc release];
     
     if (!m_trianglePipeline) {
         std::cerr << "Error: Failed to create triangle pipeline state\n";
@@ -611,6 +623,12 @@ lab_result MetalBackend::SubmitCommands(const std::vector<DrawCommand>& commands
                     vertices.push_back(Vertex(params.vertices[i]));
                 }
                 m_currentCommandBuffer->DrawLines(vertices.data(), params.vertexCount, params.lineWidth);
+                break;
+            }
+                
+            case DrawCommandType::BindTexture: {
+                const auto& params = cmd.bind_texture;
+                m_currentCommandBuffer->BindTexture(params.texture);
                 break;
             }
             

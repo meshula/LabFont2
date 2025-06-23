@@ -28,6 +28,9 @@ void lab_destroy_texture(lab_context ctx, lab_texture texture);
 lab_result lab_create_buffer(lab_context ctx, const lab_buffer_desc* desc, lab_buffer* out_buffer);
 void lab_destroy_buffer(lab_context ctx, lab_buffer buffer);
 
+lab_result lab_texture_width(lab_texture texture, int* width);
+lab_result lab_texture_height(lab_texture texture, int* height);
+
 /* Render target management */
 lab_result lab_create_render_target(lab_context ctx, const lab_render_target_desc* desc, lab_render_target* out_target);
 void lab_destroy_render_target(lab_context ctx, lab_render_target target);

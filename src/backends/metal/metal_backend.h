@@ -80,6 +80,7 @@ public:
     
     // Pipeline state objects
     MetalRenderPipelineStateRef GetTrianglePipeline() const { return m_trianglePipeline; }
+    MetalRenderPipelineStateRef GetTexturedTrianglePipeline() const { return m_texturedTrianglePipeline; }
     MetalRenderPipelineStateRef GetLinePipeline() const { return m_linePipeline; }
     MetalDepthStencilStateRef GetDepthState() const { return m_depthState; }
     
@@ -91,6 +92,7 @@ private:
     MetalCommandQueueRef m_commandQueue;
     MetalLibraryRef m_shaderLibrary;
     MetalRenderPipelineStateRef m_trianglePipeline;
+    MetalRenderPipelineStateRef m_texturedTrianglePipeline;
     MetalRenderPipelineStateRef m_linePipeline;
     MetalDepthStencilStateRef m_depthState;
 };

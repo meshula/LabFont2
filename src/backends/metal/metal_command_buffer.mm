@@ -1,5 +1,6 @@
 #import "metal_command_buffer.h"
 #import "metal_backend.h"
+#import "core/resource.h"
 #import <Metal/Metal.h>
 #include <iostream>
 
@@ -13,6 +14,7 @@ MetalCommandBuffer::MetalCommandBuffer(MetalDevice* device)
     , m_vertexBuffer(nil)
     , m_vertexBufferCapacity(0)
     , m_currentBlendMode(BlendMode::None)
+    , m_currentTexture(nullptr)
     , m_inRenderPass(false)
     , m_currentDrawMode(DrawMode::Triangles)
 {
@@ -269,6 +271,14 @@ void MetalCommandBuffer::DrawLines(const Vertex* vertices, uint32_t vertexCount,
     }
 }
 
+void MetalCommandBuffer::BindTexture(lab_texture texture) {
+    if (m_currentTexture == texture) {
+        return;
+    }
+    // finish drawing with previously bound textures
+    Flush(m_currentDrawMode);
+    m_currentTexture = texture;
+}
 
 void MetalCommandBuffer::Flush(DrawMode mode) {
     if (m_vertexData.empty() || (m_currentDrawMode == DrawMode::None)) {
@@ -285,11 +295,29 @@ void MetalCommandBuffer::Flush(DrawMode mode) {
 
     // Set line pipeline and draw
     if (mode == DrawMode::Triangles) {
-        [m_renderEncoder setRenderPipelineState:m_device->GetTrianglePipeline()];
+        if (m_currentTexture) {
+            [m_renderEncoder setRenderPipelineState:m_device->GetTexturedTrianglePipeline()];
+        }
+        else {
+            [m_renderEncoder setRenderPipelineState:m_device->GetTrianglePipeline()];
+        }
     } else if (mode == DrawMode::Lines) {
         [m_renderEncoder setRenderPipelineState:m_device->GetLinePipeline()];
     }
 
+    if (m_currentTexture) {
+        auto textureResource = reinterpret_cast<labfont::TextureResource*>(m_currentTexture);
+        if (!textureResource->IsValid()) {
+            return LAB_RESULT_INVALID_TEXTURE;
+        }
+        if (textureResource->texture) {
+            MetalTexture* mt = dynamic_cast<MetalTexture*>(textureResource->texture.get());
+            if (mt) {
+                [m_renderEncoder setFragmentTexture:mt->GetMTLTexture() atIndex:0];
+            }
+        }
+    }
+    
     [m_renderEncoder setVertexBuffer:m_vertexBuffer offset:0 atIndex:0];
     [m_renderEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
                       vertexStart:0

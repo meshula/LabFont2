@@ -100,11 +100,19 @@ typedef struct lab_vertex_2TC {
     float color[4];     /* r, g, b, a */
 } lab_vertex_2TC;
 
+/* Opaque handle types */
+typedef struct lab_context_t* lab_context;
+typedef struct lab_font_t* lab_font;
+typedef struct lab_texture_t* lab_texture;
+typedef struct lab_buffer_t* lab_buffer;
+typedef struct lab_render_target_t* lab_render_target;
+
 /* Draw command types */
 typedef enum lab_draw_command_type {
     LAB_DRAW_COMMAND_CLEAR,
     LAB_DRAW_COMMAND_TRIANGLES,
-    LAB_DRAW_COMMAND_LINES
+    LAB_DRAW_COMMAND_LINES,
+    LAB_DRAW_COMMAND_BIND_TEXTURE,
 } lab_draw_command_type;
 
 /* Draw command data */
@@ -123,6 +131,9 @@ typedef struct lab_draw_command {
             uint32_t vertexCount;
             float lineWidth;
         } lines;
+        struct {
+            const lab_texture texture;
+        } bind_texture;
     };
 } lab_draw_command;
 
@@ -134,12 +145,6 @@ typedef struct lab_render_target_desc {
     bool hasDepth;
 } lab_render_target_desc;
 
-/* Opaque handle types */
-typedef struct lab_context_t* lab_context;
-typedef struct lab_font_t* lab_font;
-typedef struct lab_texture_t* lab_texture;
-typedef struct lab_buffer_t* lab_buffer;
-typedef struct lab_render_target_t* lab_render_target;
 
 /* Resource descriptors */
 typedef struct lab_texture_desc {
