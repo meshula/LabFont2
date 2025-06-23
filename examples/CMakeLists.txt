@@ -178,6 +178,9 @@ endfunction()
 # Basic drawing example
 add_labfont_example(basic_drawing "basic/drawing_main" ${RESOLVED_BACKEND} "resources")
 
+# Coordinate system test
+add_labfont_example(coordinate_system_test "basic/coordinate_system_test" ${RESOLVED_BACKEND} "resources")
+
 # Texture example
 add_labfont_example(texture_example "basic/texture_main" ${RESOLVED_BACKEND} "resources")
 

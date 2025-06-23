@@ -647,7 +647,8 @@ lab_result MetalBackend::SubmitCommands(const std::vector<DrawCommand>& commands
                 break;
             }
             
-            case DrawCommandType::SetViewport: {
+            case DrawCommandType::SetViewport:
+            case DrawCommandType::SetViewportAPI: {
                 const auto& params = cmd.viewport;
                 m_currentCommandBuffer->SetViewport(
                     params.x, params.y,

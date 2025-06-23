@@ -1,6 +1,6 @@
-// Simple example of drawing a red triangle using LabFont abstraction
+// Enhanced coordinate system example demonstrating proper transformations
 
-#define GLFW_INCLUDE_NONE // Prevents GLFW from including OpenGL headers
+#define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -51,10 +51,12 @@ int fb_texture_height = 0;
     return [CAMetalLayer class];
 }
 @end
-#endif // __APPLE__
+#endif
 
-static void WindowShouldClose(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
+// Coordinate system
+lab_coordinate_system coord_system;
+
+static void WindowShouldClose(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
@@ -70,7 +72,7 @@ static void WindowResize(GLFWwindow *window, int width, int height) {
 #endif
 }
 
-// Initialize GLFW and create a window
+
 bool InitWindow() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -78,7 +80,7 @@ bool InitWindow() {
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(kWidth, kHeight, "LabFont Triangle Example", nullptr, nullptr);
+    window = glfwCreateWindow(kWidth, kHeight, "LabFont Coordinate System Example", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -193,6 +195,7 @@ bool InitWindow() {
     return true;
 }
 
+
 void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffer_size) {
 #ifdef _WIN32
     HDC hdc = GetDC(glfwGetWin32Window(window));
@@ -280,11 +283,10 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
 #endif
 }
 
-// Initialize LabFont context
 bool InitLabFont() {
     // Create a backend descriptor
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND, // Use CPU backend for portability
+        .type = LAB_BACKEND_CPU, // Use CPU backend to test coordinate system
         .width = kWidth,
         .height = kHeight,
         .native_window = window
@@ -293,7 +295,7 @@ bool InitLabFont() {
     // Create the context
     lab_result result = lab_create_context(&backend_desc, &context);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result);
+        std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result) << std::endl;
         return false;
     }
 
@@ -307,163 +309,79 @@ bool InitLabFont() {
     
     result = lab_create_render_target(context, &rt_desc, &render_target);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to create render target: " << lab_get_error_string(result);
+        std::cerr << "Failed to create render target: " << lab_get_error_string(result) << std::endl;
         return false;
     }
     
     // Set the render target
     result = lab_set_render_target(context, render_target);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to set render target: " << lab_get_error_string(result);
+        std::cerr << "Failed to set render target: " << lab_get_error_string(result) << std::endl;
         return false;
     }
+
+    // Get the default coordinate system
+    result = lab_get_coordinate_system(context, &coord_system);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to get coordinate system: " << lab_get_error_string(result) << std::endl;
+        return false;
+    }
+
+    std::cout << "Coordinate system initialized successfully!" << std::endl;
+    std::cout << "Device space: (" << coord_system.desc.device_origin[0] << ", " << coord_system.desc.device_origin[1] 
+              << ") size (" << coord_system.desc.device_size[0] << ", " << coord_system.desc.device_size[1] << ")" << std::endl;
+    std::cout << "Local space: (" << coord_system.desc.local_origin[0] << ", " << coord_system.desc.local_origin[1] 
+              << ") size (" << coord_system.desc.local_size[0] << ", " << coord_system.desc.local_size[1] << ")" << std::endl;
 
     return true;
 }
 
-// Create a triangle using LabFont vertices
-std::vector<lab_vertex_2TC> CreateTriangleVertices() {
-    // Define a red triangle centered at origin
-    std::vector<lab_vertex_2TC> vertices = {
-        // Top vertex (red)
-        {
-            .position = {0.0f, 0.5f},
-            .texcoord = {0.5f, 0.0f},
-            .color = {1.0f, 0.0f, 0.0f, 1.0f}
-        },
-        // Bottom left vertex (red)
-        {
-            .position = {-0.5f, -0.5f},
-            .texcoord = {0.0f, 1.0f},
-            .color = {1.0f, 0.0f, 0.0f, 1.0f}
-        },
-        // Bottom right vertex (red)
-        {
-            .position = {0.5f, -0.5f},
-            .texcoord = {1.0f, 1.0f},
-            .color = {1.0f, 0.0f, 0.0f, 1.0f}
-        }
-    };
+// Global persistent vertex data (pre-transformed)
+static std::vector<lab_vertex_2TC> g_redTriangleVertices;
+static std::vector<lab_vertex_2TC> g_greenTriangleVertices;
+static bool g_verticesInitialized = false;
 
-    return vertices;
-}
-
-// Create a second triangle centered at (0.5, 0.5)
-std::vector<lab_vertex_2TC> CreateSecondTriangleVertices() {
-    // Define a green triangle centered at (0.5, 0.5)
-    std::vector<lab_vertex_2TC> vertices = {
-        // Top vertex (green)
-        {
-            .position = {0.5f, 1.0f},
-            .texcoord = {0.5f, 0.0f},
-            .color = {0.0f, 1.0f, 0.0f, 1.0f}
-        },
-        // Bottom left vertex (green)
-        {
-            .position = {0.0f, 0.0f},
-            .texcoord = {0.0f, 1.0f},
-            .color = {0.0f, 1.0f, 0.0f, 1.0f}
-        },
-        // Bottom right vertex (green)
-        {
-            .position = {1.0f, 0.0f},
-            .texcoord = {1.0f, 1.0f},
-            .color = {0.0f, 1.0f, 0.0f, 1.0f}
-        }
-    };
-
-    return vertices;
-}
-
-// Render a frame
-lab_result Render() {
-    // Begin the frame
-    lab_result result = lab_begin_frame(context);
-    if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to begin frame: " << lab_get_error_string(result);
-        return result;
-    }
+// Initialize pre-transformed vertices (call once after coordinate system setup)
+void InitializeTransformedVertices() {
+    if (g_verticesInitialized) return;
     
-    // Create clear command (black background)
-    lab_draw_command clear_cmd = {
-        .type = LAB_DRAW_COMMAND_CLEAR,
-        .clear = {
-            .color = {0.0f, 0.0f, 0.0f, 1.0f}
-        }
+    // Create local coordinate vertices
+    std::vector<lab_vertex_2TC> redLocal = {
+        {.position = {0.0f, 0.5f}, .texcoord = {0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}},
+        {.position = {-0.5f, -0.5f}, .texcoord = {0.0f, 1.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}},
+        {.position = {0.5f, -0.5f}, .texcoord = {1.0f, 1.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}}
     };
     
-    // Get current time for alternating display
-    static double start_time = glfwGetTime();
-    double current_time = glfwGetTime();
-    double elapsed = current_time - start_time;
+    std::vector<lab_vertex_2TC> greenLocal = {
+        {.position = {0.2f, 0.8f}, .texcoord = {0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}},
+        {.position = {-0.2f, 0.2f}, .texcoord = {0.0f, 1.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}},
+        {.position = {0.6f, 0.2f}, .texcoord = {1.0f, 1.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}}
+    };
     
-    // Alternate every half second
-    bool use_first_triangle = ((int)(elapsed * 2)) % 2 == 0;
+    // Pre-transform vertices once
+    g_redTriangleVertices.resize(redLocal.size());
+    g_greenTriangleVertices.resize(greenLocal.size());
     
-    std::vector<lab_draw_command> commands;
-    commands.push_back(clear_cmd);
-    
-    if (use_first_triangle) {
-        // Set viewport for first triangle (default 0,1 coordinate system)
-        lab_draw_command viewport_cmd = {
-            .type = LAB_DRAW_COMMAND_SET_VIEWPORT,
-            .set_viewport = {
-                .x = 0.0f, .y = 0.0f,
-                .width = 1.0f, .height = 1.0f
-            }
-        };
-        commands.push_back(viewport_cmd);
-        
-        // Get first triangle vertices (red, centered at origin)
-        static std::vector<lab_vertex_2TC> vertices = CreateTriangleVertices();
-        
-        lab_draw_command triangle_cmd = {
-            .type = LAB_DRAW_COMMAND_TRIANGLES,
-            .triangles = {
-                .vertices = vertices.data(),
-                .vertexCount = static_cast<uint32_t>(vertices.size())
-            }
-        };
-        commands.push_back(triangle_cmd);
-    } else {
-        // Set viewport for second triangle - smaller viewport in center
-        lab_draw_command viewport_cmd = {
-            .type = LAB_DRAW_COMMAND_SET_VIEWPORT,
-            .set_viewport = {
-                .x = 0.f, .y = 0.f,
-                .width = 1.0f, .height = 1.0f
-            }
-        };
-        commands.push_back(viewport_cmd);
-        
-        // Get second triangle vertices (green, centered at 0.5, 0.5)
-        static std::vector<lab_vertex_2TC> vertices = CreateSecondTriangleVertices();
-        
-        lab_draw_command triangle_cmd = {
-            .type = LAB_DRAW_COMMAND_TRIANGLES,
-            .triangles = {
-                .vertices = vertices.data(),
-                .vertexCount = static_cast<uint32_t>(vertices.size())
-            }
-        };
-        commands.push_back(triangle_cmd);
+    for (size_t i = 0; i < redLocal.size(); ++i) {
+        lab_result result = lab_transform_vertex(&coord_system, LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
+                                               &redLocal[i], &g_redTriangleVertices[i]);
+        if (result != LAB_RESULT_OK) {
+            std::cerr << "Failed to transform red vertex " << i << ": " << lab_get_error_string(result) << std::endl;
+            return;
+        }
     }
     
-    // Submit all commands
-    result = lab_submit_commands(context, commands.data(), static_cast<uint32_t>(commands.size()));
-    if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to submit commands: " << lab_get_error_string(result);
-        return result;
+    for (size_t i = 0; i < greenLocal.size(); ++i) {
+        lab_result result = lab_transform_vertex(&coord_system, LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
+                                               &greenLocal[i], &g_greenTriangleVertices[i]);
+        if (result != LAB_RESULT_OK) {
+            std::cerr << "Failed to transform green vertex " << i << ": " << lab_get_error_string(result) << std::endl;
+            return;
+        }
     }
     
-    // End the frame
-    result = lab_end_frame(context);
-    if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to end frame: " << lab_get_error_string(result);
-        return result;
-    }
-    
-    return LAB_RESULT_OK;
+    g_verticesInitialized = true;
+    std::cout << "Vertices pre-transformed successfully!" << std::endl;
 }
 
 lab_result Blit() {
@@ -478,25 +396,96 @@ lab_result Blit() {
     // Blit the framebuffer to the window
     BlitToWindow(rt_desc.width, rt_desc.height, framebuffer, framebuffer_size);
     
-    // Save the render target to a file (only once)
-    static bool saved = false;
-    if (!saved) {
-        result = lab_save_render_target(context, render_target, "triangle_output.png");
-        if (result != LAB_RESULT_OK) {
-            std::cerr << "Failed to save render target: " << lab_get_error_string(result);
-            // Continue even if saving fails
-        } else {
-            std::cout << "Render target saved to triangle_output.png" << std::endl;
-            saved = true;
+    return LAB_RESULT_OK;
+}
+
+lab_result Render() {
+    // Begin the frame
+    lab_result result = lab_begin_frame(context);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to begin frame: " << lab_get_error_string(result) << std::endl;
+        return result;
+    }
+    
+    // Create clear command (black background)
+    lab_draw_command clear_cmd = {
+        .type = LAB_DRAW_COMMAND_CLEAR,
+        .clear = {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f}
         }
+    };
+    
+    // Get current time for demonstration
+    static double start_time = glfwGetTime();
+    double current_time = glfwGetTime();
+    double elapsed = current_time - start_time;
+    
+    // Alternate between triangles every 2 seconds
+    bool use_first_triangle = ((int)(elapsed * 0.5)) % 2 == 0;
+    
+    std::vector<lab_draw_command> commands;
+    commands.push_back(clear_cmd);
+    
+    if (use_first_triangle) {
+        std::cout << "\rRendering red triangle (pre-transformed, persistent vertices)" << std::flush;
+        
+        // Use pre-transformed persistent vertices - no scope issues!
+        lab_draw_command triangle_cmd = {
+            .type = LAB_DRAW_COMMAND_TRIANGLES,
+            .triangles = {
+                .vertices = g_redTriangleVertices.data(),
+                .vertexCount = static_cast<uint32_t>(g_redTriangleVertices.size())
+            }
+        };
+        commands.push_back(triangle_cmd);
+    } else {
+        std::cout << "\rRendering green triangle (pre-transformed, persistent vertices)" << std::flush;
+        
+        // Use pre-transformed persistent vertices - no scope issues!
+        lab_draw_command triangle_cmd = {
+            .type = LAB_DRAW_COMMAND_TRIANGLES,
+            .triangles = {
+                .vertices = g_greenTriangleVertices.data(),
+                .vertexCount = static_cast<uint32_t>(g_greenTriangleVertices.size())
+            }
+        };
+        commands.push_back(triangle_cmd);
+    }
+    
+    // Submit all commands
+    result = lab_submit_commands(context, commands.data(), static_cast<uint32_t>(commands.size()));
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to submit commands: " << lab_get_error_string(result) << std::endl;
+        return result;
+    }
+    
+    // End the frame
+    result = lab_end_frame(context);
+    if (result != LAB_RESULT_OK) {
+        std::cerr << "Failed to end frame: " << lab_get_error_string(result) << std::endl;
+        return result;
     }
     
     return LAB_RESULT_OK;
 }
 
-// Cleanup resources
+lab_result SaveFrame() {
+    // Save the render target to a file (only once)
+    static bool saved = false;
+    if (!saved) {
+        lab_result result = lab_save_render_target(context, render_target, "coordinate_system_test.png");
+        if (result != LAB_RESULT_OK) {
+            std::cerr << "Failed to save render target: " << lab_get_error_string(result) << std::endl;
+            return result;
+        } else {
+            std::cout << "\nCoordinate system test saved to coordinate_system_test.png" << std::endl;
+            saved = true;
+        }
+    }
+    return LAB_RESULT_OK;
+}
+
 void Cleanup() {
-    // Free the framebuffer data
     if (framebuffer) {
         lab_free(framebuffer);
         framebuffer = nullptr;
@@ -521,17 +510,10 @@ void Cleanup() {
     glfwTerminate();
 }
 
-#ifndef MAIN
-#define MAIN main
-#endif
-
-#ifdef __APPLE__
-#define LOOPSCOPE @autoreleasepool
-#else
-#define LOOPSCOPE
-#endif
-
-int MAIN() {
+int main() {
+    std::cout << "LabFont2 Coordinate System Test" << std::endl;
+    std::cout << "=================================" << std::endl;
+    
     // Initialize window
     if (!InitWindow()) {
         return 1;
@@ -543,18 +525,43 @@ int MAIN() {
         return 1;
     }
 
-    // Main loop
-    while (!glfwWindowShouldClose(window)) {
+    std::cout << "\nStarting render loop. Press ESC to exit." << std::endl;
+    std::cout << "Red triangle: Local coordinates transformed to normalized coordinates" << std::endl;
+    std::cout << "Green triangle: Demonstrates coordinate system transformation" << std::endl;
+    
+    // Run a few frames to demonstrate coordinate system
+    int frameCount = 0;
+    const int maxFrames = 10; // Limit frames for testing
+    
+    InitializeTransformedVertices();
+    
+    while (!glfwWindowShouldClose(window) && frameCount < maxFrames) {
         glfwPollEvents();
         
-        LOOPSCOPE {
-            if (Render() != LAB_RESULT_OK) {
-                break;
-            }
-            Blit();
+        if (Render() != LAB_RESULT_OK) {
+            break;
         }
+        
+        // Blit the rendered frame to the window
+        if (Blit() != LAB_RESULT_OK) {
+            std::cerr << "Failed to blit frame to window" << std::endl;
+            break;
+        }
+        
+        // Save first frame
+        if (frameCount == 0) {
+            SaveFrame();
+        }
+        
+        frameCount++;
+        
+        // Small delay to see the alternating triangles
+        glfwWaitEventsTimeout(0.5);
     }
 
+    std::cout << "\n\nCoordinate system test completed successfully!" << std::endl;
+    std::cout << "Rendered " << frameCount << " frames with proper coordinate transformations." << std::endl;
+    
     // Cleanup
     Cleanup();
     return 0;

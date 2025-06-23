@@ -43,6 +43,17 @@ lab_result lab_get_render_target_data(lab_context ctx, lab_render_target target,
 lab_result lab_begin_frame(lab_context ctx);
 lab_result lab_end_frame(lab_context ctx);
 
+/* Coordinate system management */
+lab_result lab_init_coordinate_system(lab_coordinate_system* coord_system, const lab_coordinate_desc* desc);
+lab_result lab_set_coordinate_system(lab_context ctx, const lab_coordinate_system* coord_system);
+lab_result lab_get_coordinate_system(lab_context ctx, lab_coordinate_system* out_coord_system);
+lab_result lab_transform_point(const lab_coordinate_system* coord_system, 
+                              lab_coordinate_space from_space, lab_coordinate_space to_space,
+                              const float input[2], float output[2]);
+lab_result lab_transform_vertex(const lab_coordinate_system* coord_system,
+                               lab_coordinate_space from_space, lab_coordinate_space to_space,
+                               const lab_vertex_2TC* input, lab_vertex_2TC* output);
+
 /* Draw commands */
 lab_result lab_submit_commands(lab_context ctx, const lab_draw_command* commands, uint32_t commandCount);
 

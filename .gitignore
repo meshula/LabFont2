@@ -16,6 +16,7 @@ third_party/lvgl/
 .idea/
 *.swp
 *.swo
+.staging/
 
 # Compiled files
 *.o

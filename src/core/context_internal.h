@@ -10,6 +10,7 @@
 #include "resource_manager.h"
 #include "memory.h"
 #include "error.h"
+#include "coordinate_system.h"
 
 namespace labfont {
 
@@ -41,6 +42,10 @@ public:
     // Viewport
     void SetViewport(float x, float y, float width, float height);
     
+    // Coordinate system management
+    void SetCoordinateSystem(const lab_coordinate_system& coord_system);
+    const lab_coordinate_system& GetCoordinateSystem() const;
+    
 protected:
     Context() = default;  // Protected constructor, use Create() instead
     
@@ -58,6 +63,10 @@ protected:
     unsigned int m_height;
     bool m_inTextMode;
     bool m_inDrawMode;
+    
+    // Coordinate system
+    lab_coordinate_system m_coordinateSystem;
+    bool m_coordinateSystemInitialized;
 };
 
 // Helper function to convert C handle to C++ object

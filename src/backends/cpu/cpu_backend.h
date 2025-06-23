@@ -203,6 +203,25 @@ private:
     CPURenderTarget* m_currentRenderTarget = nullptr;
     BlendMode m_currentBlendMode = BlendMode::Alpha;
     std::vector<DrawCommand> m_commands;
+    
+    // Viewport state for coordinate transformation
+    float m_viewportX = 0.0f;
+    float m_viewportY = 0.0f;
+    float m_viewportWidth = 1.0f;
+    float m_viewportHeight = 1.0f;
+    
+    // Transform normalized coordinates (-1,1) to viewport coordinates (0,1)
+    void TransformVertex(lab_vertex_2TC& vertex) {
+        // Convert from normalized device coordinates to viewport coordinates
+        // Input: vertex in -1,1 range (standard graphics coordinates)
+        // Output: vertex in 0,1 range (LabFont coordinate system)
+        vertex.position[0] = (vertex.position[0] + 1.0f) * 0.5f;
+        vertex.position[1] = (vertex.position[1] + 1.0f) * 0.5f;
+        
+        // Apply viewport transformation
+        vertex.position[0] = m_viewportX + vertex.position[0] * m_viewportWidth;
+        vertex.position[1] = m_viewportY + vertex.position[1] * m_viewportHeight;
+    };
 };
 
 } // namespace labfont

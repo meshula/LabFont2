@@ -110,6 +110,9 @@ set(CORE_SRC
     src/core/backend.h
     src/core/context_internal.h
     src/core/context.cpp
+    src/core/coordinate_system.h
+    src/core/coordinate_system.cpp
+    src/core/labfont_coordinate_system.cpp
     src/core/draw_state.h
     src/core/error.cpp
     src/core/error.h

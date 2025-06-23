@@ -91,6 +91,13 @@ lab_result Context::Initialize(lab_backend_type type, const lab_context_desc* de
     m_height = desc ? desc->height : 0;
     m_inTextMode = false;
     m_inDrawMode = false;
+    m_coordinateSystemInitialized = false;
+    
+    // Initialize default coordinate system
+    auto coordResult = CreateStandardCoordinateSystem(&m_coordinateSystem, type, m_width, m_height);
+    if (coordResult == LAB_RESULT_OK) {
+        m_coordinateSystemInitialized = true;
+    }
     
     return lab_result(LAB_RESULT_OK);
 }
@@ -101,6 +108,15 @@ void Context::BeginFrame() {
 
 void Context::EndFrame() {
     m_backend->EndFrame();
+}
+
+void Context::SetCoordinateSystem(const lab_coordinate_system& coord_system) {
+    m_coordinateSystem = coord_system;
+    m_coordinateSystemInitialized = true;
+}
+
+const lab_coordinate_system& Context::GetCoordinateSystem() const {
+    return m_coordinateSystem;
 }
 
 } // namespace labfont

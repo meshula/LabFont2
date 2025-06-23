@@ -21,9 +21,10 @@ enum class DrawCommandType {
     DrawTriangles = LAB_DRAW_COMMAND_TRIANGLES,
     DrawLines = LAB_DRAW_COMMAND_LINES,
     BindTexture = LAB_DRAW_COMMAND_BIND_TEXTURE,
+    SetViewportAPI = LAB_DRAW_COMMAND_SET_VIEWPORT,  // Map to public API
     SetBlendMode,  // Extended commands for internal use
     SetScissor,
-    SetViewport
+    SetViewport    // Internal viewport command
 };
 
 enum class BlendMode {
@@ -104,6 +105,13 @@ struct DrawCommand {
             case LAB_DRAW_COMMAND_BIND_TEXTURE:
                 type = DrawCommandType::BindTexture;
                 std::memcpy(&bind_texture, &cmd.bind_texture, sizeof(bind_texture));
+                break;
+            case LAB_DRAW_COMMAND_SET_VIEWPORT:
+                type = DrawCommandType::SetViewportAPI;
+                viewport.x = cmd.set_viewport.x;
+                viewport.y = cmd.set_viewport.y;
+                viewport.width = cmd.set_viewport.width;
+                viewport.height = cmd.set_viewport.height;
                 break;
         }
     }

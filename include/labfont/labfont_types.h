@@ -75,6 +75,43 @@ typedef struct lab_color
     float r, g, b, a;
 } lab_color;
 
+/* Coordinate system types */
+typedef enum lab_coordinate_space {
+    LAB_COORD_DEVICE,     /* Device coordinates (pixels for CPU, NDC for GPU) */
+    LAB_COORD_NORMALIZED, /* Normalized device coordinates (0,1) or (-1,1) */
+    LAB_COORD_LOCAL       /* User/application coordinate space */
+} lab_coordinate_space;
+
+typedef struct lab_coordinate_desc {
+    /* Device coordinate space (backend-dependent) */
+    float device_origin[2];   /* Origin in device coordinates */
+    float device_size[2];     /* Size in device coordinates */
+    
+    /* Normalized coordinate space (0,1) or (-1,1) */
+    float normalized_origin[2]; /* NDC origin */
+    float normalized_size[2];   /* NDC size */
+    
+    /* Local/user coordinate space */
+    float local_origin[2];    /* Origin in user coordinates */
+    float local_size[2];      /* Size in user coordinates */
+} lab_coordinate_desc;
+
+typedef struct lab_coordinate_system {
+    lab_coordinate_desc desc;
+    
+    /* Computed transformation matrices (3x3 homogeneous) */
+    float local_to_normalized[9];
+    float local_to_device[9];
+    float normalized_to_device[9];
+    float device_to_normalized[9];
+    float normalized_to_local[9];
+    float device_to_local[9];
+    
+    /* Cached inverse determinants for performance */
+    float local_to_normalized_det;
+    float normalized_to_device_det;
+} lab_coordinate_system;
+
 /* Backend description */
 typedef struct lab_backend_desc {
     lab_backend_type type;     /* Backend type (Metal, WebGPU, etc.) */
@@ -113,6 +150,7 @@ typedef enum lab_draw_command_type {
     LAB_DRAW_COMMAND_TRIANGLES,
     LAB_DRAW_COMMAND_LINES,
     LAB_DRAW_COMMAND_BIND_TEXTURE,
+    LAB_DRAW_COMMAND_SET_VIEWPORT,
 } lab_draw_command_type;
 
 /* Draw command data */
@@ -134,6 +172,10 @@ typedef struct lab_draw_command {
         struct {
             const lab_texture texture;
         } bind_texture;
+        struct {
+            float x, y;           /* Viewport top-left corner */
+            float width, height;  /* Viewport dimensions */
+        } set_viewport;
     };
 } lab_draw_command;
 
