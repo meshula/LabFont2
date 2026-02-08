@@ -149,7 +149,7 @@ bool InitWindow() {
         float2 texCoord;
     };
 
-    vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
+    vertex VertexOut vertex_blit(VertexIn in [[stage_in]]) {
         VertexOut out;
         out.position = in.position;
         out.texCoord = in.texCoord;  // Pass texture coordinates to fragment shader
@@ -160,7 +160,7 @@ bool InitWindow() {
         float2 texCoord;
     };
 
-    fragment float4 fragment_main(FragmentIn in [[stage_in]], 
+    fragment float4 fragment_blit(FragmentIn in [[stage_in]], 
                                   texture2d<float> texture [[texture(0)]]) {
         constexpr sampler s; // Default sampler
 
@@ -176,8 +176,8 @@ bool InitWindow() {
         NSLog(@"Failed to compile vertex shader: %@", error);
     }
     
-    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_main"];
-    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_main"];
+    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_blit"];
+    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_blit"];
     
     MTLRenderPipelineDescriptor *pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineDesc.vertexFunction = vertexFunction;
@@ -282,7 +282,7 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
 }
 
 // Initialize LabFont context and load texture
-bool InitLabFont() {
+bool InitLabFont(const char* resources_path) {
     int textureWidth, textureHeight;
     lab_result result;
         
@@ -291,7 +291,7 @@ bool InitLabFont() {
     
     // Create a backend descriptor
     lab_backend_desc backend_desc = {
-        .type = LAB_BACKEND, // Use CPU backend for portability
+        .type = LAB_BACKEND, // BACKEND with no suffix is default. Use _CPU backend for portability
         .width = (uint32_t) kWidth,
         .height = (uint32_t) kHeight,
         .native_window = window
@@ -305,8 +305,9 @@ bool InitLabFont() {
     }
     
     // Load the logo texture first to get its dimensions
-    const char* logo_path = "resources/labfont-logo1.jpg";
-    result = lab_load_texture(context, logo_path, &logo_texture);
+    std::string logo_path(resources_path);
+    logo_path += "/labfont-logo1.jpg";
+    result = lab_load_texture(context, logo_path.c_str(), &logo_texture);
     if (result != LAB_RESULT_OK) {
         std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
         return false;
@@ -315,12 +316,12 @@ bool InitLabFont() {
     // Verify that the texture loaded ok by checking dimensions
     result = lab_texture_width(logo_texture, &textureWidth);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
+        std::cerr << "Failed to get texture width: " << lab_get_error_string(result) << std::endl;
         return false;
     }
     result = lab_texture_height(logo_texture, &textureHeight);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to load texture: " << lab_get_error_string(result) << std::endl;
+        std::cerr << "Failed to get texture height: " << lab_get_error_string(result) << std::endl;
         return false;
     }
 
@@ -507,9 +508,6 @@ void Cleanup() {
     glfwTerminate();
 }
 
-#ifndef MAIN
-#define MAIN main
-#endif
 
 #ifdef __APPLE__
 #define LOOPSCOPE @autoreleasepool
@@ -517,14 +515,15 @@ void Cleanup() {
 #define LOOPSCOPE
 #endif
 
-int MAIN() {
+
+int run_app(const char* resource_path) {
     // Initialize window
     if (!InitWindow()) {
         return 1;
     }
 
     // Initialize LabFont
-    if (!InitLabFont()) {
+    if (!InitLabFont(resource_path)) {
         Cleanup();
         return 1;
     }
@@ -545,3 +544,25 @@ int MAIN() {
     Cleanup();
     return 0;
 }
+
+
+#ifdef DEFAULT_MAIN
+// Platform-specific headers
+#ifdef _WIN32
+    #include <direct.h>
+    #define GetCurrentDir _getcwd
+#else
+    #include <unistd.h>
+    #define GetCurrentDir getcwd
+#endif
+
+int main(int argc, char** argv) {
+    char cwd[1024];
+    if (GetCurrentDir(cwd, sizeof(cwd)) != NULL) {
+    } else {
+        printf("Could not obtain cwd\n");
+        return 1;
+    }
+    return run_app(cwd);
+}
+#endif

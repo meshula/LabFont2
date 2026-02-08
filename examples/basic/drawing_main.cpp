@@ -138,28 +138,28 @@ bool InitWindow() {
     #include <metal_stdlib>
     using namespace metal;
 
-    struct VertexIn {
+    struct BlitVertexIn {
         float4 position [[attribute(0)]];
         float2 texCoord [[attribute(1)]];
     };
 
-    struct VertexOut {
+    struct BlitVertexOut {
         float4 position [[position]];
         float2 texCoord;
     };
 
-    vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
-        VertexOut out;
+    vertex BlitVertexOut vertex_blit_main(BlitVertexIn in [[stage_in]]) {
+        BlitVertexOut out;
         out.position = in.position;
         out.texCoord = in.texCoord;  // Pass texture coordinates to fragment shader
         return out;
     }
     
-    struct FragmentIn {
+    struct BlitFragmentIn {
         float2 texCoord;
     };
 
-    fragment float4 fragment_main(FragmentIn in [[stage_in]], 
+    fragment float4 fragment_blit_main(BlitFragmentIn in [[stage_in]], 
                                   texture2d<float> texture [[texture(0)]]) {
         constexpr sampler s; // Default sampler
 
@@ -175,8 +175,8 @@ bool InitWindow() {
         NSLog(@"Failed to compile vertex shader: %@", error);
     }
     
-    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_main"];
-    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_main"];
+    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_blit_main"];
+    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_blit_main"];
     
     MTLRenderPipelineDescriptor *pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineDesc.vertexFunction = vertexFunction;
@@ -229,7 +229,7 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
                             bytesPerRow:width * 4]; // assuming 4 bytes per pixel (RGBA)
 
 
-    // Use a static clear color that pulses
+    // Use a static clear color that pulses (if the blit fails we'll see pulsing)
     static MTLClearColor color = MTLClearColorMake(0, 0, 0, 1);
     color.green = (color.green > 1.0) ? 0 : color.green + 0.01;
 
@@ -251,7 +251,8 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
     [encoder setRenderPipelineState:pipelineState];
     [encoder setVertexBuffer:fsQuadBuffer offset:0 atIndex:0];
     
-    // If using a texture, set it as a fragment shader input (assuming the texture is passed to the pipeline)
+    // If using a texture, set it as a fragment shader input
+    // (assuming the texture is passed to the pipeline)
     [encoder setFragmentTexture:framebuffer_texture atIndex:0];
 
     // Draw the quad
@@ -293,7 +294,7 @@ bool InitLabFont() {
     // Create the context
     lab_result result = lab_create_context(&backend_desc, &context);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result);
+        std::cerr << "Failed to create LabFont context: " << lab_get_error_string(result) << std::endl;
         return false;
     }
 
@@ -307,14 +308,14 @@ bool InitLabFont() {
     
     result = lab_create_render_target(context, &rt_desc, &render_target);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to create render target: " << lab_get_error_string(result);
+        std::cerr << "Failed to create render target: " << lab_get_error_string(result) << std::endl;
         return false;
     }
     
     // Set the render target
     result = lab_set_render_target(context, render_target);
     if (result != LAB_RESULT_OK) {
-        std::cerr << "Failed to set render target: " << lab_get_error_string(result);
+        std::cerr << "Failed to set render target: " << lab_get_error_string(result) << std::endl;
         return false;
     }
 
@@ -402,18 +403,10 @@ lab_result Render() {
     
     std::vector<lab_draw_command> commands;
     commands.push_back(clear_cmd);
-    
+
     if (use_first_triangle) {
-        // Set viewport for first triangle (default 0,1 coordinate system)
-        lab_draw_command viewport_cmd = {
-            .type = LAB_DRAW_COMMAND_SET_VIEWPORT,
-            .set_viewport = {
-                .x = 0.0f, .y = 0.0f,
-                .width = 1.0f, .height = 1.0f
-            }
-        };
-        commands.push_back(viewport_cmd);
-        
+        std::cout << "\rRendering red triangle (pre-transformed, persistent vertices)" << std::flush;
+
         // Get first triangle vertices (red, centered at origin)
         static std::vector<lab_vertex_2TC> vertices = CreateTriangleVertices();
         
@@ -426,15 +419,7 @@ lab_result Render() {
         };
         commands.push_back(triangle_cmd);
     } else {
-        // Set viewport for second triangle - smaller viewport in center
-        lab_draw_command viewport_cmd = {
-            .type = LAB_DRAW_COMMAND_SET_VIEWPORT,
-            .set_viewport = {
-                .x = 0.f, .y = 0.f,
-                .width = 1.0f, .height = 1.0f
-            }
-        };
-        commands.push_back(viewport_cmd);
+        std::cout << "\rRendering green triangle (pre-transformed, persistent vertices)" << std::flush;
         
         // Get second triangle vertices (green, centered at 0.5, 0.5)
         static std::vector<lab_vertex_2TC> vertices = CreateSecondTriangleVertices();
@@ -532,6 +517,9 @@ void Cleanup() {
 #endif
 
 int MAIN() {
+    std::cout << "LabFont2 Basic Draw Test" << std::endl;
+    std::cout << "=================================" << std::endl;
+
     // Initialize window
     if (!InitWindow()) {
         return 1;
@@ -542,6 +530,8 @@ int MAIN() {
         Cleanup();
         return 1;
     }
+
+    std::cout << "\nStarting render loop. Press ESC to exit." << std::endl;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {

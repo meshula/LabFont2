@@ -240,9 +240,7 @@ BSD Two-Clause License - Enabling broad adoption while preserving attribution.
 The following dependencies are required to build different components of LabFont2:
 
 - **Vulkan SDK**: Found at `/Users/nick/VulkanSDK/1.4.304.1/macOS`
-- **Emscripten**: Not found. Required for WebAssembly builds.
-  - Follow the installation instructions at [Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
-  - Run the configure.py script again after installation
+- **Emscripten**: Found in PATH
 - **GLFW**: Found
 
 ## Building
@@ -252,9 +250,11 @@ The configure.py script has generated build scripts for the detected dependencie
 - `build_core.sh`: Builds the core library without any backends
 - `build_vk.sh`: Builds with the Vulkan backend
 - `build_mtl.sh`: Builds with the Metal backend
+- `build_wasm.sh`: Builds with WebAssembly and WebGPU
 
 ### Example Build Scripts
 
 - `build_examples_cpu.sh`: Builds examples with the CPU backend
 - `build_examples_vulkan.sh`: Builds examples with the Vulkan backend
 - `build_examples_metal.sh`: Builds examples with the Metal backend
+- `build_examples_wgpu.sh`: Builds examples with the WebGPU backend

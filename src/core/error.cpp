@@ -64,6 +64,8 @@ const char* GetResultString(lab_result error) {
             return "Command encoder initialization failed";
         case LAB_RESULT_INVALID_COMMAND_BUFFER:
             return "Invalid command buffer";
+        case LAB_RESULT_TEXTURE_LOAD_FAILED:
+            return "Texture Load failed";
         default:
             return "Unknown error";
     }

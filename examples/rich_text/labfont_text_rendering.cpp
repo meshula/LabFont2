@@ -6,8 +6,8 @@
  #include "labfont/labfont.h"
  #include "labfont/labfont_renderer.h"
  
- // Font demo structure from your original example
- extern struct {
+ // Font demo structure from the original example
+ struct {
      struct LabFont* font_japanese;
      struct LabFont* font_normal;
      struct LabFont* font_italic;

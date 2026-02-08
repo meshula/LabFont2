@@ -24,7 +24,7 @@ fn vertex_main(input: VertexInput) -> VertexOutput {
 
 // Fragment shader for triangles
 @fragment
-fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
+fn fragment_color(input: VertexOutput) -> @location(0) vec4<f32> {
     return input.color;
 }
 

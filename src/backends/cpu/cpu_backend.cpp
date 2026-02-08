@@ -44,7 +44,7 @@ lab_result CPUBackend::SubmitCommands(const std::vector<DrawCommand>& commands) 
                 
                 // Apply coordinate transformation to each vertex
                 for (auto& vertex : transformedVertices) {
-                    TransformVertex(vertex);
+                    TransformVertexToViewport(vertex);
                 }
                 
                 for (uint32_t i = 0; i < params.vertexCount; i += 3) {

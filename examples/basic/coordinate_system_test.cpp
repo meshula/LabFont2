@@ -150,7 +150,7 @@ bool InitWindow() {
         float2 texCoord;
     };
 
-    vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
+    vertex VertexOut vertex_blit(VertexIn in [[stage_in]]) {
         VertexOut out;
         out.position = in.position;
         out.texCoord = in.texCoord;  // Pass texture coordinates to fragment shader
@@ -161,7 +161,7 @@ bool InitWindow() {
         float2 texCoord;
     };
 
-    fragment float4 fragment_main(FragmentIn in [[stage_in]], 
+    fragment float4 fragment_blit(FragmentIn in [[stage_in]], 
                                   texture2d<float> texture [[texture(0)]]) {
         constexpr sampler s; // Default sampler
 
@@ -177,8 +177,8 @@ bool InitWindow() {
         NSLog(@"Failed to compile vertex shader: %@", error);
     }
     
-    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_main"];
-    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_main"];
+    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_blit"];
+    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_blit"];
     
     MTLRenderPipelineDescriptor *pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineDesc.vertexFunction = vertexFunction;
@@ -232,7 +232,7 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
                             bytesPerRow:width * 4]; // assuming 4 bytes per pixel (RGBA)
 
 
-    // Use a static clear color that pulses
+    // Use a static clear color that pulses (if the blit fails we'll see pulsing)
     static MTLClearColor color = MTLClearColorMake(0, 0, 0, 1);
     color.green = (color.green > 1.0) ? 0 : color.green + 0.01;
 
@@ -254,7 +254,8 @@ void BlitToWindow(int width, int height, uint8_t* framebuffer, size_t framebuffe
     [encoder setRenderPipelineState:pipelineState];
     [encoder setVertexBuffer:fsQuadBuffer offset:0 atIndex:0];
     
-    // If using a texture, set it as a fragment shader input (assuming the texture is passed to the pipeline)
+    // If using a texture, set it as a fragment shader input
+    // (assuming the texture is passed to the pipeline)
     [encoder setFragmentTexture:framebuffer_texture atIndex:0];
 
     // Draw the quad
@@ -347,15 +348,15 @@ void InitializeTransformedVertices() {
     
     // Create local coordinate vertices
     std::vector<lab_vertex_2TC> redLocal = {
-        {.position = {0.0f, 0.5f}, .texcoord = {0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}},
+        {.position = { 0.0f,  0.5f}, .texcoord = {0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}},
         {.position = {-0.5f, -0.5f}, .texcoord = {0.0f, 1.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}},
-        {.position = {0.5f, -0.5f}, .texcoord = {1.0f, 1.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}}
+        {.position = { 0.5f, -0.5f}, .texcoord = {1.0f, 1.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}}
     };
     
     std::vector<lab_vertex_2TC> greenLocal = {
-        {.position = {0.2f, 0.8f}, .texcoord = {0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}},
+        {.position = { 0.2f, 0.8f}, .texcoord = {0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}},
         {.position = {-0.2f, 0.2f}, .texcoord = {0.0f, 1.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}},
-        {.position = {0.6f, 0.2f}, .texcoord = {1.0f, 1.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}}
+        {.position = { 0.6f, 0.2f}, .texcoord = {1.0f, 1.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}}
     };
     
     // Pre-transform vertices once
@@ -363,8 +364,9 @@ void InitializeTransformedVertices() {
     g_greenTriangleVertices.resize(greenLocal.size());
     
     for (size_t i = 0; i < redLocal.size(); ++i) {
-        lab_result result = lab_transform_vertex(&coord_system, LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
-                                               &redLocal[i], &g_redTriangleVertices[i]);
+        lab_result result = lab_transform_vertex(&coord_system,
+                                                 LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
+                                                 &redLocal[i], &g_redTriangleVertices[i]);
         if (result != LAB_RESULT_OK) {
             std::cerr << "Failed to transform red vertex " << i << ": " << lab_get_error_string(result) << std::endl;
             return;
@@ -372,8 +374,9 @@ void InitializeTransformedVertices() {
     }
     
     for (size_t i = 0; i < greenLocal.size(); ++i) {
-        lab_result result = lab_transform_vertex(&coord_system, LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
-                                               &greenLocal[i], &g_greenTriangleVertices[i]);
+        lab_result result = lab_transform_vertex(&coord_system,
+                                                 LAB_COORD_LOCAL, LAB_COORD_NORMALIZED,
+                                                 &greenLocal[i], &g_greenTriangleVertices[i]);
         if (result != LAB_RESULT_OK) {
             std::cerr << "Failed to transform green vertex " << i << ": " << lab_get_error_string(result) << std::endl;
             return;
@@ -425,7 +428,7 @@ lab_result Render() {
     
     std::vector<lab_draw_command> commands;
     commands.push_back(clear_cmd);
-    
+
     if (use_first_triangle) {
         std::cout << "\rRendering red triangle (pre-transformed, persistent vertices)" << std::flush;
         
@@ -531,7 +534,7 @@ int main() {
     
     // Run a few frames to demonstrate coordinate system
     int frameCount = 0;
-    const int maxFrames = 10; // Limit frames for testing
+    const int maxFrames = 100; // Limit frames for testing
     
     InitializeTransformedVertices();
     

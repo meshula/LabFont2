@@ -23,12 +23,12 @@ vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
 }
 
 // Fragment shader for triangles and lines
-fragment float4 fragment_main(VertexOut in [[stage_in]]) {
+fragment float4 fragment_color(VertexOut in [[stage_in]]) {
     return in.color;
 }
 
 // fragment shader for textured triangles
-fragment float4 fragment_triangle(VertexOut in [[stage_in]],
+fragment float4 fragment_texture(VertexOut in [[stage_in]],
                                texture2d<float> colorTexture [[texture(0)]]) {
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);

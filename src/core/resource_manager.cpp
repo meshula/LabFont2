@@ -387,7 +387,7 @@ lab_result lab_load_texture(lab_context ctx, const char* path, lab_texture* out_
     unsigned char* data = stbi_load(path, &width, &height, &channels, 4); // Force RGBA
     
     if (!data) {
-        return LAB_RESULT_TEXTURE_CREATION_FAILED;
+        return LAB_RESULT_TEXTURE_LOAD_FAILED;
     }
     
     // Create texture descriptor

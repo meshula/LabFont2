@@ -211,7 +211,7 @@ private:
     float m_viewportHeight = 1.0f;
     
     // Transform normalized coordinates (-1,1) to viewport coordinates (0,1)
-    void TransformVertex(lab_vertex_2TC& vertex) {
+    void TransformVertexToViewport(lab_vertex_2TC& vertex) {
         // Convert from normalized device coordinates to viewport coordinates
         // Input: vertex in -1,1 range (standard graphics coordinates)
         // Output: vertex in 0,1 range (LabFont coordinate system)

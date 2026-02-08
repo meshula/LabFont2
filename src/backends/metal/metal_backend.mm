@@ -362,8 +362,8 @@ bool MetalDevice::CreatePipelineStates() {
     
     // Triangle pipeline
     id<MTLFunction> vertexFunc = [m_shaderLibrary newFunctionWithName:@"vertex_main"];
-    id<MTLFunction> fragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_main"];
-    id<MTLFunction> texturedFragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_triangle"];
+    id<MTLFunction> fragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_color"];
+    id<MTLFunction> texturedFragmentFunc = [m_shaderLibrary newFunctionWithName:@"fragment_texture"];
 
     if (!vertexFunc) {
         std::cerr << "Error: Failed to find vertex shader function 'vertex_main' in shader library\n";
@@ -372,14 +372,14 @@ bool MetalDevice::CreatePipelineStates() {
         return false;
     }
     if (!fragmentFunc) {
-        std::cerr << "Error: Failed to find fragment shader function 'fragment_main' in shader library\n";
+        std::cerr << "Error: Failed to find fragment shader function 'fragment_color' in shader library\n";
         [vertexFunc release];
         [vertexDesc release];
         [pipelineDesc release];
         return false;
     }
     if (!texturedFragmentFunc) {
-        std::cerr << "Error: Failed to find fragment shader function 'fragment_textured' in shader library\n";
+        std::cerr << "Error: Failed to find fragment shader function 'fragment_texture' in shader library\n";
         [vertexDesc release];
         [pipelineDesc release];
         return false;
