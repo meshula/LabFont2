@@ -120,6 +120,8 @@ set(CORE_SRC
     src/core/internal_types.h
     src/core/labfont_draw.cpp
     src/core/labfont_renderer.c
+    src/core/sokol_8bit_fonts.cpp
+    src/core/quadplay_font.cpp
     src/core/memory.cpp
     src/core/memory.h
     src/core/resource_manager.cpp
